@@ -21,8 +21,8 @@ body {background:#f5f7fa;font-size:14px;line-height:1.4;overflow-x:hidden;positi
     .order-input-container {flex-direction:column!important;min-height:auto!important;height:auto!important;}
     .input-column,.result-column {width:100%!important;}
     .result-column {border-top:1px solid #ddd!important;}
-    .source-order-input {height:180px!important;}
-    .result-content {height:180px!important;}
+    .source-order-input {height:150px!important;}
+    .result-content {height:150px!important;}
     .btn-group {display:grid!important;grid-template-columns:repeat(auto-fill,minmax(60px,1fr))!important;gap:4px!important;}
     .category-btn {padding:4px 2px!important;font-size:11px!important;min-height:30px!important;}
     .table-container {overflow-x:auto!important;-webkit-overflow-scrolling:touch!important;margin-left:-10px!important;margin-right:-10px!important;padding:0 10px!important;}
@@ -144,7 +144,6 @@ input[type="number"].small-input {width:50px;padding:3px 5px;border:1px solid #d
 .btn-amount-prefix2 {background:#8e44ad;color:white;padding:6px 10px;font-size:12px;min-height:30px;border-radius:15px;}
 .btn-remove-sep {background:#7f8c8d;color:white;padding:6px 10px;font-size:12px;min-height:30px;border-radius:15px;}
 .btn-replace-sep {background:#8e44ad;color:white;padding:6px 10px;font-size:12px;min-height:30px;border-radius:15px;}
-.btn-mark {background:#3498db;color:white;padding:6px 10px;font-size:12px;min-height:30px;border-radius:15px;}
 
 .recognize-card .btn-group {margin-top:12px;display:flex;flex-direction:row;gap:8px;flex-wrap:wrap;}
 .recognize-card .btn-group .btn {flex:1;}
@@ -806,7 +805,7 @@ function pinWindow(winId) { const win = document.getElementById(winId); if (!win
 async function showDatabase() { const pwd = await prompt("请输入数据库密码：",""); if (pwd === PASSWORD) { const modal = document.getElementById('databaseModal'); if (!modal) return; modal.style.display = 'flex'; highestZ += 1; modal.style.zIndex = highestZ; renderCustomConfigContainer(); makeWindowDraggable('databaseModalBox'); } else { await alert("密码错误"); } }
 function hideDatabase() { const modal = document.getElementById('databaseModal'); if (modal) modal.style.display = 'none'; }
 
-// ===== 识别弹窗 =====
+// ===== 识别弹窗（添加了标记按钮，结果区改为 div） =====
 function showRecognizeModal() {
   if (document.getElementById('recognizeWin')) return;
   const win = document.createElement('div'); win.className = 'floating-window'; win.id = 'recognizeWin';
@@ -826,8 +825,8 @@ function showRecognizeModal() {
           <button class="btn btn-amount-prefix2" onclick="showAmountSuffixManager()">金额后缀</button>
         </div>
         <div class="order-input-container" style="flex:1;"><div class="input-column"><div class="box-label">订单输入框</div><textarea class="source-order-input" placeholder="" oninput="convertOrderText()"></textarea></div><div class="result-column"><div class="box-label">识别结果</div><div class="result-area-new"><div class="result-content" id="orderResult" contenteditable="false"></div></div></div></div>
-        <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
-          <button class="btn btn-paste" onclick="pasteOrder()">粘贴订单</button><button class="btn btn-save-order" onclick="saveOrder()">保存下单</button><button class="btn btn-report" onclick="saveReportOrder()">上报</button><button class="btn btn-clear" onclick="clearAllInput()">清空</button><button class="btn btn-replace-sep" onclick="replaceSeparators()">换分隔</button><button class="btn btn-remove-sep" onclick="removeSeparators()">去分隔</button><button class="btn btn-mark" onclick="markSelection()">标记</button><button class="btn btn-cancel" onclick="semanticReplace()">语义转换</button><span id="invalidCharsHint" style="margin-left:auto;font-size:12px;color:red;display:none;"></span>
+        <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;">
+          <button class="btn btn-paste" onclick="pasteOrder()">粘贴订单</button><button class="btn btn-save-order" onclick="saveOrder()">保存下单</button><button class="btn btn-report" onclick="saveReportOrder()">上报</button><button class="btn btn-clear" onclick="clearAllInput()">清空</button><button class="btn btn-replace-sep" onclick="replaceSeparators()">换分隔</button><button class="btn btn-remove-sep" onclick="removeSeparators()">去分隔</button><button class="btn btn-mark" onclick="markSelection()">标记</button><button class="btn btn-cancel" onclick="semanticReplace()">语义转换</button>
         </div>
       </div>
       <div class="card category-card"><div class="card-title">分类快捷选择</div><div class="btn-group">
@@ -847,6 +846,7 @@ function markSelection() {
   const start = ta.selectionStart, end = ta.selectionEnd;
   if (start === end) { showToast('请先选择文本'); return; }
   const selectedText = ta.value.substring(start, end);
+  // 将选中内容按常见分隔符拆开，过滤空串，用 '-' 连接
   const tokens = selectedText.split(/[\s,，.。、+\-*＊\/\\|]+/).filter(t => t.trim());
   if (tokens.length === 0) { showToast('所选内容无有效文字'); return; }
   const merged = tokens.join('-');
@@ -854,140 +854,7 @@ function markSelection() {
   convertOrderText();
 }
 
-// ===== 繁体生肖转简体 =====
-function convertTraditionalZodiac(text) {
-  const map = { '馬':'马', '雞':'鸡', '豬':'猪', '龍':'龙' };
-  return text.replace(/[馬雞豬龍]/g, m => map[m] || m);
-}
-
-// ===== 从混合文本中提取有效关键词 =====
-function extractKeywordsFromToken(token, cfg, vc) {
-  const result = [];
-  let i = 0;
-  while (i < token.length) {
-    let matched = false;
-    if (/\d/.test(token[i])) {
-      let numStr = '';
-      while (i < token.length && /\d/.test(token[i])) {
-        numStr += token[i];
-        i++;
-      }
-      const num = parseInt(numStr);
-      if (num >= 1 && num <= 49) {
-        result.push(num.toString().padStart(2, '0'));
-      }
-      continue;
-    }
-    for (let len = Math.min(4, token.length - i); len >= 1; len--) {
-      const sub = token.substring(i, i + len);
-      if (vc.has(sub)) {
-        result.push(sub);
-        i += len;
-        matched = true;
-        break;
-      }
-    }
-    if (!matched) {
-      i++;
-    }
-  }
-  return result;
-}
-
-// ===== 改进的 tokenizeAndJoin 使用智能提取 =====
-function tokenizeAndJoin(content) {
-  const cfg = getAllConfigData();
-  const vc = getAllValidCategories(cfg);
-  const rawTokens = content.split(/[^\u4e00-\u9fa5\d]+/).filter(t => t.trim());
-  const allKeywords = [];
-  rawTokens.forEach(t => {
-    const extracted = extractKeywordsFromToken(t, cfg, vc);
-    allKeywords.push(...extracted);
-  });
-  return allKeywords.join('-');
-}
-
-// ===== 从原始行中提取无效字符（只返回无效字符的红色HTML片段） =====
-function extractInvalidChars(line, cfg, vc) {
-  const HARD_AMP_LIST = ['各','各号','号','个','=','各数','每数','每号','个号','每个号','各码','各号码'];
-  const cusAmp = getCustomAmountPrefixes();
-  const allAmps = [...HARD_AMP_LIST, ...cusAmp];
-  allAmps.sort((a,b) => b.length - a.length);
-  const baseSuf = '元块咪米斤#،';
-  const cusAmtSuf = getCustomAmountSuffixes();
-  const amtSufSet = new Set([...baseSuf.split(''), ...cusAmtSuf]);
-
-  const invalids = [];
-  let i = 0;
-  while (i < line.length) {
-    const ch = line[i];
-    if (/[\s,，.。、+\-*＊\/\\|]/.test(ch)) { i++; continue; }
-    let matchedAmp = false;
-    for (const amp of allAmps) {
-      if (line.substring(i, i + amp.length) === amp) {
-        i += amp.length;
-        matchedAmp = true;
-        break;
-      }
-    }
-    if (matchedAmp) continue;
-    if (amtSufSet.has(ch)) { i++; continue; }
-    if (/\d/.test(ch)) {
-      let numStr = '';
-      let j = i;
-      while (j < line.length && /\d/.test(line[j])) {
-        numStr += line[j];
-        j++;
-      }
-      const num = parseInt(numStr);
-      if (num < 1 || num > 49) {
-        invalids.push(`<span style="color:red;">${numStr}</span>`);
-      }
-      i = j;
-      continue;
-    }
-    if (/[\u4e00-\u9fa5]/.test(ch)) {
-      if (!vc.has(ch)) {
-        invalids.push(`<span style="color:red;">${ch}</span>`);
-      }
-      i++;
-      continue;
-    }
-    i++;
-  }
-  return invalids;
-}
-
-// ===== 检测一行是否存在无效字符 =====
-function hasInvalidChars(line, cfg, vc) {
-  let cleaned = line.replace(/[\s,，.。、+\-*＊\/\\|]+/g, '');
-  const HARD_AMP_LIST = ['各','各号','号','个','=','各数','每数','每号','个号','每个号','各码','各号码'];
-  const cusAmp = getCustomAmountPrefixes();
-  const allAmps = [...HARD_AMP_LIST, ...cusAmp];
-  allAmps.sort((a,b) => b.length - a.length);
-  const baseSuf = '元块咪米斤#،';
-  const cusAmtSuf = getCustomAmountSuffixes();
-  const allAmtChars = [...new Set([...baseSuf.split(''), ...cusAmtSuf])].join('');
-  allAmps.forEach(amp => { cleaned = cleaned.split(amp).join(''); });
-  for (const ch of allAmtChars) { cleaned = cleaned.split(ch).join(''); }
-  cleaned = cleaned.replace(/\d+/g, '');
-  let remaining = cleaned;
-  while (remaining.length > 0) {
-    let matched = false;
-    for (let len = Math.min(4, remaining.length); len >= 1; len--) {
-      const sub = remaining.substring(0, len);
-      if (vc.has(sub)) {
-        remaining = remaining.substring(len);
-        matched = true;
-        break;
-      }
-    }
-    if (!matched) return true;
-  }
-  return false;
-}
-
-// ===== 数据库配置读写 =====
+// ===== 数据库配置读写（基于静态HTML input，并支持自定义分类） =====
 function getAllConfigData() {
   const configData = {
     zodiac:{}, shengxiaoAttr:{}, wuxing:{}, bose:{}, banbo:{}, danshuang:{}, weishu:{},
@@ -1233,14 +1100,38 @@ function applyReplacePresets(text) { const p=getReplacePresets(); let r=text; p.
 // ===== 语义转换 =====
 async function semanticReplace() { const ta=document.querySelector('.source-order-input'); if(!ta)return; const s=ta.selectionStart,e=ta.selectionEnd; if(s===e){showToast('请先选择文本');return;} const sel=ta.value.substring(s,e); const cfg=getAllConfigData(); const vc=getAllValidCategories(cfg); const tokens=sel.split(/[\s,，.。、+\-*＊\/\\|]+/).filter(t=>t.trim()); const matched=tokens.filter(t=>vc.has(t)); if(!matched.length){showToast('未识别有效分类');return;} let sets=matched.map(cat=>{ let nums=[]; if(cfg.shengxiaoAttr[cat]){ cfg.shengxiaoAttr[cat].forEach(z=>{ if(cfg.zodiac[z])nums.push(...cfg.zodiac[z].map(n=>n.toString().padStart(2,'0'))); }); } const dir=cfg.wuxing[cat]||cfg.bose[cat]||cfg.banbo[cat]||cfg.danshuang[cat]||cfg.weishu[cat]||cfg.daxiaodanshuang[cat]||cfg.daxiao[cat]||cfg.heshu[cat]||cfg.toushu[cat]||cfg.menshu[cat]||cfg.duanwei[cat]||cfg.hedahexiao[cat]||cfg.weidaweixiao[cat]||cfg.hewei[cat]||cfg.heshudanshuang[cat]||cfg.toushuDanshuang[cat]; if(dir)nums.push(...dir.map(n=>n.toString().padStart(2,'0'))); if(cfg.zodiac[cat])nums.push(...cfg.zodiac[cat].map(n=>n.toString().padStart(2,'0'))); return new Set(nums); }); let inter=sets[0]; for(let i=1;i<sets.length;i++)inter=new Set([...inter].filter(x=>sets[i].has(x))); const res=[...inter].sort((a,b)=>parseInt(a)-parseInt(b)); if(!res.length){showToast('无共同号码');return;} const str=res.join('-'); const cf=await confirm(`转换结果：${str}\n是否替换选中文本？`); if(cf){ta.value=ta.value.substring(0,s)+str+ta.value.substring(e);convertOrderText();} }
 
-// ===== 订单识别核心（修复：识别框无效行红色 + 语义转换右边只显示无效字符） =====
+function tokenizeAndJoin(content) {
+  const cfg = getAllConfigData();
+  const vc = getAllValidCategories(cfg);
+  const tokens = content.split(/[^\u4e00-\u9fa5\d]+/).filter(t => t.trim()).map(t => t.trim());
+  const res = [];
+  tokens.forEach(t => {
+    const tm = t.match(/^(\d{2,})尾$/);
+    const hm = t.match(/^(\d{2,})头$/);
+    if (tm) {
+      const ds = tm[1].split('').map(d => d + '尾');
+      res.push(...ds);
+    } else if (hm) {
+      const ds = hm[1].split('').map(d => d + '头');
+      res.push(...ds);
+    } else if (/^\d{1,2}$/.test(t)) {
+      const n = parseInt(t);
+      if (n >= 1 && n <= 49) res.push(t.length === 1 ? '0' + t : t);
+    } else if (vc.has(t)) {
+      res.push(t);
+    } else if (/^[\u4e00-\u9fa5]+$/.test(t)) {
+      const cs = t.match(/[\u4e00-\u9fa5]/g) || [];
+      if (cs.every(c => vc.has(c))) res.push(...cs);
+    }
+  });
+  return res.join('-');
+}
+
+// ===== 订单识别核心（修改为输出 HTML 并高亮无效行） =====
 function convertOrderText() {
   const inputEl=document.querySelector('.source-order-input');
   if(!inputEl)return;
-  let text = inputEl.value.trim();
-  text = convertTraditionalZodiac(text);
-  text = applyCategoryAliases(applyReplacePresets(text));
-
+  let text=applyCategoryAliases(applyReplacePresets(inputEl.value.trim()));
   const resultEl=document.getElementById('orderResult');
   if(!resultEl)return;
   if(!text){resultEl.innerHTML='';updateOrderTotalDisplay();return;}
@@ -1250,6 +1141,8 @@ function convertOrderText() {
   const allAmpList = [...HARD_AMP_LIST, ...cusAmp];
   allAmpList.sort((a,b) => b.length - a.length);
   const AMP_ORIGINAL = '(?:' + allAmpList.map(s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|') + ')';
+  const IGN=['奥特','特码','澳门特码','特','奥','澳','澳门','澳門','澳門特碼','澳门特码','澳門特码',':','。','.','新',',','新','新奥','门','，','新澳','新特','新澳特','特碼'];
+  const cusPre=getCustomPrefixes(); const allPre=[...IGN,...cusPre];
   const baseSuf='元块咪米斤#،。\\s';
   const cusAmtSuf=getCustomAmountSuffixes(); const allAmtChars=[...new Set([...baseSuf.split(''),...cusAmtSuf])].join('');
   const AMTS=`[${allAmtChars}]*`;
@@ -1271,7 +1164,27 @@ function convertOrderText() {
       return;
     }
     let cl=line;
-    cl = cl.replace(/([一二三四五六七八九十百千]+)/g, (m) => cn2n(m));
+    allPre.forEach(p=>{if(cl.startsWith(p))cl=cl.substring(p.length).trim();});
+    cl = cl.replace(/[^\u4e00-\u9fa5\d]+$/, '');
+    cl=cl.replace(/([一二三四五六七八九十百千]+)/g,(m)=>cn2n(m));
+    while (cl && !/^[\d\u4e00-\u9fa5]/.test(cl)) {
+      cl = cl.substring(1).trim();
+    }
+    const leadingChineseMatch = cl.match(/^([\u4e00-\u9fa5]+)/);
+    if (leadingChineseMatch) {
+      const leadingChinese = leadingChineseMatch[1];
+      let isValidPrefix = false;
+      for (let i = 1; i <= leadingChinese.length; i++) {
+        const sub = leadingChinese.substring(0, i);
+        if (vc.has(sub)) {
+          isValidPrefix = true;
+          break;
+        }
+      }
+      if (!isValidPrefix) {
+        cl = cl.substring(leadingChinese.length).trim();
+      }
+    }
 
     const shxMatch = cl.match(new RegExp(`^(.+?)(各肖|各)(\\d+)${AMTS}$`));
     if (shxMatch) {
@@ -1303,15 +1216,15 @@ function convertOrderText() {
     const om=cl.match(op);
     if(om&&om.length>0){
       let rl=cl;
-      om.forEach(omPart=>{
-        const oi=rl.indexOf(omPart);
+      om.forEach(om=>{
+        const oi=rl.indexOf(om);
         if(oi!==-1){
           const cont=rl.substring(0,oi).trim();
-          const am=omPart.match(/(\d+)/);
+          const am=om.match(/(\d+)/);
           if(am){
             const amt=am[1];
             if(cont){ const jo=tokenizeAndJoin(cont); if(jo)resultLines.push(`${jo} 各数 ${amt}`); }
-            rl=rl.substring(oi+omPart.length);
+            rl=rl.substring(oi+om.length);
           }
         }
       });
@@ -1329,53 +1242,26 @@ function convertOrderText() {
     }
   });
 
-  // 收集无效字符（只取无效字/数字本身）
-  const allInvalidChars = [];
-  let hasAnyValidResult = false;
-
+  // 生成 HTML，无效行红色
   let html = '';
-  resultLines.forEach((resultLine, index) => {
-    const originalLine = lines[index] || resultLine;
-    const m = resultLine.match(/^(.+?)\s+各数\s+(\d+)$/);
+  resultLines.forEach(line => {
+    const m = line.match(/^(.+?)\s+各数\s+(\d+)$/);
     if (!m) {
-      html += `<div style="color:red;">${resultLine}</div>`;
-      const invalids = extractInvalidChars(originalLine, cfg, vc);
-      if (invalids.length > 0) allInvalidChars.push(...invalids);
+      html += `<div style="color:red;">${line}</div>`;
       return;
     }
     const content = m[1];
     const amt = parseInt(m[2]) || 0;
-    const { numbers, zodiacs } = countItemsInLine(resultLine, cfg, vc);
+    // 检查是否有效：必须有号码/生肖/分类，且金额 > 0
+    const { numbers, zodiacs } = countItemsInLine(line, cfg, vc);
     const totalItems = numbers.length + zodiacs.length;
     if (totalItems === 0 || amt <= 0) {
-      html += `<div style="color:red;">${resultLine}</div>`;
-      const invalids = extractInvalidChars(originalLine, cfg, vc);
-      if (invalids.length > 0) allInvalidChars.push(...invalids);
+      html += `<div style="color:red;">${line}</div>`;
     } else {
-      hasAnyValidResult = true;
-      if (hasInvalidChars(originalLine, cfg, vc)) {
-        html += `<div style="color:red;">${resultLine}</div>`;
-        const invalids = extractInvalidChars(originalLine, cfg, vc);
-        if (invalids.length > 0) allInvalidChars.push(...invalids);
-      } else {
-        html += `<div>${resultLine}</div>`;
-      }
+      html += `<div>${line}</div>`;
     }
   });
   resultEl.innerHTML = html;
-
-  // 更新语义转换右边的无效字符提示
-  const hint = document.getElementById('invalidCharsHint');
-  if (hint) {
-    if (allInvalidChars.length > 0 && hasAnyValidResult) {
-      hint.style.display = 'inline';
-      hint.innerHTML = allInvalidChars.join(' ');
-    } else {
-      hint.style.display = 'none';
-      hint.innerHTML = '';
-    }
-  }
-
   updateOrderTotalDisplay();
 }
 
@@ -1439,14 +1325,12 @@ async function updateTableFromRecords(){
     fReps.forEach(rec=>{
       try{
         const user=rec.user;
-        if(user && !userBetData[user]) userBetData[user] = {};
         rec.content.split('\n').filter(l=>l.trim()).forEach(line=>{
           const{numbers,zodiacs,amount}=countItemsInLine(line,cfg,keys);
           numbers.forEach(num=>{
             reportBetData[num]=(reportBetData[num]||0)-amount;
             reportAmountData[num]=(reportAmountData[num]||0)+amount;
-            if(user){
-              if(!userBetData[user]) userBetData[user] = {};
+            if(user && userBetData[user]){
               userBetData[user][num]=(userBetData[user][num]||0)-amount;
             }
           });
@@ -1455,8 +1339,7 @@ async function updateTableFromRecords(){
               const num=n.padStart(2,'0');
               reportBetData[num]=(reportBetData[num]||0)-amount;
               reportAmountData[num]=(reportAmountData[num]||0)+amount;
-              if(user){
-                if(!userBetData[user]) userBetData[user] = {};
+              if(user && userBetData[user]){
                 userBetData[user][num]=(userBetData[user][num]||0)-amount;
               }
             });
@@ -1564,115 +1447,24 @@ function renderAmountFrequencyCards(){ const nt=document.getElementById('numberA
 // ===== 对奖相关 =====
 function getNumberListForCategory(cat,cfg){ const nums=[]; if(cfg.shengxiaoAttr[cat]){ cfg.shengxiaoAttr[cat].forEach(z=>{if(cfg.zodiac[z])nums.push(...cfg.zodiac[z].map(n=>n.toString().padStart(2,'0')));}); } const dir=cfg.wuxing[cat]||cfg.bose[cat]||cfg.banbo[cat]||cfg.danshuang[cat]||cfg.weishu[cat]||cfg.daxiaodanshuang[cat]||cfg.daxiao[cat]||cfg.heshu[cat]||cfg.toushu[cat]||cfg.menshu[cat]||cfg.duanwei[cat]||cfg.hedahexiao[cat]||cfg.weidaweixiao[cat]||cfg.hewei[cat]||cfg.heshudanshuang[cat]||cfg.toushuDanshuang[cat]; if(dir)nums.push(...dir.map(n=>n.toString().padStart(2,'0'))); if(cfg.zodiac[cat])nums.push(...cfg.zodiac[cat].map(n=>n.toString().padStart(2,'0'))); return [...new Set(nums)]; }
 function isTokenMatching(token,targetNum,cfg){ const t=targetNum.padStart(2,'0'); if(/^\d{1,2}$/.test(token))return token.padStart(2,'0')===t; const vc=getAllValidCategories(cfg); if(vc.has(token)){const nums=getNumberListForCategory(token,cfg);return nums.includes(t);} return false; }
-function highlightContent(content,targetNum,cfg){ if(!targetNum)return content; const t=targetNum.padStart(2,'0'); return content.replace(new RegExp(`(${t})`, 'g'), '<span class="highlight-number">$1</span>'); }
+function highlightContent(content,targetNum,cfg){ if(!targetNum)return content; const t=targetNum.padStart(2,'0'); const parts=[];let tmp=''; for(const ch of content){if(ch==='-'||ch===' '){if(tmp)parts.push(tmp);parts.push(ch);tmp='';}else{tmp+=ch;}} if(tmp)parts.push(tmp); return parts.map(p=>{if(p==='-'||p===' ')return p;if(isTokenMatching(p,targetNum,cfg))return`<span class="highlight-number">${p}</span>`;return p;}).join(''); }
 function orderContainsTarget(content,targetNum,cfg){ if(!targetNum)return true; const t=targetNum.padStart(2,'0'); const lines=content.split('\n'); for(const line of lines){ const m=line.match(/^(.+?)\s+各数\s+(\d+)$/); if(!m)continue; const cont=m[1]; const parts=[];let tmp=''; for(const ch of cont){if(ch==='-'||ch===' '){if(tmp)parts.push(tmp);tmp='';}else{tmp+=ch;}} if(tmp)parts.push(tmp); for(const p of parts){if(p!=='-'&&p!==' '&&isTokenMatching(p,targetNum,cfg))return true;} } return false; }
 function formatTimestampToCST(iso){ const d=new Date(iso); return new Intl.DateTimeFormat('zh-CN',{year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false,timeZone:'Asia/Shanghai'}).format(d); }
 function getUserColor(u){ let h=0; for(let i=0;i<u.length;i++)h=u.charCodeAt(i)+((h<<5)-h); const hue=(h%360+360)%360; return`hsl(${hue},70%,45%)`; }
 
-// ===== 新增：订单记录弹窗对奖信息显示 =====
-function updatePrizeResult() {
-  const prizeInput = document.getElementById('prizeNumberInput');
-  const container = document.getElementById('prizeInfoContainer');
-  if (!prizeInput || !container) return;
-
-  const numStr = prizeInput.value.trim();
-  if (!numStr || !/^\d{1,2}$/.test(numStr) || parseInt(numStr) < 1 || parseInt(numStr) > 49) {
-    container.style.display = 'none';
-    return;
-  }
-
-  const formattedNum = numStr.length === 1 ? '0' + numStr : numStr;
-
-  const totalBetEl = document.getElementById('totalBet');
-  const totalBet = totalBetEl ? parseInt(totalBetEl.textContent) || 0 : 0;
-
-  const originalBet = tableBetData[formattedNum] || 0;
-  const reportBet = reportBetData[formattedNum] || 0;
-
-  let reportRisk = 0;
-  const reportTbody = document.getElementById('reportTableBody');
-  if (reportTbody) {
-    const rows = reportTbody.querySelectorAll('tr');
-    for (const row of rows) {
-      const firstCell = row.querySelector('td');
-      if (firstCell) {
-        const cellText = firstCell.textContent.trim();
-        const cellNum = cellText.substring(0, 2);
-        if (cellNum === formattedNum) {
-          const riskCell = row.querySelectorAll('td')[2];
-          if (riskCell) {
-            reportRisk = parseInt(riskCell.textContent) || 0;
-            break;
-          }
-        }
-      }
-    }
-  }
-
-  if (totalBet === 0 && originalBet === 0 && reportBet === 0 && reportRisk === 0) {
-    container.style.display = 'none';
-    return;
-  }
-
-  container.style.display = 'inline-flex';
-  document.getElementById('prizeTotalBet').textContent = totalBet;
-  document.getElementById('prizeOriginalBet').textContent = originalBet;
-  document.getElementById('prizeReportBet').textContent = reportBet;
-  document.getElementById('prizeReportRisk').textContent = reportRisk;
-}
-
-async function applyPrizeFilter(){
-  const di=document.getElementById('recordDateFilter'),pi=document.getElementById('prizeNumberInput'),uf=document.getElementById('recordUserFilter');
-  if(!di||!pi||!uf)return;
-  const sd=di.value,pn=pi.value.trim(),uv=uf.value;
-  const recs=await getOrderRecords();
-  let filtered=uv==='all'?recs:recs.filter(r=>r.user===uv);
-  if(sd)filtered=filtered.filter(r=>r.date===sd);
-  const cfg=getAllConfigData();
-  let final=[];
-  if(pn){for(const it of filtered){if(orderContainsTarget(it.content,pn,cfg))final.push(it);}}else{final=filtered;}
-  const cont=document.getElementById('orderListContainer');
-  if(!cont)return;
-  if(final.length===0){cont.innerHTML='<div style="padding:20px;text-align:center;color:#666;">暂无匹配订单</div>';}
-  else{
-    cont.innerHTML=final.map(it=>{
-      const ts=formatTimestampToCST(it.timestamp),ud=it.user||'未知',col=getUserColor(ud),ta=it.totalAmount||0;
-      const lines=it.content.split('\n');
-      const hl=lines.map(l=>{
-        const m=l.match(/^(.+?)\s+各数\s+(\d+)$/);
-        if(!m)return l;
-        let cont=m[1],amt=m[2];
-        if(pn){
-          const t=pn.padStart(2,'0');
-          cont = cont.replace(new RegExp(`(${t})`, 'g'), '<span class="highlight-number">$1</span>');
-        }
-        return`${cont} 各数 ${amt}`;
-      }).join('<br>');
-      return`<div class="order-item"><input type="checkbox" class="order-check" data-id="${it.id}"><div class="order-content">${hl}</div><div class="order-info"><span class="order-total" style="color:#000;">合计：${ta}</span><span class="order-meta"><span style="color:${col};">用户：${ud}</span> &nbsp; ${ts}</span></div><button class="order-del" onclick="deleteOrderRecord(${it.id})">删除</button></div>`;
-    }).join('');
-  }
-  updatePrizeResult();
-}
+async function applyPrizeFilter(){ const di=document.getElementById('recordDateFilter'),pi=document.getElementById('prizeNumberInput'),uf=document.getElementById('recordUserFilter'); if(!di||!pi||!uf)return; const sd=di.value,pn=pi.value.trim(),uv=uf.value; const recs=await getOrderRecords(); let filtered=uv==='all'?recs:recs.filter(r=>r.user===uv); if(sd)filtered=filtered.filter(r=>r.date===sd); const cfg=getAllConfigData(); let final=[]; if(pn){for(const it of filtered){if(orderContainsTarget(it.content,pn,cfg))final.push(it);}}else{final=filtered;} const cont=document.getElementById('orderListContainer'); if(!cont)return; if(final.length===0){cont.innerHTML='<div style="padding:20px;text-align:center;color:#666;">暂无匹配订单</div>';return;} cont.innerHTML=final.map(it=>{ const ts=formatTimestampToCST(it.timestamp),ud=it.user||'未知',col=getUserColor(ud),ta=it.totalAmount||0; const lines=it.content.split('\n'); const hl=lines.map(l=>{const m=l.match(/^(.+?)\s+各数\s+(\d+)$/);if(!m)return l;const cont=m[1],amt=m[2];const hc=highlightContent(cont,pn,cfg);return`${hc} 各数 ${amt}`;}).join('<br>'); return`<div class="order-item"><input type="checkbox" class="order-check" data-id="${it.id}"><div class="order-content">${hl}</div><div class="order-info"><span class="order-total" style="color:#000;">合计：${ta}</span><span class="order-meta"><span style="color:${col};">用户：${ud}</span> &nbsp; ${ts}</span></div><button class="order-del" onclick="deleteOrderRecord(${it.id})">删除</button></div>`; }).join(''); }
 
 async function showOrderRecord(filter='all'){
   try{
-    const recs=await getOrderRecords(),users=getUsers();
+    const recs=await getOrderRecords(),users=getUsers(),today=getTodayCST();
     if(document.getElementById('orderWin'))document.getElementById('orderWin').remove();
     const w=document.createElement('div'); w.className='floating-window'; w.id='orderWin';
     w.style.width='750px'; w.style.height='600px'; w.style.left='50%'; w.style.top='50%'; w.style.transform='translate(-50%,-50%)';
-    const currentDate = document.getElementById('filterDate')?.value || getTodayCST();
     let html=`<div class="modal-header"><h3>下单记录</h3><div class="window-controls"><button onclick="maximizeWindow('orderWin')">🗖</button><button onclick="pinWindow('orderWin')">📌</button><button onclick="document.getElementById('orderWin').remove()">×</button></div></div><div class="modal-body">`;
     html+=`<div style="margin-bottom:10px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;"><select id="recordUserFilter" onchange="applyPrizeFilter()" style="padding:4px 8px;border-radius:4px;border:1px solid #ccc;"><option value="all" ${filter==='all'?'selected':''}>全部用户</option>`;
     users.forEach(u=>html+=`<option value="${u}" ${u===filter?'selected':''}>${u}</option>`);
-    html+=`</select><button onclick="checkAll()" style="padding:6px 12px;background:#007bff;color:#fff;border:none;border-radius:4px;">全选</button><button onclick="uncheckAll()" style="padding:6px 12px;background:#6c757d;color:#fff;border:none;border-radius:4px;">取消全选</button><button onclick="deleteChecked()" style="padding:6px 12px;background:#e74c3c;color:#fff;border:none;border-radius:4px;">批量删除</button><span style="margin-left:auto;">对奖：</span><input type="text" id="prizeNumberInput" placeholder="号码" maxlength="2" oninput="applyPrizeFilter();updatePrizeResult();" style="padding:4px;border-radius:4px;border:1px solid #ccc;width:50px;">`;
-    html+=`<span id="prizeInfoContainer" style="display:none;margin-left:8px;gap:12px;align-items:center;font-size:13px;color:#333;">
-      <span>总下注：<b id="prizeTotalBet">0</b></span>
-      <span>原下注数：<b id="prizeOriginalBet">0</b></span>
-      <span>下注数：<b id="prizeReportBet">0</b></span>
-      <span>盈亏：<b id="prizeReportRisk" style="color:#e74c3c;">0</b></span>
-    </span>`;
-    html+=`</div><div id="orderListContainer">`;
-    const df=recs.filter(r=>r.date===currentDate);
+    html+=`</select><button onclick="checkAll()" style="padding:6px 12px;background:#007bff;color:#fff;border:none;border-radius:4px;">全选</button><button onclick="uncheckAll()" style="padding:6px 12px;background:#6c757d;color:#fff;border:none;border-radius:4px;">取消全选</button><button onclick="deleteChecked()" style="padding:6px 12px;background:#e74c3c;color:#fff;border:none;border-radius:4px;">批量删除</button><span style="margin-left:auto;">日期：</span><input type="date" id="recordDateFilter" value="${today}" onchange="applyPrizeFilter()" style="padding:4px 8px;border-radius:4px;border:1px solid #ccc;width:140px;"><span>对奖：</span><input type="text" id="prizeNumberInput" placeholder="号码" maxlength="2" oninput="applyPrizeFilter()" style="padding:4px;border-radius:4px;border:1px solid #ccc;width:50px;"></div><div id="orderListContainer">`;
+    const df=recs.filter(r=>r.date===today);
     const fin=(filter==='all')?df:df.filter(r=>r.user===filter);
     if(fin.length===0)html+=`<div style="padding:20px;text-align:center;color:#666;">暂无订单记录</div>`;
     else{
