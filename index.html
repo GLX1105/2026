@@ -826,7 +826,8 @@ function showRecognizeModal() {
         </div>
         <div class="order-input-container" style="flex:1;"><div class="input-column"><div class="box-label">订单输入框</div><textarea class="source-order-input" placeholder="" oninput="convertOrderText()"></textarea></div><div class="result-column"><div class="box-label">识别结果</div><div class="result-area-new"><div class="result-content" id="orderResult" contenteditable="false"></div></div></div></div>
         <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;">
-          <button class="btn btn-paste" onclick="pasteOrder()">粘贴订单</button><button class="btn btn-save-order" onclick="saveOrder()">保存下单</button><button class="btn btn-report" onclick="saveReportOrder()">上报</button><button class="btn btn-clear" onclick="clearAllInput()">清空</button><button class="btn btn-replace-sep" onclick="replaceSeparators()">换分隔</button><button class="btn btn-remove-sep" onclick="removeSeparators()">去分隔</button><button class="btn btn-mark" onclick="markSelection()">标记</button><button class="btn btn-cancel" onclick="semanticReplace()">语义转换</button><span id="invalidTokensDisplay" style="color:red; font-size:12px; display:none; margin-left:8px; white-space:nowrap;"></span>
+          <button class="btn btn-paste" onclick="pasteOrder()">粘贴订单</button><button class="btn btn-save-order" onclick="saveOrder()">保存下单</button><button class="btn btn-report" onclick="saveReportOrder()">上报</button><button class="btn btn-clear" onclick="clearAllInput()">清空</button><button class="btn btn-replace-sep" onclick="replaceSeparators()">换分隔</button><button class="btn btn-remove-sep" onclick="removeSeparators()">去分隔</button><button class="btn btn-mark" onclick="markSelection()">标记</button><button class="btn btn-cancel" onclick="semanticReplace()">语义转换</button>
+          <span id="invalidTokensDisplay" style="color:red; font-size:12px; display:none; white-space:pre-line; margin-left:auto;"></span>
         </div>
       </div>
       <div class="card category-card"><div class="card-title">分类快捷选择</div><div class="btn-group">
@@ -1120,30 +1121,51 @@ function tokenizeAndJoin(content) {
     } else if (vc.has(t)) {
       res.push(t);
     } else if (/^[\u4e00-\u9fa5]+$/.test(t)) {
+      // 容错处理：拆分连续汉字，保留有效单字，丢弃无效单字
       const cs = t.match(/[\u4e00-\u9fa5]/g) || [];
-      if (cs.every(c => vc.has(c))) res.push(...cs);
+      if (cs.some(c => vc.has(c))) {
+        cs.forEach(c => {
+          if (vc.has(c)) res.push(c);
+        });
+      }
     }
   });
   return res.join('-');
 }
 
-// ===== 修改后的订单识别核心（增加前缀忽略、行标红、无效token显示） =====
+// ===== 修改后的订单识别核心（容错识别、行标红、无效token显示） =====
 function convertOrderText() {
   const inputEl = document.querySelector('.source-order-input');
-  if (!inputEl) return;
-  let text = applyCategoryAliases(applyReplacePresets(inputEl.value.trim()));
   const resultEl = document.getElementById('orderResult');
-  if (!resultEl) return;
-  if (!text) { resultEl.innerHTML = ''; updateOrderTotalDisplay(); return; }
+  const invalidSpan = document.getElementById('invalidTokensDisplay');
 
-  const lines = text.split('\n'); const resultLines = [];
+  if (!inputEl || !resultEl) return;
+
+  let text = applyCategoryAliases(applyReplacePresets(inputEl.value.trim()));
+
+  // 清空输入框时隐藏无效token显示
+  if (!text) {
+    resultEl.innerHTML = '';
+    if (invalidSpan) {
+      invalidSpan.textContent = '';
+      invalidSpan.style.display = 'none';
+    }
+    updateOrderTotalDisplay();
+    return;
+  }
+
+  const lines = text.split('\n');
+  const resultLines = [];        // 存储识别后的行文本
+  const originalContents = [];   // 存储每行对应的原始内容（各数之前的部分）
+
   const HARD_AMP_LIST = ['各','各号','号','个','=','各数','每数','每号','个号','每个号','各码','各号码'];
   const cusAmp = getCustomAmountPrefixes();
   const allAmpList = [...HARD_AMP_LIST, ...cusAmp];
   allAmpList.sort((a, b) => b.length - a.length);
   const AMP_ORIGINAL = '(?:' + allAmpList.map(s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|') + ')';
   const IGN = ['奥特','特码','澳门特码','特','奥','澳','澳门','澳門','澳門特碼','澳门特码','澳門特码',':','。','.','新',',','新','新奥','门','，','新澳','新特','新澳特','特碼'];
-  const cusPre = getCustomPrefixes(); const allPre = [...IGN, ...cusPre];
+  const cusPre = getCustomPrefixes();
+  const allPre = [...IGN, ...cusPre];
   const baseSuf = '元块咪米斤#،。\\s';
   const cusAmtSuf = getCustomAmountSuffixes();
   const allAmtChars = [...new Set([...baseSuf.split(''), ...cusAmtSuf])].join('');
@@ -1185,7 +1207,13 @@ function convertOrderText() {
     const clean = token.replace(PUNCT_REGEX, '');
     if (clean === '') return false;
     if (isValidNumber(clean)) return true;
+    // 检查是否为完整分类名
     if (allCatNames.has(clean)) return true;
+    // 如果是纯中文且长度>1，检查是否每个单字都是有效分类名（处理连续生肖等）
+    if (/^[\u4e00-\u9fa5]+$/.test(clean) && clean.length > 1) {
+      const chars = clean.split('');
+      if (chars.every(ch => allCatNames.has(ch))) return true;
+    }
     return false;
   }
 
@@ -1193,30 +1221,37 @@ function convertOrderText() {
     line = line.trim();
     if (!line) return;
 
+    // 简单格式：数字+任意分隔符+金额 → 转换成 数字 各数 金额
     const pairMatch = line.match(SIMPLE_PAIR);
     if (pairMatch) {
       let num = pairMatch[1];
       const amount = pairMatch[2];
       if (num.length === 1) num = '0' + num;
       resultLines.push(`${num} 各数 ${amount}`);
+      originalContents.push(pairMatch[1]);
       return;
     }
 
     let cl = line;
+
+    // 1. 移除固定忽略词（IGN）
     allPre.forEach(p => { if (cl.startsWith(p)) cl = cl.substring(p.length).trim(); });
+
+    // 2. 移除行末非中文非数字字符（金额后缀等）
     cl = cl.replace(/[^\u4e00-\u9fa5\d]+$/, '');
     cl = cl.replace(/([一二三四五六七八九十百千]+)/g, (m) => cn2n(m));
     while (cl && !/^[\d\u4e00-\u9fa5]/.test(cl)) {
       cl = cl.substring(1).trim();
     }
 
-    // 智能跳过无效前缀
+    // 3. 智能跳过无效前缀
     while (cl && !/^\d/.test(cl) && !startsWithCategory(cl)) {
       cl = cl.substring(1).trim();
     }
 
     if (!cl) return;
 
+    // 处理“各肖”或“各”的特殊模式
     const shxMatch = cl.match(new RegExp(`^(.+?)(各肖|各)(\\d+)${AMTS}$`));
     if (shxMatch) {
       const rawContent = shxMatch[1];
@@ -1235,13 +1270,20 @@ function convertOrderText() {
           });
           const amtPerBen = Math.round(amtRaw / 5);
           const amtPerOther = Math.round(amtRaw / 4);
-          if (benmingList.length > 0) resultLines.push(`${benmingList.join('-')} 各数 ${amtPerBen}`);
-          if (otherList.length > 0) resultLines.push(`${otherList.join('-')} 各数 ${amtPerOther}`);
+          if (benmingList.length > 0) {
+            resultLines.push(`${benmingList.join('-')} 各数 ${amtPerBen}`);
+            originalContents.push(benmingList.join('-'));
+          }
+          if (otherList.length > 0) {
+            resultLines.push(`${otherList.join('-')} 各数 ${amtPerOther}`);
+            originalContents.push(otherList.join('-'));
+          }
           return;
         }
       }
     }
 
+    // 使用金额前缀分割
     const op = new RegExp(`(${AMP_ORIGINAL}\\d+${AMTS})`, 'g');
     const om = cl.match(op);
     if (om && om.length > 0) {
@@ -1253,16 +1295,34 @@ function convertOrderText() {
           const am = om.match(/(\d+)/);
           if (am) {
             const amt = am[1];
-            if (cont) { const jo = tokenizeAndJoin(cont); if (jo) resultLines.push(`${jo} 各数 ${amt}`); }
+            if (cont) {
+              const jo = tokenizeAndJoin(cont);
+              if (jo) {
+                resultLines.push(`${jo} 各数 ${amt}`);
+                originalContents.push(cont); // 保存原始内容用于检测
+              }
+            }
             rl = rl.substring(oi + om.length);
           }
         }
       });
-      if (rl.trim()) { const jo = tokenizeAndJoin(rl.trim()); if (jo) resultLines.push(`${jo} 各数 0`); }
+      if (rl.trim()) {
+        const jo = tokenizeAndJoin(rl.trim());
+        if (jo) {
+          resultLines.push(`${jo} 各数 0`);
+          originalContents.push(rl.trim());
+        }
+      }
     } else {
       const pat = new RegExp(`^(.+?)${AMP_ORIGINAL}(\\d+)$`);
       const m = cl.match(pat);
-      if (m) { const jo = tokenizeAndJoin(m[1].trim()); if (jo) resultLines.push(`${jo} 各数 ${m[2]}`); }
+      if (m) {
+        const jo = tokenizeAndJoin(m[1].trim());
+        if (jo) {
+          resultLines.push(`${jo} 各数 ${m[2]}`);
+          originalContents.push(m[1].trim());
+        }
+      }
       else {
         const sp = new RegExp(`(\\d+)(?:号|${AMP_ORIGINAL})(\\d+)$`);
         const sm = cl.match(sp);
@@ -1271,19 +1331,37 @@ function convertOrderText() {
           if (parseInt(num) >= 1 && parseInt(num) <= 49) {
             num = num.length === 1 ? `0${num}` : num;
             resultLines.push(`${num} 各数 ${sm[2]}`);
+            originalContents.push(num);
           }
         } else {
           const jo = tokenizeAndJoin(cl);
-          if (jo) resultLines.push(`${jo} 各数 0`);
+          if (jo) {
+            resultLines.push(`${jo} 各数 0`);
+            originalContents.push(cl);
+          }
         }
       }
     }
   });
 
+  // 收集每行的无效token列表
+  const lineInvalidTokens = []; // 每个元素是一行无效token的数组
+  resultLines.forEach((line, idx) => {
+    const originalContent = originalContents[idx] || '';
+    const rawTokens = originalContent.split(/[\s,，.。、+\-*＊\/\\|]+/).filter(t => t.trim());
+    const invalidInLine = [];
+    rawTokens.forEach(token => {
+      if (!isValidToken(token)) {
+        const displayToken = token.replace(PUNCT_REGEX, '');
+        if (displayToken) invalidInLine.push(displayToken);
+      }
+    });
+    lineInvalidTokens.push(invalidInLine);
+  });
+
   // 生成 HTML，检测无效token
-  const invalidTokens = [];
   let html = '';
-  resultLines.forEach(line => {
+  resultLines.forEach((line, idx) => {
     const m = line.match(/^(.+?)\s+各数\s+(\d+)$/);
     if (!m) {
       html += `<div style="color:red;">${line}</div>`;
@@ -1291,19 +1369,14 @@ function convertOrderText() {
     }
     const content = m[1];
     const amt = parseInt(m[2]) || 0;
-    const tokens = content.split('-').filter(t => t.trim());
-    let hasInvalid = false;
-    tokens.forEach(token => {
-      if (!isValidToken(token)) {
-        hasInvalid = true;
-        const displayToken = token.replace(PUNCT_REGEX, '');
-        if (displayToken) invalidTokens.push(displayToken);
-      }
-    });
+    const hasInvalidInSource = lineInvalidTokens[idx].length > 0;
+
+    // 原有无效条件：无有效项或金额≤0
     const { numbers, zodiacs } = countItemsInLine(line, cfg, vc);
     const totalItems = numbers.length + zodiacs.length;
-    if (totalItems === 0 || amt <= 0) hasInvalid = true;
-    if (hasInvalid) {
+    const isInvalid = totalItems === 0 || amt <= 0 || hasInvalidInSource;
+
+    if (isInvalid) {
       html += `<div style="color:red;">${line}</div>`;
     } else {
       html += `<div>${line}</div>`;
@@ -1311,14 +1384,19 @@ function convertOrderText() {
   });
   resultEl.innerHTML = html;
 
-  const invalidSpan = document.getElementById('invalidTokensDisplay');
+  // 更新无效token显示（按行分行显示）
   if (invalidSpan) {
-    const uniqueInvalid = [...new Set(invalidTokens)];
-    if (uniqueInvalid.length > 0) {
-      invalidSpan.textContent = '无效: ' + uniqueInvalid.join(', ');
+    const displayLines = [];
+    lineInvalidTokens.forEach(arr => {
+      if (arr.length > 0) {
+        displayLines.push('无效: ' + arr.join(', '));
+      }
+    });
+    if (displayLines.length > 0) {
+      invalidSpan.innerHTML = displayLines.join('<br>');
       invalidSpan.style.display = 'inline';
     } else {
-      invalidSpan.textContent = '';
+      invalidSpan.innerHTML = '';
       invalidSpan.style.display = 'none';
     }
   }
@@ -1509,7 +1587,27 @@ function orderContainsTarget(content,targetNum,cfg){ if(!targetNum)return true; 
 function formatTimestampToCST(iso){ const d=new Date(iso); return new Intl.DateTimeFormat('zh-CN',{year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false,timeZone:'Asia/Shanghai'}).format(d); }
 function getUserColor(u){ let h=0; for(let i=0;i<u.length;i++)h=u.charCodeAt(i)+((h<<5)-h); const hue=(h%360+360)%360; return`hsl(${hue},70%,45%)`; }
 
-async function applyPrizeFilter(){ const di=document.getElementById('recordDateFilter'),pi=document.getElementById('prizeNumberInput'),uf=document.getElementById('recordUserFilter'); if(!di||!pi||!uf)return; const sd=di.value,pn=pi.value.trim(),uv=uf.value; const recs=await getOrderRecords(); let filtered=uv==='all'?recs:recs.filter(r=>r.user===uv); if(sd)filtered=filtered.filter(r=>r.date===sd); const cfg=getAllConfigData(); let final=[]; if(pn){for(const it of filtered){if(orderContainsTarget(it.content,pn,cfg))final.push(it);}}else{final=filtered;} const cont=document.getElementById('orderListContainer'); if(!cont)return; if(final.length===0){cont.innerHTML='<div style="padding:20px;text-align:center;color:#666;">暂无匹配订单</div>';return;} cont.innerHTML=final.map(it=>{ const ts=formatTimestampToCST(it.timestamp),ud=it.user||'未知',col=getUserColor(ud),ta=it.totalAmount||0; const lines=it.content.split('\n'); const hl=lines.map(l=>{const m=l.match(/^(.+?)\s+各数\s+(\d+)$/);if(!m)return l;const cont=m[1],amt=m[2];const hc=highlightContent(cont,pn,cfg);return`${hc} 各数 ${amt}`;}).join('<br>'); return`<div class="order-item"><input type="checkbox" class="order-check" data-id="${it.id}"><div class="order-content">${hl}</div><div class="order-info"><span class="order-total" style="color:#000;">合计：${ta}</span><span class="order-meta"><span style="color:${col};">用户：${ud}</span> &nbsp; ${ts}</span></div><button class="order-del" onclick="deleteOrderRecord(${it.id})">删除</button></div>`; }).join(''); }
+async function applyPrizeFilter(){
+  const pi=document.getElementById('prizeNumberInput'),uf=document.getElementById('recordUserFilter');
+  if(!pi||!uf) return;
+  const sd = document.getElementById('filterDate')?.value;
+  const pn=pi.value.trim(),uv=uf.value;
+  const recs=await getOrderRecords();
+  let filtered=uv==='all'?recs:recs.filter(r=>r.user===uv);
+  if(sd)filtered=filtered.filter(r=>r.date===sd);
+  const cfg=getAllConfigData();
+  let final=[];
+  if(pn){for(const it of filtered){if(orderContainsTarget(it.content,pn,cfg))final.push(it);}}else{final=filtered;}
+  const cont=document.getElementById('orderListContainer');
+  if(!cont)return;
+  if(final.length===0){cont.innerHTML='<div style="padding:20px;text-align:center;color:#666;">暂无匹配订单</div>';return;}
+  cont.innerHTML=final.map(it=>{
+    const ts=formatTimestampToCST(it.timestamp),ud=it.user||'未知',col=getUserColor(ud),ta=it.totalAmount||0;
+    const lines=it.content.split('\n');
+    const hl=lines.map(l=>{const m=l.match(/^(.+?)\s+各数\s+(\d+)$/);if(!m)return l;const cont=m[1],amt=m[2];const hc=highlightContent(cont,pn,cfg);return`${hc} 各数 ${amt}`;}).join('<br>');
+    return`<div class="order-item"><input type="checkbox" class="order-check" data-id="${it.id}"><div class="order-content">${hl}</div><div class="order-info"><span class="order-total" style="color:#000;">合计：${ta}</span><span class="order-meta"><span style="color:${col};">用户：${ud}</span> &nbsp; ${ts}</span></div><button class="order-del" onclick="deleteOrderRecord(${it.id})">删除</button></div>`;
+  }).join('');
+}
 
 async function showOrderRecord(filter='all'){
   try{
@@ -1520,8 +1618,9 @@ async function showOrderRecord(filter='all'){
     let html=`<div class="modal-header"><h3>下单记录</h3><div class="window-controls"><button onclick="maximizeWindow('orderWin')">🗖</button><button onclick="pinWindow('orderWin')">📌</button><button onclick="document.getElementById('orderWin').remove()">×</button></div></div><div class="modal-body">`;
     html+=`<div style="margin-bottom:10px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;"><select id="recordUserFilter" onchange="applyPrizeFilter()" style="padding:4px 8px;border-radius:4px;border:1px solid #ccc;"><option value="all" ${filter==='all'?'selected':''}>全部用户</option>`;
     users.forEach(u=>html+=`<option value="${u}" ${u===filter?'selected':''}>${u}</option>`);
-    html+=`</select><button onclick="checkAll()" style="padding:6px 12px;background:#007bff;color:#fff;border:none;border-radius:4px;">全选</button><button onclick="uncheckAll()" style="padding:6px 12px;background:#6c757d;color:#fff;border:none;border-radius:4px;">取消全选</button><button onclick="deleteChecked()" style="padding:6px 12px;background:#e74c3c;color:#fff;border:none;border-radius:4px;">批量删除</button><span style="margin-left:auto;">日期：</span><input type="date" id="recordDateFilter" value="${today}" onchange="applyPrizeFilter()" style="padding:4px 8px;border-radius:4px;border:1px solid #ccc;width:140px;"><span>对奖：</span><input type="text" id="prizeNumberInput" placeholder="号码" maxlength="2" oninput="applyPrizeFilter()" style="padding:4px;border-radius:4px;border:1px solid #ccc;width:50px;"></div><div id="orderListContainer">`;
-    const df=recs.filter(r=>r.date===today);
+    html+=`</select><button onclick="checkAll()" style="padding:6px 12px;background:#007bff;color:#fff;border:none;border-radius:4px;">全选</button><button onclick="uncheckAll()" style="padding:6px 12px;background:#6c757d;color:#fff;border:none;border-radius:4px;">取消全选</button><button onclick="deleteChecked()" style="padding:6px 12px;background:#e74c3c;color:#fff;border:none;border-radius:4px;">批量删除</button><span style="margin-left:auto;">对奖：</span><input type="text" id="prizeNumberInput" placeholder="号码" maxlength="2" oninput="applyPrizeFilter()" style="padding:4px;border-radius:4px;border:1px solid #ccc;width:50px;"></div><div id="orderListContainer">`;
+    const filterDateVal = document.getElementById('filterDate')?.value || today;
+    const df=recs.filter(r=>r.date===filterDateVal);
     const fin=(filter==='all')?df:df.filter(r=>r.user===filter);
     if(fin.length===0)html+=`<div style="padding:20px;text-align:center;color:#666;">暂无订单记录</div>`;
     else{
@@ -1707,7 +1806,12 @@ document.getElementById('zodiacAmountMax')?.addEventListener('input', updateTabl
 
 const filterDateEl = document.getElementById('filterDate');
 if (filterDateEl) {
-  filterDateEl.addEventListener('change', updateTableFromRecords);
+  filterDateEl.addEventListener('change', () => {
+    updateTableFromRecords();
+    if (document.getElementById('orderWin')) {
+      applyPrizeFilter();
+    }
+  });
   filterDateEl.addEventListener('input', updateTableFromRecords);
 }
 
