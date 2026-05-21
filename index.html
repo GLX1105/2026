@@ -826,7 +826,7 @@ function showRecognizeModal() {
         </div>
         <div class="order-input-container" style="flex:1;"><div class="input-column"><div class="box-label">订单输入框</div><textarea class="source-order-input" placeholder="" oninput="convertOrderText()"></textarea></div><div class="result-column"><div class="box-label">识别结果</div><div class="result-area-new"><div class="result-content" id="orderResult" contenteditable="false"></div></div></div></div>
         <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;">
-          <button class="btn btn-paste" onclick="pasteOrder()">粘贴订单</button><button class="btn btn-save-order" onclick="saveOrder()">保存下单</button><button class="btn btn-report" onclick="saveReportOrder()">上报</button><button class="btn btn-clear" onclick="clearAllInput()">清空</button><button class="btn btn-replace-sep" onclick="replaceSeparators()">换分隔</button><button class="btn btn-remove-sep" onclick="removeSeparators()">去分隔</button><button class="btn btn-mark" onclick="markSelection()">标记</button><button class="btn btn-cancel" onclick="semanticReplace()">语义转换</button>
+          <button class="btn btn-paste" onclick="pasteOrder()">粘贴订单</button><button class="btn btn-save-order" onclick="saveOrder()">保存下单</button><button class="btn btn-report" onclick="saveReportOrder()">上报</button><button class="btn btn-clear" onclick="clearAllInput()">清空</button><button class="btn btn-replace-sep" onclick="replaceSeparators()">换分隔</button><button class="btn btn-remove-sep" onclick="removeSeparators()">去分隔</button><button class="btn btn-mark" onclick="markSelection()">标记</button><button class="btn btn-cancel" onclick="semanticReplace()">语义转换</button><span id="invalidTokensDisplay" style="color:red; font-size:12px; display:none; margin-left:8px; white-space:nowrap;"></span>
         </div>
       </div>
       <div class="card category-card"><div class="card-title">分类快捷选择</div><div class="btn-group">
@@ -1127,64 +1127,95 @@ function tokenizeAndJoin(content) {
   return res.join('-');
 }
 
-// ===== 订单识别核心（修改为输出 HTML 并高亮无效行） =====
+// ===== 修改后的订单识别核心（增加前缀忽略、行标红、无效token显示） =====
 function convertOrderText() {
-  const inputEl=document.querySelector('.source-order-input');
-  if(!inputEl)return;
-  let text=applyCategoryAliases(applyReplacePresets(inputEl.value.trim()));
-  const resultEl=document.getElementById('orderResult');
-  if(!resultEl)return;
-  if(!text){resultEl.innerHTML='';updateOrderTotalDisplay();return;}
-  const lines=text.split('\n'); const resultLines=[];
+  const inputEl = document.querySelector('.source-order-input');
+  if (!inputEl) return;
+  let text = applyCategoryAliases(applyReplacePresets(inputEl.value.trim()));
+  const resultEl = document.getElementById('orderResult');
+  if (!resultEl) return;
+  if (!text) { resultEl.innerHTML = ''; updateOrderTotalDisplay(); return; }
+
+  const lines = text.split('\n'); const resultLines = [];
   const HARD_AMP_LIST = ['各','各号','号','个','=','各数','每数','每号','个号','每个号','各码','各号码'];
   const cusAmp = getCustomAmountPrefixes();
   const allAmpList = [...HARD_AMP_LIST, ...cusAmp];
-  allAmpList.sort((a,b) => b.length - a.length);
+  allAmpList.sort((a, b) => b.length - a.length);
   const AMP_ORIGINAL = '(?:' + allAmpList.map(s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|') + ')';
-  const IGN=['奥特','特码','澳门特码','特','奥','澳','澳门','澳門','澳門特碼','澳门特码','澳門特码',':','。','.','新',',','新','新奥','门','，','新澳','新特','新澳特','特碼'];
-  const cusPre=getCustomPrefixes(); const allPre=[...IGN,...cusPre];
-  const baseSuf='元块咪米斤#،。\\s';
-  const cusAmtSuf=getCustomAmountSuffixes(); const allAmtChars=[...new Set([...baseSuf.split(''),...cusAmtSuf])].join('');
-  const AMTS=`[${allAmtChars}]*`;
-  function cn2n(s){ const m={'零':0,'一':1,'二':2,'三':3,'四':4,'五':5,'六':6,'七':7,'八':8,'九':9,'十':10,'百':100,'千':1000}; let sum=0,tmp=0; for(let c of s){ const v=m[c]; if(v===10||v===100||v===1000){ if(tmp===0)tmp=1; tmp*=v; sum+=tmp; tmp=0; }else if(v!==undefined){ if(tmp>0){sum+=tmp;tmp=0;} tmp=v; } } sum+=tmp; return sum; }
+  const IGN = ['奥特','特码','澳门特码','特','奥','澳','澳门','澳門','澳門特碼','澳门特码','澳門特码',':','。','.','新',',','新','新奥','门','，','新澳','新特','新澳特','特碼'];
+  const cusPre = getCustomPrefixes(); const allPre = [...IGN, ...cusPre];
+  const baseSuf = '元块咪米斤#،。\\s';
+  const cusAmtSuf = getCustomAmountSuffixes();
+  const allAmtChars = [...new Set([...baseSuf.split(''), ...cusAmtSuf])].join('');
+  const AMTS = `[${allAmtChars}]*`;
+
+  function cn2n(s) {
+    const m = {'零':0,'一':1,'二':2,'三':3,'四':4,'五':5,'六':6,'七':7,'八':8,'九':9,'十':10,'百':100,'千':1000};
+    let sum = 0, tmp = 0;
+    for (let c of s) {
+      const v = m[c];
+      if (v === 10 || v === 100 || v === 1000) { if (tmp === 0) tmp = 1; tmp *= v; sum += tmp; tmp = 0; }
+      else if (v !== undefined) { if (tmp > 0) { sum += tmp; tmp = 0; } tmp = v; }
+    }
+    sum += tmp; return sum;
+  }
+
   const SIMPLE_PAIR = /^(\d{1,2})[^\d\s]+(\d+)$/;
   const cfg = getAllConfigData();
   const vc = getAllValidCategories(cfg);
+  const allCatNames = new Set();
+  Object.keys(cfg.zodiac).forEach(z => allCatNames.add(z));
+  vc.forEach(c => allCatNames.add(c));
   const ZODIAC_SET = new Set(Object.keys(cfg.zodiac));
 
-  lines.forEach(line=>{
-    line=line.trim();
-    if(!line)return;
+  function startsWithCategory(str) {
+    for (let cat of allCatNames) {
+      if (str.startsWith(cat)) return true;
+    }
+    return false;
+  }
+
+  function isValidNumber(token) {
+    return /^(0[1-9]|[1-4][0-9]|49?)$/.test(token);
+  }
+
+  const PUNCT_REGEX = /[\s,，。.、+\-*＊\/\\|!@#$%^&*()=+_{}\[\]:;"'<>,.?\/~！@#￥%…&*（）—+【】{}|：“”；‘’《》，。？、]/g;
+
+  function isValidToken(token) {
+    const clean = token.replace(PUNCT_REGEX, '');
+    if (clean === '') return false;
+    if (isValidNumber(clean)) return true;
+    if (allCatNames.has(clean)) return true;
+    return false;
+  }
+
+  lines.forEach(line => {
+    line = line.trim();
+    if (!line) return;
+
     const pairMatch = line.match(SIMPLE_PAIR);
-    if(pairMatch){
+    if (pairMatch) {
       let num = pairMatch[1];
       const amount = pairMatch[2];
-      if(num.length===1) num = '0'+num;
+      if (num.length === 1) num = '0' + num;
       resultLines.push(`${num} 各数 ${amount}`);
       return;
     }
-    let cl=line;
-    allPre.forEach(p=>{if(cl.startsWith(p))cl=cl.substring(p.length).trim();});
+
+    let cl = line;
+    allPre.forEach(p => { if (cl.startsWith(p)) cl = cl.substring(p.length).trim(); });
     cl = cl.replace(/[^\u4e00-\u9fa5\d]+$/, '');
-    cl=cl.replace(/([一二三四五六七八九十百千]+)/g,(m)=>cn2n(m));
+    cl = cl.replace(/([一二三四五六七八九十百千]+)/g, (m) => cn2n(m));
     while (cl && !/^[\d\u4e00-\u9fa5]/.test(cl)) {
       cl = cl.substring(1).trim();
     }
-    const leadingChineseMatch = cl.match(/^([\u4e00-\u9fa5]+)/);
-    if (leadingChineseMatch) {
-      const leadingChinese = leadingChineseMatch[1];
-      let isValidPrefix = false;
-      for (let i = 1; i <= leadingChinese.length; i++) {
-        const sub = leadingChinese.substring(0, i);
-        if (vc.has(sub)) {
-          isValidPrefix = true;
-          break;
-        }
-      }
-      if (!isValidPrefix) {
-        cl = cl.substring(leadingChinese.length).trim();
-      }
+
+    // 智能跳过无效前缀
+    while (cl && !/^\d/.test(cl) && !startsWithCategory(cl)) {
+      cl = cl.substring(1).trim();
     }
+
+    if (!cl) return;
 
     const shxMatch = cl.match(new RegExp(`^(.+?)(各肖|各)(\\d+)${AMTS}$`));
     if (shxMatch) {
@@ -1197,8 +1228,7 @@ function convertOrderText() {
         }
         if (zodiacs.length > 0) {
           const curBenming = document.getElementById('startZodiacSelect')?.value || '马';
-          const benmingList = [];
-          const otherList = [];
+          const benmingList = [], otherList = [];
           zodiacs.forEach(z => {
             if (z === curBenming) benmingList.push(z);
             else otherList.push(z);
@@ -1212,37 +1242,46 @@ function convertOrderText() {
       }
     }
 
-    const op=new RegExp(`(${AMP_ORIGINAL}\\d+${AMTS})`,'g');
-    const om=cl.match(op);
-    if(om&&om.length>0){
-      let rl=cl;
-      om.forEach(om=>{
-        const oi=rl.indexOf(om);
-        if(oi!==-1){
-          const cont=rl.substring(0,oi).trim();
-          const am=om.match(/(\d+)/);
-          if(am){
-            const amt=am[1];
-            if(cont){ const jo=tokenizeAndJoin(cont); if(jo)resultLines.push(`${jo} 各数 ${amt}`); }
-            rl=rl.substring(oi+om.length);
+    const op = new RegExp(`(${AMP_ORIGINAL}\\d+${AMTS})`, 'g');
+    const om = cl.match(op);
+    if (om && om.length > 0) {
+      let rl = cl;
+      om.forEach(om => {
+        const oi = rl.indexOf(om);
+        if (oi !== -1) {
+          const cont = rl.substring(0, oi).trim();
+          const am = om.match(/(\d+)/);
+          if (am) {
+            const amt = am[1];
+            if (cont) { const jo = tokenizeAndJoin(cont); if (jo) resultLines.push(`${jo} 各数 ${amt}`); }
+            rl = rl.substring(oi + om.length);
           }
         }
       });
-      if(rl.trim()){ const jo=tokenizeAndJoin(rl.trim()); if(jo)resultLines.push(`${jo} 各数 0`); }
-    }else{
-      const pat=new RegExp(`^(.+?)${AMP_ORIGINAL}(\\d+)$`);
-      const m=cl.match(pat);
-      if(m){ const jo=tokenizeAndJoin(m[1].trim()); if(jo)resultLines.push(`${jo} 各数 ${m[2]}`); }
-      else{
-        const sp=new RegExp(`(\\d+)(?:号|${AMP_ORIGINAL})(\\d+)$`);
-        const sm=cl.match(sp);
-        if(sm){ let num=sm[1].trim(); if(parseInt(num)>=1&&parseInt(num)<=49){ num=num.length===1?`0${num}`:num; resultLines.push(`${num} 各数 ${sm[2]}`); } }
-        else{ const jo=tokenizeAndJoin(cl); if(jo)resultLines.push(`${jo} 各数 0`); }
+      if (rl.trim()) { const jo = tokenizeAndJoin(rl.trim()); if (jo) resultLines.push(`${jo} 各数 0`); }
+    } else {
+      const pat = new RegExp(`^(.+?)${AMP_ORIGINAL}(\\d+)$`);
+      const m = cl.match(pat);
+      if (m) { const jo = tokenizeAndJoin(m[1].trim()); if (jo) resultLines.push(`${jo} 各数 ${m[2]}`); }
+      else {
+        const sp = new RegExp(`(\\d+)(?:号|${AMP_ORIGINAL})(\\d+)$`);
+        const sm = cl.match(sp);
+        if (sm) {
+          let num = sm[1].trim();
+          if (parseInt(num) >= 1 && parseInt(num) <= 49) {
+            num = num.length === 1 ? `0${num}` : num;
+            resultLines.push(`${num} 各数 ${sm[2]}`);
+          }
+        } else {
+          const jo = tokenizeAndJoin(cl);
+          if (jo) resultLines.push(`${jo} 各数 0`);
+        }
       }
     }
   });
 
-  // 生成 HTML，无效行红色
+  // 生成 HTML，检测无效token
+  const invalidTokens = [];
   let html = '';
   resultLines.forEach(line => {
     const m = line.match(/^(.+?)\s+各数\s+(\d+)$/);
@@ -1252,16 +1291,38 @@ function convertOrderText() {
     }
     const content = m[1];
     const amt = parseInt(m[2]) || 0;
-    // 检查是否有效：必须有号码/生肖/分类，且金额 > 0
+    const tokens = content.split('-').filter(t => t.trim());
+    let hasInvalid = false;
+    tokens.forEach(token => {
+      if (!isValidToken(token)) {
+        hasInvalid = true;
+        const displayToken = token.replace(PUNCT_REGEX, '');
+        if (displayToken) invalidTokens.push(displayToken);
+      }
+    });
     const { numbers, zodiacs } = countItemsInLine(line, cfg, vc);
     const totalItems = numbers.length + zodiacs.length;
-    if (totalItems === 0 || amt <= 0) {
+    if (totalItems === 0 || amt <= 0) hasInvalid = true;
+    if (hasInvalid) {
       html += `<div style="color:red;">${line}</div>`;
     } else {
       html += `<div>${line}</div>`;
     }
   });
   resultEl.innerHTML = html;
+
+  const invalidSpan = document.getElementById('invalidTokensDisplay');
+  if (invalidSpan) {
+    const uniqueInvalid = [...new Set(invalidTokens)];
+    if (uniqueInvalid.length > 0) {
+      invalidSpan.textContent = '无效: ' + uniqueInvalid.join(', ');
+      invalidSpan.style.display = 'inline';
+    } else {
+      invalidSpan.textContent = '';
+      invalidSpan.style.display = 'none';
+    }
+  }
+
   updateOrderTotalDisplay();
 }
 
@@ -1278,8 +1339,6 @@ async function updateTableFromRecords(){
     const fd=document.getElementById('filterDate')?.value;
     const recs=await getOrderRecords();
     const reps=await getReportOrderRecords();
-    console.log(`[updateTableFromRecords] 日期=${fd}, 下单记录=${recs.length}, 上报记录=${reps.length}`);
-
     tableBetData={};userBetData={};reportBetData={};reportAmountData={};
     numberCount={};zodiacCount={};numberAmountCount={};zodiacAmountCount={};
     numberOrderTotal=0;zodiacWeightedTotal=0;
@@ -1291,8 +1350,6 @@ async function updateTableFromRecords(){
     const curZod=localStorage.getItem('selectedStartZodiac')||'马';
     const fRecs=fd?recs.filter(r=>r.date===fd):recs;
     const fReps=fd?reps.filter(r=>r.date===fd):reps;
-
-    console.log(`[updateTableFromRecords] 过滤后 下单=${fRecs.length}, 上报=${fReps.length}`);
 
     fRecs.forEach(rec=>{
       try{
@@ -1319,7 +1376,7 @@ async function updateTableFromRecords(){
             });
           });
         });
-      }catch(e){ console.error('处理下单记录出错:', rec.id, e); }
+      }catch(e){}
     });
 
     fReps.forEach(rec=>{
@@ -1345,7 +1402,7 @@ async function updateTableFromRecords(){
             });
           });
         });
-      }catch(e){ console.error('处理上报记录出错:', rec.id, e); }
+      }catch(e){}
     });
 
     generateRiskTable();
@@ -1356,7 +1413,7 @@ async function updateTableFromRecords(){
     updateReportAmountTotal();
     updateAmountDisplays();
     calculateStorageUsage();
-  }catch(e){console.error('[updateTableFromRecords] 严重错误:', e);}
+  }catch(e){}
 }
 
 function updateOrderTotalDisplay(){ const re=document.getElementById('orderResult'); const box=document.getElementById('orderTotalAmountBox'); const span=document.getElementById('orderTotalAmount'); if(!re||!box||!span)return; const txt=re.innerText.trim(); if(!txt){box.style.display='none';return;} const lines=txt.split('\n'); const cfg=getAllConfigData(); const keys=getAllValidCategories(cfg); let total=0; lines.forEach(line=>{ const{numbers,zodiacs,amount}=countItemsInLine(line,cfg,keys); let cnt=numbers.length; zodiacs.forEach(z=>{cnt+=(cfg.zodiac[z]||[]).length;}); if(cnt>0)total+=cnt*amount; }); span.textContent=total; box.style.display='inline-flex'; }
