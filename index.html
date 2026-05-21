@@ -806,7 +806,7 @@ function pinWindow(winId) { const win = document.getElementById(winId); if (!win
 async function showDatabase() { const pwd = await prompt("请输入数据库密码：",""); if (pwd === PASSWORD) { const modal = document.getElementById('databaseModal'); if (!modal) return; modal.style.display = 'flex'; highestZ += 1; modal.style.zIndex = highestZ; renderCustomConfigContainer(); makeWindowDraggable('databaseModalBox'); } else { await alert("密码错误"); } }
 function hideDatabase() { const modal = document.getElementById('databaseModal'); if (modal) modal.style.display = 'none'; }
 
-// ===== 识别弹窗（标记按钮蓝色，语义转换右边加无效字符提示） =====
+// ===== 识别弹窗（标记按钮蓝色） =====
 function showRecognizeModal() {
   if (document.getElementById('recognizeWin')) return;
   const win = document.createElement('div'); win.className = 'floating-window'; win.id = 'recognizeWin';
@@ -826,8 +826,8 @@ function showRecognizeModal() {
           <button class="btn btn-amount-prefix2" onclick="showAmountSuffixManager()">金额后缀</button>
         </div>
         <div class="order-input-container" style="flex:1;"><div class="input-column"><div class="box-label">订单输入框</div><textarea class="source-order-input" placeholder="" oninput="convertOrderText()"></textarea></div><div class="result-column"><div class="box-label">识别结果</div><div class="result-area-new"><div class="result-content" id="orderResult" contenteditable="false"></div></div></div></div>
-        <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
-          <button class="btn btn-paste" onclick="pasteOrder()">粘贴订单</button><button class="btn btn-save-order" onclick="saveOrder()">保存下单</button><button class="btn btn-report" onclick="saveReportOrder()">上报</button><button class="btn btn-clear" onclick="clearAllInput()">清空</button><button class="btn btn-replace-sep" onclick="replaceSeparators()">换分隔</button><button class="btn btn-remove-sep" onclick="removeSeparators()">去分隔</button><button class="btn btn-mark" onclick="markSelection()">标记</button><button class="btn btn-cancel" onclick="semanticReplace()">语义转换</button><span id="invalidCharsHint" style="margin-left:auto;font-size:12px;color:red;display:none;"></span>
+        <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;">
+          <button class="btn btn-paste" onclick="pasteOrder()">粘贴订单</button><button class="btn btn-save-order" onclick="saveOrder()">保存下单</button><button class="btn btn-report" onclick="saveReportOrder()">上报</button><button class="btn btn-clear" onclick="clearAllInput()">清空</button><button class="btn btn-replace-sep" onclick="replaceSeparators()">换分隔</button><button class="btn btn-remove-sep" onclick="removeSeparators()">去分隔</button><button class="btn btn-mark" onclick="markSelection()">标记</button><button class="btn btn-cancel" onclick="semanticReplace()">语义转换</button>
         </div>
       </div>
       <div class="card category-card"><div class="card-title">分类快捷选择</div><div class="btn-group">
@@ -866,6 +866,7 @@ function extractKeywordsFromToken(token, cfg, vc) {
   let i = 0;
   while (i < token.length) {
     let matched = false;
+    // 如果是数字开头，尝试提取一个完整的数字串
     if (/\d/.test(token[i])) {
       let numStr = '';
       while (i < token.length && /\d/.test(token[i])) {
@@ -873,11 +874,14 @@ function extractKeywordsFromToken(token, cfg, vc) {
         i++;
       }
       const num = parseInt(numStr);
+      // 只有数字在 1~49 之间才视为有效号码
       if (num >= 1 && num <= 49) {
         result.push(num.toString().padStart(2, '0'));
       }
+      // 无效数字（如 67、050）直接丢弃整段，不拆分
       continue;
     }
+    // 尝试匹配最长的有效分类名（从当前位置开始，最长4个字符）
     for (let len = Math.min(4, token.length - i); len >= 1; len--) {
       const sub = token.substring(i, i + len);
       if (vc.has(sub)) {
@@ -887,6 +891,7 @@ function extractKeywordsFromToken(token, cfg, vc) {
         break;
       }
     }
+    // 如果没有匹配到任何有效词，丢弃当前字符
     if (!matched) {
       i++;
     }
@@ -907,89 +912,29 @@ function tokenizeAndJoin(content) {
   return allKeywords.join('-');
 }
 
-// ===== 从原始行中提取无效字符（只返回无效字符的红色HTML片段） =====
-function extractInvalidChars(line, cfg, vc) {
-  const HARD_AMP_LIST = ['各','各号','号','个','=','各数','每数','每号','个号','每个号','各码','各号码'];
-  const cusAmp = getCustomAmountPrefixes();
-  const allAmps = [...HARD_AMP_LIST, ...cusAmp];
-  allAmps.sort((a,b) => b.length - a.length);
-  const baseSuf = '元块咪米斤#،';
-  const cusAmtSuf = getCustomAmountSuffixes();
-  const amtSufSet = new Set([...baseSuf.split(''), ...cusAmtSuf]);
-
-  const invalids = [];
-  let i = 0;
-  while (i < line.length) {
-    const ch = line[i];
-    // 跳过分隔符
-    if (/[\s,，.。、+\-*＊\/\\|]/.test(ch)) { i++; continue; }
-    // 跳过金额指示符
-    let matchedAmp = false;
-    for (const amp of allAmps) {
-      if (line.substring(i, i + amp.length) === amp) {
-        i += amp.length;
-        matchedAmp = true;
-        break;
-      }
-    }
-    if (matchedAmp) continue;
-    // 跳过金额后缀字符
-    if (amtSufSet.has(ch)) { i++; continue; }
-    // 处理数字
-    if (/\d/.test(ch)) {
-      let numStr = '';
-      let j = i;
-      while (j < line.length && /\d/.test(line[j])) {
-        numStr += line[j];
-        j++;
-      }
-      const num = parseInt(numStr);
-      if (num < 1 || num > 49) {
-        invalids.push(`<span style="color:red;">${numStr}</span>`);
-      }
-      i = j;
-      continue;
-    }
-    // 处理汉字
-    if (/[\u4e00-\u9fa5]/.test(ch)) {
-      if (!vc.has(ch)) {
-        invalids.push(`<span style="color:red;">${ch}</span>`);
-      }
-      i++;
-      continue;
-    }
-    i++;
-  }
-  return invalids;
-}
-
-// ===== 检测一行是否存在无效字符（忽略分隔符、金额指示符、金额后缀，支持多字分类） =====
+// ===== 检测一行是否存在无效字符（忽略分隔符和空格） =====
 function hasInvalidChars(line, cfg, vc) {
-  let cleaned = line.replace(/[\s,，.。、+\-*＊\/\\|]+/g, '');
-  const HARD_AMP_LIST = ['各','各号','号','个','=','各数','每数','每号','个号','每个号','各码','各号码'];
-  const cusAmp = getCustomAmountPrefixes();
-  const allAmps = [...HARD_AMP_LIST, ...cusAmp];
-  allAmps.sort((a,b) => b.length - a.length);
-  const baseSuf = '元块咪米斤#،';
-  const cusAmtSuf = getCustomAmountSuffixes();
-  const allAmtChars = [...new Set([...baseSuf.split(''), ...cusAmtSuf])].join('');
-  allAmps.forEach(amp => { cleaned = cleaned.split(amp).join(''); });
-  for (const ch of allAmtChars) { cleaned = cleaned.split(ch).join(''); }
-  cleaned = cleaned.replace(/\d+/g, '');
-  let remaining = cleaned;
-  while (remaining.length > 0) {
-    let matched = false;
-    for (let len = Math.min(4, remaining.length); len >= 1; len--) {
-      const sub = remaining.substring(0, len);
-      if (vc.has(sub)) {
-        remaining = remaining.substring(len);
-        matched = true;
-        break;
-      }
+  // 移除所有分隔符和空格，只保留汉字和数字
+  const cleaned = line.replace(/[\s,，.。、+\-*＊\/\\|]+/g, '');
+  
+  // 检查数字：提取所有连续数字，判断是否在 1~49 内
+  const numbers = cleaned.match(/\d+/g) || [];
+  for (const numStr of numbers) {
+    const num = parseInt(numStr);
+    if (num < 1 || num > 49) {
+      return true; // 发现无效数字
     }
-    if (!matched) return true;
   }
-  return false;
+  
+  // 检查汉字：提取所有中文字符，判断是否在有效分类库里
+  const chineseChars = cleaned.match(/[\u4e00-\u9fa5]/g) || [];
+  for (const ch of chineseChars) {
+    if (!vc.has(ch)) {
+      return true; // 发现无效汉字
+    }
+  }
+  
+  return false; // 全部有效
 }
 
 // ===== 数据库配置读写（基于静态HTML input，并支持自定义分类） =====
@@ -1243,7 +1188,9 @@ function convertOrderText() {
   const inputEl=document.querySelector('.source-order-input');
   if(!inputEl)return;
   let text = inputEl.value.trim();
+  // 繁体生肖转简体
   text = convertTraditionalZodiac(text);
+  // 应用分类缩写和替换预设
   text = applyCategoryAliases(applyReplacePresets(text));
 
   const resultEl=document.getElementById('orderResult');
@@ -1276,8 +1223,10 @@ function convertOrderText() {
       return;
     }
     let cl=line;
+    // 只做中文数字转换，不再剥离任何前缀或验证首段中文
     cl = cl.replace(/([一二三四五六七八九十百千]+)/g, (m) => cn2n(m));
 
+    // 处理"各肖"的情况
     const shxMatch = cl.match(new RegExp(`^(.+?)(各肖|各)(\\d+)${AMTS}$`));
     if (shxMatch) {
       const rawContent = shxMatch[1];
@@ -1304,6 +1253,7 @@ function convertOrderText() {
       }
     }
 
+    // 通用的金额指示符拆分
     const op=new RegExp(`(${AMP_ORIGINAL}\\d+${AMTS})`,'g');
     const om=cl.match(op);
     if(om&&om.length>0){
@@ -1322,6 +1272,7 @@ function convertOrderText() {
       });
       if(rl.trim()){ const jo=tokenizeAndJoin(rl.trim()); if(jo)resultLines.push(`${jo} 各数 0`); }
     }else{
+      // 没有明确的金额指示符，尝试整个行匹配
       const pat=new RegExp(`^(.+?)${AMP_ORIGINAL}(\\d+)$`);
       const m=cl.match(pat);
       if(m){ const jo=tokenizeAndJoin(m[1].trim()); if(jo)resultLines.push(`${jo} 各数 ${m[2]}`); }
@@ -1334,51 +1285,34 @@ function convertOrderText() {
     }
   });
 
-  // 收集无效字符（只取无效字/数字本身）
-  const allInvalidChars = [];
+  // 生成 HTML，无效行红色
   let html = '';
   resultLines.forEach((resultLine, index) => {
+    // 获取对应的原始行
     const originalLine = lines[index] || resultLine;
     const m = resultLine.match(/^(.+?)\s+各数\s+(\d+)$/);
     if (!m) {
       html += `<div style="color:red;">${resultLine}</div>`;
-      // 提取无效字符
-      const invalids = extractInvalidChars(originalLine, cfg, vc);
-      if (invalids.length > 0) allInvalidChars.push(...invalids);
       return;
     }
     const content = m[1];
     const amt = parseInt(m[2]) || 0;
     const { numbers, zodiacs } = countItemsInLine(resultLine, cfg, vc);
     const totalItems = numbers.length + zodiacs.length;
+    
+    // 检查是否有效
     if (totalItems === 0 || amt <= 0) {
       html += `<div style="color:red;">${resultLine}</div>`;
-      const invalids = extractInvalidChars(originalLine, cfg, vc);
-      if (invalids.length > 0) allInvalidChars.push(...invalids);
     } else {
+      // 检查原始行是否存在无效字符
       if (hasInvalidChars(originalLine, cfg, vc)) {
         html += `<div style="color:red;">${resultLine}</div>`;
-        const invalids = extractInvalidChars(originalLine, cfg, vc);
-        if (invalids.length > 0) allInvalidChars.push(...invalids);
       } else {
         html += `<div>${resultLine}</div>`;
       }
     }
   });
   resultEl.innerHTML = html;
-
-  // 更新语义转换右边的无效字符提示（只显示无效字符本身）
-  const hint = document.getElementById('invalidCharsHint');
-  if (hint) {
-    if (allInvalidChars.length > 0) {
-      hint.style.display = 'inline';
-      hint.innerHTML = allInvalidChars.join(' ');
-    } else {
-      hint.style.display = 'none';
-      hint.innerHTML = '';
-    }
-  }
-
   updateOrderTotalDisplay();
 }
 
@@ -1442,14 +1376,12 @@ async function updateTableFromRecords(){
     fReps.forEach(rec=>{
       try{
         const user=rec.user;
-        if(user && !userBetData[user]) userBetData[user] = {};
         rec.content.split('\n').filter(l=>l.trim()).forEach(line=>{
           const{numbers,zodiacs,amount}=countItemsInLine(line,cfg,keys);
           numbers.forEach(num=>{
             reportBetData[num]=(reportBetData[num]||0)-amount;
             reportAmountData[num]=(reportAmountData[num]||0)+amount;
-            if(user){
-              if(!userBetData[user]) userBetData[user] = {};
+            if(user && userBetData[user]){
               userBetData[user][num]=(userBetData[user][num]||0)-amount;
             }
           });
@@ -1458,8 +1390,7 @@ async function updateTableFromRecords(){
               const num=n.padStart(2,'0');
               reportBetData[num]=(reportBetData[num]||0)-amount;
               reportAmountData[num]=(reportAmountData[num]||0)+amount;
-              if(user){
-                if(!userBetData[user]) userBetData[user] = {};
+              if(user && userBetData[user]){
                 userBetData[user][num]=(userBetData[user][num]||0)-amount;
               }
             });
@@ -1572,101 +1503,19 @@ function orderContainsTarget(content,targetNum,cfg){ if(!targetNum)return true; 
 function formatTimestampToCST(iso){ const d=new Date(iso); return new Intl.DateTimeFormat('zh-CN',{year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false,timeZone:'Asia/Shanghai'}).format(d); }
 function getUserColor(u){ let h=0; for(let i=0;i<u.length;i++)h=u.charCodeAt(i)+((h<<5)-h); const hue=(h%360+360)%360; return`hsl(${hue},70%,45%)`; }
 
-// ===== 新增：订单记录弹窗对奖信息显示 =====
-function updatePrizeResult() {
-  const prizeInput = document.getElementById('prizeNumberInput');
-  const container = document.getElementById('prizeInfoContainer');
-  if (!prizeInput || !container) return;
-
-  const numStr = prizeInput.value.trim();
-  if (!numStr || !/^\d{1,2}$/.test(numStr) || parseInt(numStr) < 1 || parseInt(numStr) > 49) {
-    container.style.display = 'none';
-    return;
-  }
-
-  const formattedNum = numStr.length === 1 ? '0' + numStr : numStr;
-
-  const totalBetEl = document.getElementById('totalBet');
-  const totalBet = totalBetEl ? parseInt(totalBetEl.textContent) || 0 : 0;
-
-  const originalBet = tableBetData[formattedNum] || 0;
-  const reportBet = reportBetData[formattedNum] || 0;
-
-  let reportRisk = 0;
-  const reportTbody = document.getElementById('reportTableBody');
-  if (reportTbody) {
-    const rows = reportTbody.querySelectorAll('tr');
-    for (const row of rows) {
-      const firstCell = row.querySelector('td');
-      if (firstCell) {
-        const cellText = firstCell.textContent.trim();
-        const cellNum = cellText.substring(0, 2);
-        if (cellNum === formattedNum) {
-          const riskCell = row.querySelectorAll('td')[2];
-          if (riskCell) {
-            reportRisk = parseInt(riskCell.textContent) || 0;
-            break;
-          }
-        }
-      }
-    }
-  }
-
-  if (totalBet === 0 && originalBet === 0 && reportBet === 0 && reportRisk === 0) {
-    container.style.display = 'none';
-    return;
-  }
-
-  container.style.display = 'inline-flex';
-  document.getElementById('prizeTotalBet').textContent = totalBet;
-  document.getElementById('prizeOriginalBet').textContent = originalBet;
-  document.getElementById('prizeReportBet').textContent = reportBet;
-  document.getElementById('prizeReportRisk').textContent = reportRisk;
-}
-
-async function applyPrizeFilter(){
-  const di=document.getElementById('recordDateFilter'),pi=document.getElementById('prizeNumberInput'),uf=document.getElementById('recordUserFilter');
-  if(!di||!pi||!uf)return;
-  const sd=di.value,pn=pi.value.trim(),uv=uf.value;
-  const recs=await getOrderRecords();
-  let filtered=uv==='all'?recs:recs.filter(r=>r.user===uv);
-  if(sd)filtered=filtered.filter(r=>r.date===sd);
-  const cfg=getAllConfigData();
-  let final=[];
-  if(pn){for(const it of filtered){if(orderContainsTarget(it.content,pn,cfg))final.push(it);}}else{final=filtered;}
-  const cont=document.getElementById('orderListContainer');
-  if(!cont)return;
-  if(final.length===0){cont.innerHTML='<div style="padding:20px;text-align:center;color:#666;">暂无匹配订单</div>';}
-  else{
-    cont.innerHTML=final.map(it=>{
-      const ts=formatTimestampToCST(it.timestamp),ud=it.user||'未知',col=getUserColor(ud),ta=it.totalAmount||0;
-      const lines=it.content.split('\n');
-      const hl=lines.map(l=>{const m=l.match(/^(.+?)\s+各数\s+(\d+)$/);if(!m)return l;const cont=m[1],amt=m[2];const hc=highlightContent(cont,pn,cfg);return`${hc} 各数 ${amt}`;}).join('<br>');
-      return`<div class="order-item"><input type="checkbox" class="order-check" data-id="${it.id}"><div class="order-content">${hl}</div><div class="order-info"><span class="order-total" style="color:#000;">合计：${ta}</span><span class="order-meta"><span style="color:${col};">用户：${ud}</span> &nbsp; ${ts}</span></div><button class="order-del" onclick="deleteOrderRecord(${it.id})">删除</button></div>`;
-    }).join('');
-  }
-  updatePrizeResult();
-}
+async function applyPrizeFilter(){ const di=document.getElementById('recordDateFilter'),pi=document.getElementById('prizeNumberInput'),uf=document.getElementById('recordUserFilter'); if(!di||!pi||!uf)return; const sd=di.value,pn=pi.value.trim(),uv=uf.value; const recs=await getOrderRecords(); let filtered=uv==='all'?recs:recs.filter(r=>r.user===uv); if(sd)filtered=filtered.filter(r=>r.date===sd); const cfg=getAllConfigData(); let final=[]; if(pn){for(const it of filtered){if(orderContainsTarget(it.content,pn,cfg))final.push(it);}}else{final=filtered;} const cont=document.getElementById('orderListContainer'); if(!cont)return; if(final.length===0){cont.innerHTML='<div style="padding:20px;text-align:center;color:#666;">暂无匹配订单</div>';return;} cont.innerHTML=final.map(it=>{ const ts=formatTimestampToCST(it.timestamp),ud=it.user||'未知',col=getUserColor(ud),ta=it.totalAmount||0; const lines=it.content.split('\n'); const hl=lines.map(l=>{const m=l.match(/^(.+?)\s+各数\s+(\d+)$/);if(!m)return l;const cont=m[1],amt=m[2];const hc=highlightContent(cont,pn,cfg);return`${hc} 各数 ${amt}`;}).join('<br>'); return`<div class="order-item"><input type="checkbox" class="order-check" data-id="${it.id}"><div class="order-content">${hl}</div><div class="order-info"><span class="order-total" style="color:#000;">合计：${ta}</span><span class="order-meta"><span style="color:${col};">用户：${ud}</span> &nbsp; ${ts}</span></div><button class="order-del" onclick="deleteOrderRecord(${it.id})">删除</button></div>`; }).join(''); }
 
 async function showOrderRecord(filter='all'){
   try{
-    const recs=await getOrderRecords(),users=getUsers();
+    const recs=await getOrderRecords(),users=getUsers(),today=getTodayCST();
     if(document.getElementById('orderWin'))document.getElementById('orderWin').remove();
     const w=document.createElement('div'); w.className='floating-window'; w.id='orderWin';
     w.style.width='750px'; w.style.height='600px'; w.style.left='50%'; w.style.top='50%'; w.style.transform='translate(-50%,-50%)';
-    const currentDate = document.getElementById('filterDate')?.value || getTodayCST();
     let html=`<div class="modal-header"><h3>下单记录</h3><div class="window-controls"><button onclick="maximizeWindow('orderWin')">🗖</button><button onclick="pinWindow('orderWin')">📌</button><button onclick="document.getElementById('orderWin').remove()">×</button></div></div><div class="modal-body">`;
     html+=`<div style="margin-bottom:10px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;"><select id="recordUserFilter" onchange="applyPrizeFilter()" style="padding:4px 8px;border-radius:4px;border:1px solid #ccc;"><option value="all" ${filter==='all'?'selected':''}>全部用户</option>`;
     users.forEach(u=>html+=`<option value="${u}" ${u===filter?'selected':''}>${u}</option>`);
-    html+=`</select><button onclick="checkAll()" style="padding:6px 12px;background:#007bff;color:#fff;border:none;border-radius:4px;">全选</button><button onclick="uncheckAll()" style="padding:6px 12px;background:#6c757d;color:#fff;border:none;border-radius:4px;">取消全选</button><button onclick="deleteChecked()" style="padding:6px 12px;background:#e74c3c;color:#fff;border:none;border-radius:4px;">批量删除</button><span style="margin-left:auto;">对奖：</span><input type="text" id="prizeNumberInput" placeholder="号码" maxlength="2" oninput="applyPrizeFilter();updatePrizeResult();" style="padding:4px;border-radius:4px;border:1px solid #ccc;width:50px;">`;
-    html+=`<span id="prizeInfoContainer" style="display:none;margin-left:8px;gap:12px;align-items:center;font-size:13px;color:#333;">
-      <span>总下注：<b id="prizeTotalBet">0</b></span>
-      <span>原下注数：<b id="prizeOriginalBet">0</b></span>
-      <span>下注数：<b id="prizeReportBet">0</b></span>
-      <span>盈亏：<b id="prizeReportRisk" style="color:#e74c3c;">0</b></span>
-    </span>`;
-    html+=`</div><div id="orderListContainer">`;
-    const df=recs.filter(r=>r.date===currentDate);
+    html+=`</select><button onclick="checkAll()" style="padding:6px 12px;background:#007bff;color:#fff;border:none;border-radius:4px;">全选</button><button onclick="uncheckAll()" style="padding:6px 12px;background:#6c757d;color:#fff;border:none;border-radius:4px;">取消全选</button><button onclick="deleteChecked()" style="padding:6px 12px;background:#e74c3c;color:#fff;border:none;border-radius:4px;">批量删除</button><span style="margin-left:auto;">日期：</span><input type="date" id="recordDateFilter" value="${today}" onchange="applyPrizeFilter()" style="padding:4px 8px;border-radius:4px;border:1px solid #ccc;width:140px;"><span>对奖：</span><input type="text" id="prizeNumberInput" placeholder="号码" maxlength="2" oninput="applyPrizeFilter()" style="padding:4px;border-radius:4px;border:1px solid #ccc;width:50px;"></div><div id="orderListContainer">`;
+    const df=recs.filter(r=>r.date===today);
     const fin=(filter==='all')?df:df.filter(r=>r.user===filter);
     if(fin.length===0)html+=`<div style="padding:20px;text-align:center;color:#666;">暂无订单记录</div>`;
     else{
