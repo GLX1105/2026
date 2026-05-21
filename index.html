@@ -806,7 +806,7 @@ function pinWindow(winId) { const win = document.getElementById(winId); if (!win
 async function showDatabase() { const pwd = await prompt("请输入数据库密码：",""); if (pwd === PASSWORD) { const modal = document.getElementById('databaseModal'); if (!modal) return; modal.style.display = 'flex'; highestZ += 1; modal.style.zIndex = highestZ; renderCustomConfigContainer(); makeWindowDraggable('databaseModalBox'); } else { await alert("密码错误"); } }
 function hideDatabase() { const modal = document.getElementById('databaseModal'); if (modal) modal.style.display = 'none'; }
 
-// ===== 识别弹窗（标记按钮蓝色，语义转换右边加无效字符提示） =====
+// ===== 识别弹窗 =====
 function showRecognizeModal() {
   if (document.getElementById('recognizeWin')) return;
   const win = document.createElement('div'); win.className = 'floating-window'; win.id = 'recognizeWin';
@@ -921,9 +921,7 @@ function extractInvalidChars(line, cfg, vc) {
   let i = 0;
   while (i < line.length) {
     const ch = line[i];
-    // 跳过分隔符
     if (/[\s,，.。、+\-*＊\/\\|]/.test(ch)) { i++; continue; }
-    // 跳过金额指示符
     let matchedAmp = false;
     for (const amp of allAmps) {
       if (line.substring(i, i + amp.length) === amp) {
@@ -933,9 +931,7 @@ function extractInvalidChars(line, cfg, vc) {
       }
     }
     if (matchedAmp) continue;
-    // 跳过金额后缀字符
     if (amtSufSet.has(ch)) { i++; continue; }
-    // 处理数字
     if (/\d/.test(ch)) {
       let numStr = '';
       let j = i;
@@ -950,7 +946,6 @@ function extractInvalidChars(line, cfg, vc) {
       i = j;
       continue;
     }
-    // 处理汉字
     if (/[\u4e00-\u9fa5]/.test(ch)) {
       if (!vc.has(ch)) {
         invalids.push(`<span style="color:red;">${ch}</span>`);
@@ -963,7 +958,7 @@ function extractInvalidChars(line, cfg, vc) {
   return invalids;
 }
 
-// ===== 检测一行是否存在无效字符（忽略分隔符、金额指示符、金额后缀，支持多字分类） =====
+// ===== 检测一行是否存在无效字符 =====
 function hasInvalidChars(line, cfg, vc) {
   let cleaned = line.replace(/[\s,，.。、+\-*＊\/\\|]+/g, '');
   const HARD_AMP_LIST = ['各','各号','号','个','=','各数','每数','每号','个号','每个号','各码','各号码'];
@@ -992,7 +987,7 @@ function hasInvalidChars(line, cfg, vc) {
   return false;
 }
 
-// ===== 数据库配置读写（基于静态HTML input，并支持自定义分类） =====
+// ===== 数据库配置读写 =====
 function getAllConfigData() {
   const configData = {
     zodiac:{}, shengxiaoAttr:{}, wuxing:{}, bose:{}, banbo:{}, danshuang:{}, weishu:{},
@@ -1238,7 +1233,7 @@ function applyReplacePresets(text) { const p=getReplacePresets(); let r=text; p.
 // ===== 语义转换 =====
 async function semanticReplace() { const ta=document.querySelector('.source-order-input'); if(!ta)return; const s=ta.selectionStart,e=ta.selectionEnd; if(s===e){showToast('请先选择文本');return;} const sel=ta.value.substring(s,e); const cfg=getAllConfigData(); const vc=getAllValidCategories(cfg); const tokens=sel.split(/[\s,，.。、+\-*＊\/\\|]+/).filter(t=>t.trim()); const matched=tokens.filter(t=>vc.has(t)); if(!matched.length){showToast('未识别有效分类');return;} let sets=matched.map(cat=>{ let nums=[]; if(cfg.shengxiaoAttr[cat]){ cfg.shengxiaoAttr[cat].forEach(z=>{ if(cfg.zodiac[z])nums.push(...cfg.zodiac[z].map(n=>n.toString().padStart(2,'0'))); }); } const dir=cfg.wuxing[cat]||cfg.bose[cat]||cfg.banbo[cat]||cfg.danshuang[cat]||cfg.weishu[cat]||cfg.daxiaodanshuang[cat]||cfg.daxiao[cat]||cfg.heshu[cat]||cfg.toushu[cat]||cfg.menshu[cat]||cfg.duanwei[cat]||cfg.hedahexiao[cat]||cfg.weidaweixiao[cat]||cfg.hewei[cat]||cfg.heshudanshuang[cat]||cfg.toushuDanshuang[cat]; if(dir)nums.push(...dir.map(n=>n.toString().padStart(2,'0'))); if(cfg.zodiac[cat])nums.push(...cfg.zodiac[cat].map(n=>n.toString().padStart(2,'0'))); return new Set(nums); }); let inter=sets[0]; for(let i=1;i<sets.length;i++)inter=new Set([...inter].filter(x=>sets[i].has(x))); const res=[...inter].sort((a,b)=>parseInt(a)-parseInt(b)); if(!res.length){showToast('无共同号码');return;} const str=res.join('-'); const cf=await confirm(`转换结果：${str}\n是否替换选中文本？`); if(cf){ta.value=ta.value.substring(0,s)+str+ta.value.substring(e);convertOrderText();} }
 
-// ===== 订单识别核心（包含繁体转换、智能提取、无效字符红色高亮） =====
+// ===== 订单识别核心（修复：识别框无效行红色 + 语义转换右边只显示无效字符） =====
 function convertOrderText() {
   const inputEl=document.querySelector('.source-order-input');
   if(!inputEl)return;
@@ -1336,13 +1331,14 @@ function convertOrderText() {
 
   // 收集无效字符（只取无效字/数字本身）
   const allInvalidChars = [];
+  let hasAnyValidResult = false;
+
   let html = '';
   resultLines.forEach((resultLine, index) => {
     const originalLine = lines[index] || resultLine;
     const m = resultLine.match(/^(.+?)\s+各数\s+(\d+)$/);
     if (!m) {
       html += `<div style="color:red;">${resultLine}</div>`;
-      // 提取无效字符
       const invalids = extractInvalidChars(originalLine, cfg, vc);
       if (invalids.length > 0) allInvalidChars.push(...invalids);
       return;
@@ -1356,6 +1352,7 @@ function convertOrderText() {
       const invalids = extractInvalidChars(originalLine, cfg, vc);
       if (invalids.length > 0) allInvalidChars.push(...invalids);
     } else {
+      hasAnyValidResult = true;
       if (hasInvalidChars(originalLine, cfg, vc)) {
         html += `<div style="color:red;">${resultLine}</div>`;
         const invalids = extractInvalidChars(originalLine, cfg, vc);
@@ -1367,10 +1364,10 @@ function convertOrderText() {
   });
   resultEl.innerHTML = html;
 
-  // 更新语义转换右边的无效字符提示（只显示无效字符本身）
+  // 更新语义转换右边的无效字符提示
   const hint = document.getElementById('invalidCharsHint');
   if (hint) {
-    if (allInvalidChars.length > 0) {
+    if (allInvalidChars.length > 0 && hasAnyValidResult) {
       hint.style.display = 'inline';
       hint.innerHTML = allInvalidChars.join(' ');
     } else {
@@ -1567,7 +1564,7 @@ function renderAmountFrequencyCards(){ const nt=document.getElementById('numberA
 // ===== 对奖相关 =====
 function getNumberListForCategory(cat,cfg){ const nums=[]; if(cfg.shengxiaoAttr[cat]){ cfg.shengxiaoAttr[cat].forEach(z=>{if(cfg.zodiac[z])nums.push(...cfg.zodiac[z].map(n=>n.toString().padStart(2,'0')));}); } const dir=cfg.wuxing[cat]||cfg.bose[cat]||cfg.banbo[cat]||cfg.danshuang[cat]||cfg.weishu[cat]||cfg.daxiaodanshuang[cat]||cfg.daxiao[cat]||cfg.heshu[cat]||cfg.toushu[cat]||cfg.menshu[cat]||cfg.duanwei[cat]||cfg.hedahexiao[cat]||cfg.weidaweixiao[cat]||cfg.hewei[cat]||cfg.heshudanshuang[cat]||cfg.toushuDanshuang[cat]; if(dir)nums.push(...dir.map(n=>n.toString().padStart(2,'0'))); if(cfg.zodiac[cat])nums.push(...cfg.zodiac[cat].map(n=>n.toString().padStart(2,'0'))); return [...new Set(nums)]; }
 function isTokenMatching(token,targetNum,cfg){ const t=targetNum.padStart(2,'0'); if(/^\d{1,2}$/.test(token))return token.padStart(2,'0')===t; const vc=getAllValidCategories(cfg); if(vc.has(token)){const nums=getNumberListForCategory(token,cfg);return nums.includes(t);} return false; }
-function highlightContent(content,targetNum,cfg){ if(!targetNum)return content; const t=targetNum.padStart(2,'0'); const parts=[];let tmp=''; for(const ch of content){if(ch==='-'||ch===' '){if(tmp)parts.push(tmp);parts.push(ch);tmp='';}else{tmp+=ch;}} if(tmp)parts.push(tmp); return parts.map(p=>{if(p==='-'||p===' ')return p;if(isTokenMatching(p,targetNum,cfg))return`<span class="highlight-number">${p}</span>`;return p;}).join(''); }
+function highlightContent(content,targetNum,cfg){ if(!targetNum)return content; const t=targetNum.padStart(2,'0'); return content.replace(new RegExp(`(${t})`, 'g'), '<span class="highlight-number">$1</span>'); }
 function orderContainsTarget(content,targetNum,cfg){ if(!targetNum)return true; const t=targetNum.padStart(2,'0'); const lines=content.split('\n'); for(const line of lines){ const m=line.match(/^(.+?)\s+各数\s+(\d+)$/); if(!m)continue; const cont=m[1]; const parts=[];let tmp=''; for(const ch of cont){if(ch==='-'||ch===' '){if(tmp)parts.push(tmp);tmp='';}else{tmp+=ch;}} if(tmp)parts.push(tmp); for(const p of parts){if(p!=='-'&&p!==' '&&isTokenMatching(p,targetNum,cfg))return true;} } return false; }
 function formatTimestampToCST(iso){ const d=new Date(iso); return new Intl.DateTimeFormat('zh-CN',{year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false,timeZone:'Asia/Shanghai'}).format(d); }
 function getUserColor(u){ let h=0; for(let i=0;i<u.length;i++)h=u.charCodeAt(i)+((h<<5)-h); const hue=(h%360+360)%360; return`hsl(${hue},70%,45%)`; }
@@ -1641,7 +1638,16 @@ async function applyPrizeFilter(){
     cont.innerHTML=final.map(it=>{
       const ts=formatTimestampToCST(it.timestamp),ud=it.user||'未知',col=getUserColor(ud),ta=it.totalAmount||0;
       const lines=it.content.split('\n');
-      const hl=lines.map(l=>{const m=l.match(/^(.+?)\s+各数\s+(\d+)$/);if(!m)return l;const cont=m[1],amt=m[2];const hc=highlightContent(cont,pn,cfg);return`${hc} 各数 ${amt}`;}).join('<br>');
+      const hl=lines.map(l=>{
+        const m=l.match(/^(.+?)\s+各数\s+(\d+)$/);
+        if(!m)return l;
+        let cont=m[1],amt=m[2];
+        if(pn){
+          const t=pn.padStart(2,'0');
+          cont = cont.replace(new RegExp(`(${t})`, 'g'), '<span class="highlight-number">$1</span>');
+        }
+        return`${cont} 各数 ${amt}`;
+      }).join('<br>');
       return`<div class="order-item"><input type="checkbox" class="order-check" data-id="${it.id}"><div class="order-content">${hl}</div><div class="order-info"><span class="order-total" style="color:#000;">合计：${ta}</span><span class="order-meta"><span style="color:${col};">用户：${ud}</span> &nbsp; ${ts}</span></div><button class="order-del" onclick="deleteOrderRecord(${it.id})">删除</button></div>`;
     }).join('');
   }
