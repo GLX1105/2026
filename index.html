@@ -1713,7 +1713,7 @@ async function showOrderRecord(filter='all'){
       <span id="prizeTotalSpecial" style="display:none;"></span>
       <span id="prizeSpecial" style="display:none;"></span>
       <span id="prizeProfit" style="display:none;"></span>
-      <span>对奖：</span><input type="text" id="prizeNumberInput" placeholder="号码" maxlength="2" oninput="applyPrizeFilter()" style="padding:4px;border-radius:4px;border:1px solid #ccc;width:50px;">
+      <span>对奖：</span><input type="text" id="prizeNumberInput" maxlength="2" oninput="applyPrizeFilter()" style="padding:4px;border-radius:4px;border:1px solid #ccc;width:50px;">
     </span></div>`;
     html+=`<div id="orderListContainer" style="flex:1; overflow-y:auto;">`;
     const filterDateVal = document.getElementById('filterDate')?.value || today;
@@ -1992,6 +1992,7 @@ if (filterDateEl) {
     if (document.getElementById('orderWin')) {
       applyPrizeFilter();
     }
+    applyReportCap();
   });
   filterDateEl.addEventListener('input', updateTableFromRecords);
 }
