@@ -71,6 +71,16 @@ select {
     vertical-align: middle;
 }
 
+/* 去掉数字输入框的微调按钮 */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type="number"] {
+  -moz-appearance: textfield;
+}
+
 .navbar {
     background: linear-gradient(135deg, #2c3e50 0%, #1a252f 100%);
     padding: 10px 20px;
@@ -412,9 +422,9 @@ tr.selected-row {background-color: #dceeff !important; font-weight: bold; box-sh
 .close-database-btn {background:none;border:none;color:#fff;font-size:18px;cursor:pointer;padding:0;width:30px;height:30px;display:flex;align-items:center;justify-content:center;border-radius:50%;transition:background 0.2s;}
 .close-database-btn:hover {background:rgba(255,255,255,0.1);}
 
-/* 解析结果内联文本（无样式，紧贴超额文本右侧） */
+/* 解析结果内联文本（蓝色） */
 .parse-inline {
-  font-size:12px; color:#333; line-height:1.6; white-space:pre-wrap; word-break:break-word;
+  font-size:12px; color:blue; line-height:1.6; white-space:pre-wrap; word-break:break-word;
 }
 </style>
 </head>
@@ -779,7 +789,13 @@ function verifySelfVerifyingCard(code) { const parts = code.split('-'); if (part
 function checkCardAccess(code) { return verifySelfVerifyingCard(code); }
 function isAdmin() { const session = getAuthSession(); return session && session.role === 'admin'; }
 function checkCurrentAccess() { const session = getAuthSession(); if (!session) return false; if (session.role === 'admin') return true; if (session.role === 'card' && session.cardCode) { const result = verifySelfVerifyingCard(session.cardCode); if (!result.valid) { clearAuthSession(); return false; } return true; } return false; }
-function showLoginScreen() { const overlay = document.createElement('div'); overlay.className = 'login-overlay'; overlay.id = 'loginOverlay'; overlay.innerHTML = `<div class="login-box"><h3>🔐 系统登录</h3><input type="password" id="loginPassword" placeholder="管理员密码"><button class="btn" style="background:#2c3e50;color:#fff;" id="adminLoginBtn">管理员登录</button><hr style="margin:15px 0;"><input type="text" id="cardCodeInput" placeholder="卡密"><button class="btn" style="background:#e67e22;color:#fff;" id="cardLoginBtn">卡密登录</button><div class="link" id="switchToCard">使用卡密登录</div><div class="link" id="switchToAdmin" style="display:none;">管理员登录</div></div>`; document.body.appendChild(overlay); document.getElementById('adminLoginBtn').onclick = () => { const pwd = document.getElementById('loginPassword').value.trim(); if (pwd === ADMIN_PASSWORD) { setAuthSession({ role: 'admin' }); overlay.remove(); initMainSystem(); } else showToast('管理员密码错误'); }; document.getElementById('cardLoginBtn').onclick = () => { const code = document.getElementById('cardCodeInput').value.trim().toUpperCase(); if (!code) { showToast('请输入卡密'); return; } const result = checkCardAccess(code); if (result.valid) { setAuthSession({ role: 'card', cardCode: code }); overlay.remove(); initMainSystem(); } else showToast(result.reason); }; }
+function showLoginScreen() { const overlay = document.createElement('div'); overlay.className = 'login-overlay'; overlay.id = 'loginOverlay'; overlay.innerHTML = `<div class="login-box"><h3>🔐 系统登录</h3><input type="password" id="loginPassword" placeholder="管理员密码"><button class="btn" style="background:#2c3e50;color:#fff;" id="adminLoginBtn">管理员登录</button><hr style="margin:15px 0;"><input type="text" id="cardCodeInput" placeholder="卡密"><button class="btn" style="background:#e67e22;color:#fff;" id="cardLoginBtn">卡密登录</button><div class="link" id="switchToCard">使用卡密登录</div><div class="link" id="switchToAdmin" style="display:none;">管理员登录</div></div>`; document.body.appendChild(overlay);
+  // 回车键直接登录
+  document.getElementById('loginPassword').addEventListener('keypress', (e) => { if (e.key === 'Enter') document.getElementById('adminLoginBtn').click(); });
+  document.getElementById('cardCodeInput').addEventListener('keypress', (e) => { if (e.key === 'Enter') document.getElementById('cardLoginBtn').click(); });
+  document.getElementById('adminLoginBtn').onclick = () => { const pwd = document.getElementById('loginPassword').value.trim(); if (pwd === ADMIN_PASSWORD) { setAuthSession({ role: 'admin' }); overlay.remove(); initMainSystem(); } else showToast('管理员密码错误'); };
+  document.getElementById('cardLoginBtn').onclick = () => { const code = document.getElementById('cardCodeInput').value.trim().toUpperCase(); if (!code) { showToast('请输入卡密'); return; } const result = checkCardAccess(code); if (result.valid) { setAuthSession({ role: 'card', cardCode: code }); overlay.remove(); initMainSystem(); } else showToast(result.reason); };
+}
 function logout() { clearAuthSession(); location.reload(); }
 function initMainSystem() { document.getElementById('mainContent').style.display = ''; if (isAdmin()) document.getElementById('cardMgrBtn').style.display = ''; window._systemReady(); }
 
@@ -1253,6 +1269,8 @@ function convertOrderText() {
     const clean = token.replace(PUNCT_REGEX, '');
     if (clean === '') return false;
     if (isValidNumber(clean)) return true;
+    // 允许“数字+尾”或“数字+头”
+    if (/^\d+尾$/.test(clean) || /^\d+头$/.test(clean)) return true;
     if (allCatNames.has(clean)) return true;
     if (/^[\u4e00-\u9fa5]+$/.test(clean) && clean.length > 1) {
       const chars = clean.split('');
@@ -1743,7 +1761,7 @@ async function showOrderRecord(filter='all'){
       <span id="prizeTotalSpecial" style="display:none;"></span>
       <span id="prizeSpecial" style="display:none;"></span>
       <span id="prizeProfit" style="display:none;"></span>
-      <span>对奖:</span><input type="text" id="prizeNumberInput" maxlength="2" oninput="applyPrizeFilter()" style="padding:4px;border-radius:4px;border:1px solid #ccc;width:50px;margin-left:0;">
+      <span>对奖</span><input type="text" id="prizeNumberInput" maxlength="2" oninput="applyPrizeFilter()" style="padding:4px;border-radius:4px;border:1px solid #ccc;width:50px;margin-left:0;">
     </span></div>`;
     html+=`<div id="orderListContainer" style="flex:1; overflow-y:auto;">`;
     const filterDateVal = document.getElementById('filterDate')?.value || today;
@@ -2063,6 +2081,7 @@ function enableRowDragSelect(tableId) {
     }
   }
 
+  // 桌面端鼠标事件
   tbody.addEventListener('mousedown', (e) => {
     if (e.button !== 0) return;
     if (e.ctrlKey || e.shiftKey) return;
@@ -2090,6 +2109,41 @@ function enableRowDragSelect(tableId) {
   });
 
   document.addEventListener('mouseup', () => {
+    if (window.dragSelectionActive) {
+      window.dragSelectionActive = false;
+      startRow = null;
+      endRow = null;
+    }
+  });
+
+  // 手机端触摸事件
+  tbody.addEventListener('touchstart', (e) => {
+    const targetRow = e.target.closest('tr');
+    if (!targetRow) return;
+    window.dragSelectionActive = true;
+    clearSelection();
+    startRow = targetRow;
+    endRow = targetRow;
+    targetRow.classList.add('selected-row');
+    e.preventDefault();
+  }, { passive: false });
+
+  tbody.addEventListener('touchmove', (e) => {
+    if (!window.dragSelectionActive) return;
+    const touch = e.touches[0];
+    const target = document.elementFromPoint(touch.clientX, touch.clientY);
+    if (!target) return;
+    const tr = target.closest('tr');
+    if (!tr || tr.parentElement !== tbody) return;
+    if (tr !== endRow) {
+      endRow = tr;
+      clearSelection();
+      selectRows(startRow, endRow);
+    }
+    e.preventDefault();
+  }, { passive: false });
+
+  tbody.addEventListener('touchend', () => {
     if (window.dragSelectionActive) {
       window.dragSelectionActive = false;
       startRow = null;
