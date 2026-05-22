@@ -1041,8 +1041,8 @@ function switchRiskReport() { const val = document.getElementById('riskReportSwi
 function initIndexedDB() { return new Promise((resolve) => { const request = indexedDB.open(DB_NAME, DB_VERSION); request.onerror = () => { resolve(false); }; request.onsuccess = (event) => { db = event.target.result; resolve(true); }; request.onupgradeneeded = (event) => { db = event.target.result; if (!db.objectStoreNames.contains(STORE_NAME)) db.createObjectStore(STORE_NAME, { keyPath: 'id' }); if (!db.objectStoreNames.contains(REPORT_STORE_NAME)) db.createObjectStore(REPORT_STORE_NAME, { keyPath: 'id' }); }; }); }
 async function getOrderRecords() { return new Promise((resolve) => { if (!db) resolve([]); const tx = db.transaction([STORE_NAME],'readonly'); const store = tx.objectStore(STORE_NAME); const req = store.getAll(); req.onsuccess = (e) => resolve(e.target.result || []); }); }
 async function getReportOrderRecords() { return new Promise((resolve) => { if (!db) resolve([]); const tx = db.transaction([REPORT_STORE_NAME],'readonly'); const store = tx.objectStore(REPORT_STORE_NAME); const req = store.getAll(); req.onsuccess = (e) => resolve(e.target.result || []); }); }
-async function saveOrderRecordToIDB(content, user, date, totalAmount = 0) { return new Promise((resolve) => { if (!db) resolve(false); const tx = db.transaction([STORE_NAME],'readwrite'); const store = tx.objectStore(STORE_NAME); const record = { id: Date.now() + '-' + Math.random().toString(36).substr(2, 9), content, user, date, totalAmount, timestamp: new Date().toISOString() }; const req = store.add(record); req.onsuccess = () => resolve(true); }); }
-async function saveReportOrderRecordToIDB(content, user, date, totalAmount = 0) { return new Promise((resolve) => { if (!db) resolve(false); const tx = db.transaction([REPORT_STORE_NAME],'readwrite'); const store = tx.objectStore(REPORT_STORE_NAME); const record = { id: Date.now() + '-' + Math.random().toString(36).substr(2, 9), content, user, date, totalAmount, timestamp: new Date().toISOString() }; const req = store.add(record); req.onsuccess = () => resolve(true); }); }
+async function saveOrderRecordToIDB(content, user, date, totalAmount = 0, ts = null) { return new Promise((resolve) => { if (!db) resolve(false); const tx = db.transaction([STORE_NAME],'readwrite'); const store = tx.objectStore(STORE_NAME); const record = { id: Date.now() + '-' + Math.random().toString(36).substr(2, 9), content, user, date, totalAmount, timestamp: ts || new Date().toISOString() }; const req = store.add(record); req.onsuccess = () => resolve(true); }); }
+async function saveReportOrderRecordToIDB(content, user, date, totalAmount = 0, ts = null) { return new Promise((resolve) => { if (!db) resolve(false); const tx = db.transaction([REPORT_STORE_NAME],'readwrite'); const store = tx.objectStore(REPORT_STORE_NAME); const record = { id: Date.now() + '-' + Math.random().toString(36).substr(2, 9), content, user, date, totalAmount, timestamp: ts || new Date().toISOString() }; const req = store.add(record); req.onsuccess = () => resolve(true); }); }
 async function deleteOrderRecordFromIDB(id) { return new Promise((resolve) => { if (!db) resolve(false); const tx = db.transaction([STORE_NAME],'readwrite'); const store = tx.objectStore(STORE_NAME); const req = store.delete(id); req.onsuccess = () => resolve(true); }); }
 async function deleteReportOrderRecordFromIDB(id) { return new Promise((resolve) => { if (!db) resolve(false); const tx = db.transaction([REPORT_STORE_NAME],'readwrite'); const store = tx.objectStore(REPORT_STORE_NAME); const req = store.delete(id); req.onsuccess = () => resolve(true); }); }
 async function batchDeleteOrderRecordFromIDB(ids) { return new Promise((resolve) => { if (!db) resolve(false); const tx = db.transaction([STORE_NAME],'readwrite'); const store = tx.objectStore(STORE_NAME); let count = 0; ids.forEach(id => { const req = store.delete(id); req.onsuccess = () => { count++; if (count === ids.length) resolve(true); }; }); }); }
@@ -1857,7 +1857,7 @@ async function importData(){
         for(const r of data.orders){
           const dup = eo.find(o => o.content === r.content && o.user === r.user && o.timestamp === r.timestamp);
           if(dup){ so++; continue; }
-          try{ await saveOrderRecordToIDB(r.content, r.user, r.date, r.totalAmount || 0); no++; }
+          try{ await saveOrderRecordToIDB(r.content, r.user, r.date, r.totalAmount || 0, r.timestamp); no++; }
           catch(e){ console.error('导入订单失败', e); }
         }
 
@@ -1865,7 +1865,7 @@ async function importData(){
         for(const r of data.reports){
           const dup = er.find(o => o.content === r.content && o.user === r.user && o.timestamp === r.timestamp);
           if(dup){ sr++; continue; }
-          try{ await saveReportOrderRecordToIDB(r.content, r.user, r.date, r.totalAmount || 0); nr++; }
+          try{ await saveReportOrderRecordToIDB(r.content, r.user, r.date, r.totalAmount || 0, r.timestamp); nr++; }
           catch(e){ console.error('导入上报失败', e); }
         }
 
