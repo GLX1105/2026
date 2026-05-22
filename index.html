@@ -503,7 +503,7 @@ tr.selected-row {background-color: #dceeff !important; font-weight: bold; box-sh
               <div class="summary-item">总下注：<span id="totalBet">0</span></div>
               <div class="summary-item">返水%：<input type="number" id="rebateRate" class="small-input" value="4" min="0" max="100" step="0.1"></div>
               <div class="summary-item">返水：<span id="totalRebate">0</span></div>
-              <div class="summary-item">倍数：<input type="number" id="multipleVal" class="small-input" value="47" min="0.1" step="0.1"><button class="btn btn-screenshot" onclick="screenshotTable('riskTable')" style="margin-left:4px;padding:2px 8px;font-size:12px;min-height:auto;">截图</button></div>
+              <div class="summary-item">倍数：<input type="number" id="multipleVal" class="small-input" value="47" min="0.1" step="0.1"><button class="btn btn-screenshot" onclick="screenshotTable('riskTable')" style="margin-left:4px;padding:2px 8px;font-size:12px;min-height:auto;">截图</button><button class="btn btn-copy-nums" onclick="copySelectedNumbers('riskTable')" style="margin-left:4px;padding:2px 8px;font-size:12px;min-height:auto;">复制</button></div>
             </div>
             <div class="table-container">
               <table id="riskTable"><thead><tr><th>号码</th><th>下注</th><th>风险</th><th>ID</th><th>排名</th></tr></thead><tbody id="tableBody" onclick="handleTableRowClick(event)"></tbody></table>
@@ -514,7 +514,7 @@ tr.selected-row {background-color: #dceeff !important; font-weight: bold; box-sh
               <div class="summary-item">总下注：<span id="reportTotalBet">0</span></div>
               <div class="summary-item">返水%：<input type="number" id="reportRebateRate" class="small-input" value="4" min="0" max="100" step="0.1"></div>
               <div class="summary-item">返水：<span id="reportTotalRebate">0</span></div>
-              <div class="summary-item">倍数：<input type="number" id="reportMultipleVal" class="small-input" value="47" min="0.1" step="0.1"><button class="btn btn-screenshot" onclick="screenshotTable('reportTable')" style="margin-left:4px;padding:2px 8px;font-size:12px;min-height:auto;">截图</button></div>
+              <div class="summary-item">倍数：<input type="number" id="reportMultipleVal" class="small-input" value="47" min="0.1" step="0.1"><button class="btn btn-screenshot" onclick="screenshotTable('reportTable')" style="margin-left:4px;padding:2px 8px;font-size:12px;min-height:auto;">截图</button><button class="btn btn-copy-nums" onclick="copySelectedNumbers('reportTable')" style="margin-left:4px;padding:2px 8px;font-size:12px;min-height:auto;">复制</button></div>
             </div>
             <div class="table-container">
               <table id="reportTable"><thead><tr><th>号码</th><th>下注</th><th>风险</th><th>ID</th><th>排名</th></tr></thead><tbody id="reportTableBody" onclick="handleTableRowClick(event)"></tbody></table>
@@ -1036,7 +1036,9 @@ const greenNumbers = ['05','06','11','16','17','21','22','27','28','32','33','38
 function getTodayCST() { const now = new Date(); const offset = 8*60; const localTime = now.getTime() + (now.getTimezoneOffset() + offset) * 60000; const cstDate = new Date(localTime); return `${cstDate.getFullYear()}-${String(cstDate.getMonth()+1).padStart(2,'0')}-${String(cstDate.getDate()).padStart(2,'0')}`; }
 function buildZodiacMap(startZodiac) { const map = {}; const startIndex = zodiacOrder.indexOf(startZodiac); const idx = startIndex !== -1 ? startIndex : 0; for (let i=1; i<=49; i++) map[i.toString().padStart(2,'0')] = zodiacOrder[(idx+i-1)%12]; return map; }
 async function changeStartZodiac() { const select = document.getElementById('startZodiacSelect'); const newZodiac = select.value; const savedZodiac = localStorage.getItem('selectedStartZodiac') || '马'; if (newZodiac === savedZodiac) return; const inputPwd = await prompt("请输入本年生肖切换密码：", ""); if (inputPwd !== YEAR_ZODIAC_PASSWORD) { await alert("密码错误"); select.value = savedZodiac; return; } localStorage.setItem('selectedStartZodiac', newZodiac); currentZodiacMap = buildZodiacMap(newZodiac); refreshAll(); }
-function switchRiskReport() { const val = document.getElementById('riskReportSwitcher').value; if (val === 'total') { document.getElementById('riskSection').style.display = ''; document.getElementById('reportSection').style.display = 'none'; document.getElementById('viewUserSelect').style.display = 'none'; generateRiskTable(); } else if (val === 'user') { document.getElementById('riskSection').style.display = ''; document.getElementById('reportSection').style.display = 'none'; document.getElementById('viewUserSelect').style.display = 'inline-block'; generateRiskTable(); } else if (val === 'report') { document.getElementById('riskSection').style.display = 'none'; document.getElementById('reportSection').style.display = ''; generateReportTable(); } }
+function switchRiskReport() { const val = document.getElementById('riskReportSwitcher').value;
+  document.querySelectorAll('#riskTable .selected-row, #reportTable .selected-row').forEach(el => el.classList.remove('selected-row'));
+  if (val === 'total') { document.getElementById('riskSection').style.display = ''; document.getElementById('reportSection').style.display = 'none'; document.getElementById('viewUserSelect').style.display = 'none'; generateRiskTable(); } else if (val === 'user') { document.getElementById('riskSection').style.display = ''; document.getElementById('reportSection').style.display = 'none'; document.getElementById('viewUserSelect').style.display = 'inline-block'; generateRiskTable(); } else if (val === 'report') { document.getElementById('riskSection').style.display = 'none'; document.getElementById('reportSection').style.display = ''; generateReportTable(); } }
 
 function initIndexedDB() { return new Promise((resolve) => { const request = indexedDB.open(DB_NAME, DB_VERSION); request.onerror = () => { resolve(false); }; request.onsuccess = (event) => { db = event.target.result; resolve(true); }; request.onupgradeneeded = (event) => { db = event.target.result; if (!db.objectStoreNames.contains(STORE_NAME)) db.createObjectStore(STORE_NAME, { keyPath: 'id' }); if (!db.objectStoreNames.contains(REPORT_STORE_NAME)) db.createObjectStore(REPORT_STORE_NAME, { keyPath: 'id' }); }; }); }
 async function getOrderRecords() { return new Promise((resolve) => { if (!db) resolve([]); const tx = db.transaction([STORE_NAME],'readonly'); const store = tx.objectStore(STORE_NAME); const req = store.getAll(); req.onsuccess = (e) => resolve(e.target.result || []); }); }
@@ -1550,7 +1552,16 @@ function renderAllTablesPlaceholder() {
   renderReportAmountTable();
 }
 
-function handleTableRowClick(event){ const td=event.target.closest('td'); if(!td)return; const tr=td.closest('tr'); if(!tr)return; const tbody=tr.parentElement; tbody.querySelectorAll('tr').forEach(r=>r.classList.remove('selected-row')); tr.classList.add('selected-row'); }
+function handleTableRowClick(event){
+  if (window.dragSelectionActive) return;
+  const td = event.target.closest('td');
+  if(!td) return;
+  const tr = td.closest('tr');
+  if(!tr) return;
+  const tbody = tr.parentElement;
+  tbody.querySelectorAll('tr').forEach(r => r.classList.remove('selected-row'));
+  tr.classList.add('selected-row');
+}
 
 function generateRiskTable(){ const sw=document.getElementById('riskReportSwitcher')?.value; let data; if(sw==='total')data=tableBetData; else if(sw==='user'){const u=document.getElementById('viewUserSelect')?.value;data=userBetData[u]||{};} else data=reportBetData; const tbody=document.getElementById('tableBody'); if(!tbody)return; tbody.innerHTML=''; let total=0; const mul=parseFloat(document.getElementById('multipleVal')?.value)||1; const rr=parseFloat(document.getElementById('rebateRate')?.value)||0; let list=[]; for(let n in data){const b=data[n];total+=b;list.push({num:n,bet:b});} for(let i=1;i<=49;i++){const n=i.toString().padStart(2,'0');if(!data[n])list.push({num:n,bet:0});} list.sort((a,b)=>b.bet-a.bet); const reb=(total*rr/100).toFixed(2); list.forEach((item,idx)=>{ const{num,bet}=item; const risk=Math.round(total-bet*mul-parseFloat(reb)); const cls=redNumbers.includes(num)?'red-text':(blueNumbers.includes(num)?'blue-text':'green-text'); const tr=document.createElement('tr'); tr.className=cls; tr.innerHTML=`<td>${num}${currentZodiacMap[num]||''}</td><td>${bet}</td><td>${risk}</td><td>${num}</td><td>${idx+1}</td>`; tbody.appendChild(tr); }); document.getElementById('totalBet').textContent=total; document.getElementById('totalRebate').textContent=reb; }
 function applyReportCap(){ generateReportTable(); }
@@ -1975,6 +1986,86 @@ function renderUserList() {
 async function addUserAction() { const name = document.getElementById('newUserName')?.value.trim(); if (!name) { showToast('请输入用户名'); return; } if (addUser(name)) { document.getElementById('newUserName').value = ''; renderUserList(); updateSelects(); showToast('用户添加成功'); } }
 async function deleteUserAction(name) { if (!(await confirm(`确定删除用户"${name}"及其数据吗？`))) return; deleteUser(name); renderUserList(); updateSelects(); showToast('用户已删除'); }
 
+// ===== 框选与复制功能 =====
+window.dragSelectionActive = false;
+
+function enableRowDragSelect(tableId) {
+  const tbody = document.getElementById(tableId === 'riskTable' ? 'tableBody' : 'reportTableBody');
+  if (!tbody) return;
+  let startRow = null;
+  let endRow = null;
+
+  function clearSelection() {
+    tbody.querySelectorAll('tr.selected-row').forEach(tr => tr.classList.remove('selected-row'));
+  }
+
+  function selectRows(row1, row2) {
+    if (!row1 || !row2) return;
+    const rows = Array.from(tbody.querySelectorAll('tr'));
+    const idx1 = rows.indexOf(row1);
+    const idx2 = rows.indexOf(row2);
+    if (idx1 === -1 || idx2 === -1) return;
+    const minIdx = Math.min(idx1, idx2);
+    const maxIdx = Math.max(idx1, idx2);
+    for (let i = minIdx; i <= maxIdx; i++) {
+      rows[i].classList.add('selected-row');
+    }
+  }
+
+  tbody.addEventListener('mousedown', (e) => {
+    if (e.button !== 0) return;
+    if (e.ctrlKey || e.shiftKey) return;
+    const targetRow = e.target.closest('tr');
+    if (!targetRow) return;
+    window.dragSelectionActive = true;
+    clearSelection();
+    startRow = targetRow;
+    endRow = targetRow;
+    targetRow.classList.add('selected-row');
+    e.preventDefault();
+  });
+
+  document.addEventListener('mousemove', (e) => {
+    if (!window.dragSelectionActive) return;
+    const target = document.elementFromPoint(e.clientX, e.clientY);
+    if (!target) return;
+    const tr = target.closest('tr');
+    if (!tr || tr.parentElement !== tbody) return;
+    if (tr !== endRow) {
+      endRow = tr;
+      clearSelection();
+      selectRows(startRow, endRow);
+    }
+  });
+
+  document.addEventListener('mouseup', () => {
+    if (window.dragSelectionActive) {
+      window.dragSelectionActive = false;
+      startRow = null;
+      endRow = null;
+    }
+  });
+}
+
+function copySelectedNumbers(tableId) {
+  const tbody = document.getElementById(tableId === 'riskTable' ? 'tableBody' : 'reportTableBody');
+  if (!tbody) return;
+  const selectedRows = Array.from(tbody.querySelectorAll('tr.selected-row'));
+  if (selectedRows.length === 0) { showToast('请先选择号码'); return; }
+  const ids = selectedRows.map(row => {
+    const cells = row.querySelectorAll('td');
+    return cells[3] ? cells[3].textContent.trim() : '';
+  }).filter(id => id && /^\d+$/.test(id));
+  if (ids.length === 0) { showToast('无有效号码'); return; }
+  const uniqueIds = [...new Set(ids)];
+  const text = uniqueIds.join('-');
+  navigator.clipboard.writeText(text).then(() => {
+    showToast('已复制: ' + text);
+  }).catch(() => {
+    showToast('复制失败');
+  });
+}
+
 document.getElementById('rebateRate')?.addEventListener('input', generateRiskTable);
 document.getElementById('multipleVal')?.addEventListener('input', generateRiskTable);
 document.getElementById('reportRebateRate')?.addEventListener('input', generateReportTable);
@@ -2008,6 +2099,10 @@ window.onload = async () => {
   currentZodiacMap = buildZodiacMap(savedZodiac);
   updateSelects();
   renderAllTablesPlaceholder();
+
+  enableRowDragSelect('riskTable');
+  enableRowDragSelect('reportTable');
+
   window._systemReady = async () => {
     await updateTableFromRecords();
     calculateStorageUsage();
