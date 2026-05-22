@@ -1045,10 +1045,10 @@ async function getOrderRecords() { return new Promise((resolve) => { if (!db) re
 async function getReportOrderRecords() { return new Promise((resolve) => { if (!db) resolve([]); const tx = db.transaction([REPORT_STORE_NAME],'readonly'); const store = tx.objectStore(REPORT_STORE_NAME); const req = store.getAll(); req.onsuccess = (e) => resolve(e.target.result || []); }); }
 async function saveOrderRecordToIDB(content, user, date, totalAmount = 0, ts = null) { return new Promise((resolve) => { if (!db) resolve(false); const tx = db.transaction([STORE_NAME],'readwrite'); const store = tx.objectStore(STORE_NAME); const record = { id: Date.now() + '-' + Math.random().toString(36).substr(2, 9), content, user, date, totalAmount, timestamp: ts || new Date().toISOString() }; const req = store.add(record); req.onsuccess = () => resolve(true); }); }
 async function saveReportOrderRecordToIDB(content, user, date, totalAmount = 0, ts = null) { return new Promise((resolve) => { if (!db) resolve(false); const tx = db.transaction([REPORT_STORE_NAME],'readwrite'); const store = tx.objectStore(REPORT_STORE_NAME); const record = { id: Date.now() + '-' + Math.random().toString(36).substr(2, 9), content, user, date, totalAmount, timestamp: ts || new Date().toISOString() }; const req = store.add(record); req.onsuccess = () => resolve(true); }); }
-async function deleteOrderRecordFromIDB(id) { return new Promise((resolve) => { if (!db) resolve(false); const tx = db.transaction([STORE_NAME],'readwrite'); const store = tx.objectStore(STORE_NAME); const req = store.delete(id); req.onsuccess = () => resolve(true); }); }
-async function deleteReportOrderRecordFromIDB(id) { return new Promise((resolve) => { if (!db) resolve(false); const tx = db.transaction([REPORT_STORE_NAME],'readwrite'); const store = tx.objectStore(REPORT_STORE_NAME); const req = store.delete(id); req.onsuccess = () => resolve(true); }); }
-async function batchDeleteOrderRecordFromIDB(ids) { return new Promise((resolve) => { if (!db) resolve(false); const tx = db.transaction([STORE_NAME],'readwrite'); const store = tx.objectStore(STORE_NAME); let count = 0; ids.forEach(id => { const req = store.delete(id); req.onsuccess = () => { count++; if (count === ids.length) resolve(true); }; }); }); }
-async function batchDeleteReportOrderRecordFromIDB(ids) { return new Promise((resolve) => { if (!db) resolve(false); const tx = db.transaction([REPORT_STORE_NAME],'readwrite'); const store = tx.objectStore(REPORT_STORE_NAME); let count = 0; ids.forEach(id => { const req = store.delete(id); req.onsuccess = () => { count++; if (count === ids.length) resolve(true); }; }); }); }
+async function deleteOrderRecordFromIDB(id) { return new Promise((resolve) => { if (!db) { resolve(false); return; } const tx = db.transaction([STORE_NAME],'readwrite'); const store = tx.objectStore(STORE_NAME); const req = store.delete(id); req.onsuccess = () => resolve(true); req.onerror = () => resolve(false); }); }
+async function deleteReportOrderRecordFromIDB(id) { return new Promise((resolve) => { if (!db) { resolve(false); return; } const tx = db.transaction([REPORT_STORE_NAME],'readwrite'); const store = tx.objectStore(REPORT_STORE_NAME); const req = store.delete(id); req.onsuccess = () => resolve(true); req.onerror = () => resolve(false); }); }
+async function batchDeleteOrderRecordFromIDB(ids) { return new Promise((resolve) => { if (!db) { resolve(false); return; } const tx = db.transaction([STORE_NAME],'readwrite'); const store = tx.objectStore(STORE_NAME); let count = 0; ids.forEach(id => { const req = store.delete(id); req.onsuccess = () => { count++; if (count === ids.length) resolve(true); }; req.onerror = () => { console.error('删除订单失败', id); }; }); }); }
+async function batchDeleteReportOrderRecordFromIDB(ids) { return new Promise((resolve) => { if (!db) { resolve(false); return; } const tx = db.transaction([REPORT_STORE_NAME],'readwrite'); const store = tx.objectStore(REPORT_STORE_NAME); let count = 0; ids.forEach(id => { const req = store.delete(id); req.onsuccess = () => { count++; if (count === ids.length) resolve(true); }; req.onerror = () => { console.error('删除上报失败', id); }; }); }); }
 async function clearAllOrderRecordsFromIDB() { return new Promise((resolve) => { if (!db) resolve(false); const tx = db.transaction([STORE_NAME],'readwrite'); const store = tx.objectStore(STORE_NAME); const req = store.clear(); req.onsuccess = () => resolve(true); }); }
 async function clearAllReportOrderRecordsFromIDB() { return new Promise((resolve) => { if (!db) resolve(false); const tx = db.transaction([REPORT_STORE_NAME],'readwrite'); const store = tx.objectStore(REPORT_STORE_NAME); const req = store.clear(); req.onsuccess = () => resolve(true); }); }
 
@@ -1225,7 +1225,7 @@ function convertOrderText() {
   }
 
   function isValidNumber(token) {
-    return /^(0[1-9]|[1-4][0-9]|49?)$/.test(token);
+    return /^(0[1-9]|[1-4][0-9]|49?|[1-9])$/.test(token);
   }
 
   const PUNCT_REGEX = /[\s,，.。、+\-*＊\/\\|!@#$%^&*()=+_{}\[\]:;"'<>,.?\/~！@#￥%…&*（）—+【】{}|：“”；‘’《》，。？、]/g;
@@ -1703,7 +1703,7 @@ async function applyPrizeFilter(){
       const ts=formatTimestampToCST(it.timestamp),ud=it.user||'未知',col=getUserColor(ud),ta=it.totalAmount||0;
       const lines=it.content.split('\n');
       const hl=lines.map(l=>{const m=l.match(/^(.+?)\s+各数\s+(\d+)$/);if(!m)return l;const cont=m[1],amt=m[2];const hc=highlightContent(cont,pn,cfg);return`${hc} 各数 ${amt}`;}).join('<br>');
-      return`<div class="order-item"><input type="checkbox" class="order-check" data-id="${it.id}"><div class="order-content">${hl}</div><div class="order-info"><span class="order-total" style="color:#000;">合计：${ta}</span><span class="order-meta"><span style="color:${col};">用户：${ud}</span> &nbsp; ${ts}</span></div><button class="order-del" onclick="deleteOrderRecord(${it.id})">删除</button></div>`;
+      return`<div class="order-item"><input type="checkbox" class="order-check" data-id="${it.id}"><div class="order-content">${hl}</div><div class="order-info"><span class="order-total" style="color:#000;">合计：${ta}</span><span class="order-meta"><span style="color:${col};">用户：${ud}</span> &nbsp; ${ts}</span></div><button class="order-del" onclick="deleteOrderRecord('${it.id}')">删除</button></div>`;
     }).join('');
   }
   updatePrizeStats(pn);
@@ -1734,7 +1734,7 @@ async function showOrderRecord(filter='all'){
     else{
       fin.forEach(it=>{
         const ts=formatTimestampToCST(it.timestamp),ud=it.user||'未知',col=getUserColor(ud),ta=it.totalAmount||0;
-        html+=`<div class="order-item"><input type="checkbox" class="order-check" data-id="${it.id}"><div class="order-content">${it.content.replace(/\n/g,'<br>')}</div><div class="order-info"><span class="order-total" style="color:#000;">合计：${ta}</span><span class="order-meta"><span style="color:${col};">用户：${ud}</span> &nbsp; ${ts}</span></div><button class="order-del" onclick="deleteOrderRecord(${it.id})">删除</button></div>`;
+        html+=`<div class="order-item"><input type="checkbox" class="order-check" data-id="${it.id}"><div class="order-content">${it.content.replace(/\n/g,'<br>')}</div><div class="order-info"><span class="order-total" style="color:#000;">合计：${ta}</span><span class="order-meta"><span style="color:${col};">用户：${ud}</span> &nbsp; ${ts}</span></div><button class="order-del" onclick="deleteOrderRecord('${it.id}')">删除</button></div>`;
       });
     }
     html+=`</div></div><div class="modal-footer"><button onclick="document.getElementById('orderWin').remove()" style="padding:8px 16px;background:#6c757d;color:#fff;border:none;border-radius:4px;">关闭</button></div>`;
@@ -1753,10 +1753,20 @@ async function showOrderRecord(filter='all'){
 
 async function deleteOrderRecord(id) {
   if (!(await confirm('确定删除？'))) return;
-  await deleteOrderRecordFromIDB(id);
-  await updateTableFromRecords();
-  calculateStorageUsage();
-  showOrderRecord();
+  try {
+    const result = await deleteOrderRecordFromIDB(id);
+    if (result) {
+      showToast('删除成功');
+      await updateTableFromRecords();
+      calculateStorageUsage();
+      showOrderRecord();
+    } else {
+      showToast('删除失败，记录可能已不存在');
+    }
+  } catch(e) {
+    console.error('删除订单异常', e);
+    showToast('删除异常');
+  }
 }
 
 async function showReportOrderRecord(filter='all'){
@@ -1777,7 +1787,7 @@ async function showReportOrderRecord(filter='all'){
     else{
       fin.forEach(it=>{
         const ts=formatTimestampToCST(it.timestamp),ud=it.user||'未知',ta=it.totalAmount||0;
-        html+=`<div class="order-item"><input type="checkbox" class="report-order-check" data-id="${it.id}"><div class="order-content">${it.content.replace(/\n/g,'<br>')}</div><div class="order-info"><span class="order-total" style="color:#000;">合计：${ta}</span><span class="order-meta"><span style="color:red;">用户：${ud}</span> &nbsp; ${ts}</span></div><button class="order-del" onclick="deleteReportOrderRecord(${it.id})">删除</button></div>`;
+        html+=`<div class="order-item"><input type="checkbox" class="report-order-check" data-id="${it.id}"><div class="order-content">${it.content.replace(/\n/g,'<br>')}</div><div class="order-info"><span class="order-total" style="color:#000;">合计：${ta}</span><span class="order-meta"><span style="color:red;">用户：${ud}</span> &nbsp; ${ts}</span></div><button class="order-del" onclick="deleteReportOrderRecord('${it.id}')">删除</button></div>`;
       });
     }
     html+=`</div></div><div class="modal-footer"><button onclick="document.getElementById('reportWin').remove()" style="padding:8px 16px;background:#6c757d;color:#fff;border:none;border-radius:4px;">关闭</button></div>`;
@@ -1788,10 +1798,20 @@ async function showReportOrderRecord(filter='all'){
 
 async function deleteReportOrderRecord(id) {
   if (!(await confirm('确定删除？'))) return;
-  await deleteReportOrderRecordFromIDB(id);
-  await updateTableFromRecords();
-  calculateStorageUsage();
-  showReportOrderRecord();
+  try {
+    const result = await deleteReportOrderRecordFromIDB(id);
+    if (result) {
+      showToast('删除成功');
+      await updateTableFromRecords();
+      calculateStorageUsage();
+      showReportOrderRecord();
+    } else {
+      showToast('删除失败，记录可能已不存在');
+    }
+  } catch(e) {
+    console.error('删除上报异常', e);
+    showToast('删除异常');
+  }
 }
 
 function checkAll(){ document.querySelectorAll('.order-check').forEach(cb=>cb.checked=true); }
@@ -1800,25 +1820,37 @@ function checkAllReport(){ document.querySelectorAll('.report-order-check').forE
 function uncheckAllReport(){ document.querySelectorAll('.report-order-check').forEach(cb=>cb.checked=false); }
 
 async function deleteChecked(){
-  const ids=[]; document.querySelectorAll('.order-check:checked').forEach(cb=>ids.push(Number(cb.dataset.id)));
+  const ids=[]; document.querySelectorAll('.order-check:checked').forEach(cb=>ids.push(String(cb.dataset.id)));
   if(ids.length===0){showToast('请选择');return;}
   if(!(await confirm(`确定要删除选中的 ${ids.length} 条订单记录吗？`))) return;
-  await batchDeleteOrderRecordFromIDB(ids);
-  await updateTableFromRecords();
-  calculateStorageUsage();
-  const userFilter = document.getElementById('recordUserFilter')?.value || 'all';
-  await showOrderRecord(userFilter);
+  try {
+    await batchDeleteOrderRecordFromIDB(ids);
+    showToast(`成功删除 ${ids.length} 条`);
+    await updateTableFromRecords();
+    calculateStorageUsage();
+    const userFilter = document.getElementById('recordUserFilter')?.value || 'all';
+    await showOrderRecord(userFilter);
+  } catch(e) {
+    console.error('批量删除异常', e);
+    showToast('批量删除异常');
+  }
 }
 
 async function deleteCheckedReport(){
-  const ids=[]; document.querySelectorAll('.report-order-check:checked').forEach(cb=>ids.push(Number(cb.dataset.id)));
+  const ids=[]; document.querySelectorAll('.report-order-check:checked').forEach(cb=>ids.push(String(cb.dataset.id)));
   if(ids.length===0){showToast('请选择');return;}
   if(!(await confirm(`确定要删除选中的 ${ids.length} 条上报记录吗？`))) return;
-  await batchDeleteReportOrderRecordFromIDB(ids);
-  await updateTableFromRecords();
-  calculateStorageUsage();
-  const userFilter = document.getElementById('reportRecordUserFilter')?.value || 'all';
-  await showReportOrderRecord(userFilter);
+  try {
+    await batchDeleteReportOrderRecordFromIDB(ids);
+    showToast(`成功删除 ${ids.length} 条`);
+    await updateTableFromRecords();
+    calculateStorageUsage();
+    const userFilter = document.getElementById('reportRecordUserFilter')?.value || 'all';
+    await showReportOrderRecord(userFilter);
+  } catch(e) {
+    console.error('批量删除异常', e);
+    showToast('批量删除异常');
+  }
 }
 
 // ===== 清空、粘贴、切换 =====
