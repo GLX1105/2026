@@ -1628,7 +1628,7 @@ function updatePrizeStats(pn) {
   const totalBet = Object.values(tableBetData).reduce((sum, val) => sum + val, 0);
   if (totalBet > 0) {
     totalBetEl.style.display = 'inline';
-    totalBetEl.innerHTML = `<span style="color:blue;">总额${totalBet}</span>`;
+    totalBetEl.innerHTML = `<span style="color:black;">总额</span><span style="color:blue;">${totalBet}</span>`;
   } else {
     totalBetEl.style.display = 'none';
     totalBetEl.textContent = '';
@@ -1638,7 +1638,7 @@ function updatePrizeStats(pn) {
   const totalBetNum = tableBetData[num] || 0;
   if (totalBetNum > 0) {
     totalSpecialEl.style.display = 'inline';
-    totalSpecialEl.innerHTML = `<span style="color:red;">总特${totalBetNum}</span>`;
+    totalSpecialEl.innerHTML = `<span style="color:black;">总特</span><span style="color:red;">${totalBetNum}</span>`;
   } else {
     totalSpecialEl.style.display = 'none';
     totalSpecialEl.textContent = '';
@@ -1648,7 +1648,7 @@ function updatePrizeStats(pn) {
   const reportBetNum = reportBetData[num] || 0;
   if (reportBetNum > 0) {
     specialEl.style.display = 'inline';
-    specialEl.innerHTML = `<span style="color:red;">特${reportBetNum}</span>`;
+    specialEl.innerHTML = `<span style="color:black;">特</span><span style="color:red;">${reportBetNum}</span>`;
   } else {
     specialEl.style.display = 'none';
     specialEl.textContent = '';
@@ -1658,10 +1658,10 @@ function updatePrizeStats(pn) {
   const risk = reportRiskData[num] !== undefined ? reportRiskData[num] : 0;
   if (risk > 0) {
     profitEl.style.display = 'inline';
-    profitEl.innerHTML = `<span style="color:blue;">盈${risk}</span>`;
+    profitEl.innerHTML = `<span style="color:black;">盈</span><span style="color:blue;">${risk}</span>`;
   } else if (risk < 0) {
     profitEl.style.display = 'inline';
-    profitEl.innerHTML = `<span style="color:red;">亏${risk}</span>`;
+    profitEl.innerHTML = `<span style="color:black;">亏</span><span style="color:red;">${risk}</span>`;
   } else {
     profitEl.style.display = 'none';
     profitEl.textContent = '';
@@ -1699,17 +1699,20 @@ async function showOrderRecord(filter='all'){
     if(document.getElementById('orderWin'))document.getElementById('orderWin').remove();
     const w=document.createElement('div'); w.className='floating-window'; w.id='orderWin';
     w.style.width='750px'; w.style.height='600px'; w.style.left='50%'; w.style.top='50%'; w.style.transform='translate(-50%,-50%)';
-    let html=`<div class="modal-header"><h3>下单记录</h3><div class="window-controls"><button onclick="maximizeWindow('orderWin')">🗖</button><button onclick="pinWindow('orderWin')">📌</button><button onclick="document.getElementById('orderWin').remove()">×</button></div></div><div class="modal-body">`;
-    html+=`<div style="margin-bottom:10px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;"><select id="recordUserFilter" onchange="applyPrizeFilter()" style="padding:4px 8px;border-radius:4px;border:1px solid #ccc;"><option value="all" ${filter==='all'?'selected':''}>全部用户</option>`;
+    let html=`<div class="modal-header"><h3>下单记录</h3><div class="window-controls"><button onclick="maximizeWindow('orderWin')">🗖</button><button onclick="pinWindow('orderWin')">📌</button><button onclick="document.getElementById('orderWin').remove()">×</button></div></div><div class="modal-body" style="display:flex; flex-direction:column; height: calc(100% - 120px);">`;
+    // 固定工具栏
+    html+=`<div style="margin-bottom:10px;display:flex;gap:12px;flex-wrap:wrap;align-items:center;position:sticky;top:0;background:rgba(255,255,255,0.9);z-index:2;padding:5px 0;"><select id="recordUserFilter" onchange="applyPrizeFilter()" style="padding:4px 8px;border-radius:4px;border:1px solid #ccc;"><option value="all" ${filter==='all'?'selected':''}>全部用户</option>`;
     users.forEach(u=>html+=`<option value="${u}" ${u===filter?'selected':''}>${u}</option>`);
     html+=`</select><button onclick="checkAll()" style="padding:6px 12px;background:#007bff;color:#fff;border:none;border-radius:4px;">全选</button><button onclick="uncheckAll()" style="padding:6px 12px;background:#6c757d;color:#fff;border:none;border-radius:4px;">取消全选</button><button onclick="deleteChecked()" style="padding:6px 12px;background:#e74c3c;color:#fff;border:none;border-radius:4px;">批量删除</button>
-    <span style="display:inline-flex; align-items:center; gap:8px; margin-left:auto;">
+    <span style="display:inline-flex; align-items:center; gap:16px; margin-left:auto;">
       <span id="prizeTotalBet" style="display:none;"></span>
       <span id="prizeTotalSpecial" style="display:none;"></span>
       <span id="prizeSpecial" style="display:none;"></span>
       <span id="prizeProfit" style="display:none;"></span>
       <span>对奖：</span><input type="text" id="prizeNumberInput" placeholder="号码" maxlength="2" oninput="applyPrizeFilter()" style="padding:4px;border-radius:4px;border:1px solid #ccc;width:50px;">
-    </span></div><div id="orderListContainer">`;
+    </span></div>`;
+    // 可滚动订单列表区域
+    html+=`<div id="orderListContainer" style="flex:1; overflow-y:auto;">`;
     const filterDateVal = document.getElementById('filterDate')?.value || today;
     const df=recs.filter(r=>r.date===filterDateVal);
     const fin=(filter==='all')?df:df.filter(r=>r.user===filter);
@@ -1752,10 +1755,11 @@ async function showReportOrderRecord(filter='all'){
     const fin=(filter==='all')?df:df.filter(r=>r.user===filter);
     const w=document.createElement('div'); w.className='floating-window'; w.id='reportWin';
     w.style.width='700px'; w.style.height='500px'; w.style.left='50%'; w.style.top='50%'; w.style.transform='translate(-50%,-50%)';
-    let html=`<div class="modal-header"><h3>上报数据</h3><div class="window-controls"><button onclick="maximizeWindow('reportWin')">🗖</button><button onclick="pinWindow('reportWin')">📌</button><button onclick="document.getElementById('reportWin').remove()">×</button></div></div><div class="modal-body">`;
-    html+=`<div style="margin-bottom:10px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;"><select id="reportRecordUserFilter" onchange="showReportOrderRecord(this.value)" style="padding:4px 8px;border-radius:4px;border:1px solid #ccc;"><option value="all" ${filter==='all'?'selected':''}>全部用户</option>`;
+    let html=`<div class="modal-header"><h3>上报数据</h3><div class="window-controls"><button onclick="maximizeWindow('reportWin')">🗖</button><button onclick="pinWindow('reportWin')">📌</button><button onclick="document.getElementById('reportWin').remove()">×</button></div></div><div class="modal-body" style="display:flex; flex-direction:column; height: calc(100% - 120px);">`;
+    html+=`<div style="margin-bottom:10px;display:flex;gap:12px;flex-wrap:wrap;align-items:center;position:sticky;top:0;background:rgba(255,255,255,0.9);z-index:2;padding:5px 0;"><select id="reportRecordUserFilter" onchange="showReportOrderRecord(this.value)" style="padding:4px 8px;border-radius:4px;border:1px solid #ccc;"><option value="all" ${filter==='all'?'selected':''}>全部用户</option>`;
     users.forEach(u=>html+=`<option value="${u}" ${u===filter?'selected':''}>${u}</option>`);
     html+=`</select><button onclick="checkAllReport()" style="padding:6px 12px;background:#007bff;color:#fff;border:none;border-radius:4px;">全选</button><button onclick="uncheckAllReport()" style="padding:6px 12px;background:#6c757d;color:#fff;border:none;border-radius:4px;">取消全选</button><button onclick="deleteCheckedReport()" style="padding:6px 12px;background:#e74c3c;color:#fff;border:none;border-radius:4px;">批量删除</button></div>`;
+    html+=`<div id="reportOrderListContainer" style="flex:1; overflow-y:auto;">`;
     if(fin.length===0)html+=`<div style="padding:20px;text-align:center;color:#666;">暂无上报记录</div>`;
     else{
       fin.forEach(it=>{
@@ -1763,7 +1767,7 @@ async function showReportOrderRecord(filter='all'){
         html+=`<div class="order-item"><input type="checkbox" class="report-order-check" data-id="${it.id}"><div class="order-content">${it.content.replace(/\n/g,'<br>')}</div><div class="order-info"><span class="order-total" style="color:#000;">合计：${ta}</span><span class="order-meta"><span style="color:red;">用户：${ud}</span> &nbsp; ${ts}</span></div><button class="order-del" onclick="deleteReportOrderRecord(${it.id})">删除</button></div>`;
       });
     }
-    html+=`</div><div class="modal-footer"><button onclick="document.getElementById('reportWin').remove()" style="padding:8px 16px;background:#6c757d;color:#fff;border:none;border-radius:4px;">关闭</button></div>`;
+    html+=`</div></div><div class="modal-footer"><button onclick="document.getElementById('reportWin').remove()" style="padding:8px 16px;background:#6c757d;color:#fff;border:none;border-radius:4px;">关闭</button></div>`;
     w.innerHTML=html; document.body.appendChild(w);
     makeWindowDraggable('reportWin'); highestZ+=1; w.style.zIndex=highestZ;
   }catch(e){showToast('加载失败');}
