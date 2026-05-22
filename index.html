@@ -1041,8 +1041,8 @@ function switchRiskReport() { const val = document.getElementById('riskReportSwi
 function initIndexedDB() { return new Promise((resolve) => { const request = indexedDB.open(DB_NAME, DB_VERSION); request.onerror = () => { resolve(false); }; request.onsuccess = (event) => { db = event.target.result; resolve(true); }; request.onupgradeneeded = (event) => { db = event.target.result; if (!db.objectStoreNames.contains(STORE_NAME)) db.createObjectStore(STORE_NAME, { keyPath: 'id' }); if (!db.objectStoreNames.contains(REPORT_STORE_NAME)) db.createObjectStore(REPORT_STORE_NAME, { keyPath: 'id' }); }; }); }
 async function getOrderRecords() { return new Promise((resolve) => { if (!db) resolve([]); const tx = db.transaction([STORE_NAME],'readonly'); const store = tx.objectStore(STORE_NAME); const req = store.getAll(); req.onsuccess = (e) => resolve(e.target.result || []); }); }
 async function getReportOrderRecords() { return new Promise((resolve) => { if (!db) resolve([]); const tx = db.transaction([REPORT_STORE_NAME],'readonly'); const store = tx.objectStore(REPORT_STORE_NAME); const req = store.getAll(); req.onsuccess = (e) => resolve(e.target.result || []); }); }
-async function saveOrderRecordToIDB(content, user, date, totalAmount = 0) { return new Promise((resolve) => { if (!db) resolve(false); const tx = db.transaction([STORE_NAME],'readwrite'); const store = tx.objectStore(STORE_NAME); const record = { id: Date.now(), content, user, date, totalAmount, timestamp: new Date().toISOString() }; const req = store.add(record); req.onsuccess = () => resolve(true); }); }
-async function saveReportOrderRecordToIDB(content, user, date, totalAmount = 0) { return new Promise((resolve) => { if (!db) resolve(false); const tx = db.transaction([REPORT_STORE_NAME],'readwrite'); const store = tx.objectStore(REPORT_STORE_NAME); const record = { id: Date.now(), content, user, date, totalAmount, timestamp: new Date().toISOString() }; const req = store.add(record); req.onsuccess = () => resolve(true); }); }
+async function saveOrderRecordToIDB(content, user, date, totalAmount = 0) { return new Promise((resolve) => { if (!db) resolve(false); const tx = db.transaction([STORE_NAME],'readwrite'); const store = tx.objectStore(STORE_NAME); const record = { id: Date.now() + '-' + Math.random().toString(36).substr(2, 9), content, user, date, totalAmount, timestamp: new Date().toISOString() }; const req = store.add(record); req.onsuccess = () => resolve(true); }); }
+async function saveReportOrderRecordToIDB(content, user, date, totalAmount = 0) { return new Promise((resolve) => { if (!db) resolve(false); const tx = db.transaction([REPORT_STORE_NAME],'readwrite'); const store = tx.objectStore(REPORT_STORE_NAME); const record = { id: Date.now() + '-' + Math.random().toString(36).substr(2, 9), content, user, date, totalAmount, timestamp: new Date().toISOString() }; const req = store.add(record); req.onsuccess = () => resolve(true); }); }
 async function deleteOrderRecordFromIDB(id) { return new Promise((resolve) => { if (!db) resolve(false); const tx = db.transaction([STORE_NAME],'readwrite'); const store = tx.objectStore(STORE_NAME); const req = store.delete(id); req.onsuccess = () => resolve(true); }); }
 async function deleteReportOrderRecordFromIDB(id) { return new Promise((resolve) => { if (!db) resolve(false); const tx = db.transaction([REPORT_STORE_NAME],'readwrite'); const store = tx.objectStore(REPORT_STORE_NAME); const req = store.delete(id); req.onsuccess = () => resolve(true); }); }
 async function batchDeleteOrderRecordFromIDB(ids) { return new Promise((resolve) => { if (!db) resolve(false); const tx = db.transaction([STORE_NAME],'readwrite'); const store = tx.objectStore(STORE_NAME); let count = 0; ids.forEach(id => { const req = store.delete(id); req.onsuccess = () => { count++; if (count === ids.length) resolve(true); }; }); }); }
@@ -1839,26 +1839,38 @@ async function importData(){
       try{
         const data=JSON.parse(ev.target.result);
         if(!data.orders||!data.reports){showToast('无效格式');document.body.removeChild(inp);return;}
+
+        const totalToImport = data.orders.length + data.reports.length;
+        if(totalToImport === 0){
+          showToast('文件中没有订单或上报记录');
+          document.body.removeChild(inp);
+          return;
+        }
+
+        const cf = await confirm(`文件包含 ${totalToImport} 条记录（下单${data.orders.length}条，上报${data.reports.length}条），是否导入？`);
+        if(!cf){document.body.removeChild(inp);return;}
+
         const eo=await getOrderRecords();
         const er=await getReportOrderRecords();
         let so=0,no=0;
+
         for(const r of data.orders){
-          if(eo.find(o=>o.content===r.content&&o.user===r.user&&o.date===r.date))so++;
-          else{
-            try{await saveOrderRecordToIDB(r.content,r.user,r.date,r.totalAmount||0);no++;}
-            catch(e){console.error('导入订单失败',e);}
-          }
+          const dup = eo.find(o => o.content === r.content && o.user === r.user && o.timestamp === r.timestamp);
+          if(dup){ so++; continue; }
+          try{ await saveOrderRecordToIDB(r.content, r.user, r.date, r.totalAmount || 0); no++; }
+          catch(e){ console.error('导入订单失败', e); }
         }
+
         let sr=0,nr=0;
         for(const r of data.reports){
-          if(er.find(o=>o.content===r.content&&o.user===r.user&&o.date===r.date))sr++;
-          else{
-            try{await saveReportOrderRecordToIDB(r.content,r.user,r.date,r.totalAmount||0);nr++;}
-            catch(e){console.error('导入上报失败',e);}
-          }
+          const dup = er.find(o => o.content === r.content && o.user === r.user && o.timestamp === r.timestamp);
+          if(dup){ sr++; continue; }
+          try{ await saveReportOrderRecordToIDB(r.content, r.user, r.date, r.totalAmount || 0); nr++; }
+          catch(e){ console.error('导入上报失败', e); }
         }
+
         const tn=no+nr;
-        if(tn===0){showToast(`没有新记录。\n当前已有下单${eo.length}条，上报${er.length}条。`);document.body.removeChild(inp);return;}
+
         if(data.config)localStorage.setItem('customDataConfigObj',data.config);
         if(data.presets)localStorage.setItem('replacePresets',data.presets);
         if(data.aliases)localStorage.setItem('categoryAliases',data.aliases);
@@ -1866,9 +1878,13 @@ async function importData(){
         if(data.suffixes)localStorage.setItem('customSuffixes',data.suffixes);
         if(data.amountSuffixes)localStorage.setItem('customAmountSuffixes',data.amountSuffixes);
         if(data.amountPrefixes)localStorage.setItem('customAmountPrefixes',data.amountPrefixes);
+
         await updateTableFromRecords();
         calculateStorageUsage();
-        showToast(`成功导入${tn}条新记录。`);
+
+        let msg = `成功导入 ${tn} 条新记录。`;
+        if(so+sr > 0) msg += `\n跳过 ${so+sr} 条重复记录。`;
+        showToast(msg);
         document.body.removeChild(inp);
       }catch(err){showToast('导入失败');document.body.removeChild(inp);}
     };
