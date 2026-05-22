@@ -1429,8 +1429,8 @@ function convertOrderText() {
 function getAllValidCategories(cfg) { const s=new Set(); Object.keys(cfg.zodiac).forEach(k=>s.add(k)); Object.keys(cfg.shengxiaoAttr).forEach(k=>s.add(k)); Object.keys(cfg.wuxing).forEach(k=>s.add(k)); Object.keys(cfg.bose).forEach(k=>s.add(k)); Object.keys(cfg.banbo).forEach(k=>s.add(k)); Object.keys(cfg.danshuang).forEach(k=>s.add(k)); Object.keys(cfg.weishu).forEach(k=>s.add(k)); Object.keys(cfg.daxiaodanshuang).forEach(k=>s.add(k)); Object.keys(cfg.daxiao).forEach(k=>s.add(k)); Object.keys(cfg.heshu).forEach(k=>s.add(k)); Object.keys(cfg.toushu).forEach(k=>s.add(k)); Object.keys(cfg.menshu).forEach(k=>s.add(k)); Object.keys(cfg.duanwei).forEach(k=>s.add(k)); Object.keys(cfg.hedahexiao).forEach(k=>s.add(k)); Object.keys(cfg.weidaweixiao).forEach(k=>s.add(k)); Object.keys(cfg.hewei).forEach(k=>s.add(k)); Object.keys(cfg.heshudanshuang).forEach(k=>s.add(k)); Object.keys(cfg.toushuDanshuang).forEach(k=>s.add(k)); return s; }
 
 // ===== 保存订单（日期使用 filterDate） =====
-async function saveOrder(){ const user=document.getElementById('orderUserSelect')?.value; if(!user){showToast('请选择用户');return;} const resultEl=document.getElementById('orderResult'); const rawText=resultEl?resultEl.innerText:''; const inputText=document.querySelector('.source-order-input')?.value.trim(); const textToUse=rawText||inputText; if(!textToUse)return; const vl=textToUse.split('\n').filter(l=>{const m=l.match(/各数\s+(\d+)/);return m&&parseInt(m[1])>0;}); if(!vl.length){showToast('订单无效');return;} const content=vl.join('\n'); const date=document.getElementById('filterDate')?.value||getTodayCST(); const total=computeCurrentOrderTotal(); await saveOrderRecordToIDB(content,user,date,total); processCurrentOrder(content,user,true,date); const si=document.querySelector('.source-order-input'); if(si)si.value=''; if(resultEl)resultEl.innerHTML=''; updateOrderTotalDisplay(); document.querySelectorAll('.category-btn').forEach(b=>b.classList.remove('active')); }
-async function saveReportOrder(){ const user=document.getElementById('orderUserSelect')?.value; if(!user){showToast('请选择用户');return;} const resultEl=document.getElementById('orderResult'); const rawText=resultEl?resultEl.innerText:''; const inputText=document.querySelector('.source-order-input')?.value.trim(); const textToUse=rawText||inputText; if(!textToUse)return; const vl=textToUse.split('\n').filter(l=>{const m=l.match(/各数\s+(\d+)/);return m&&parseInt(m[1])>0;}); if(!vl.length){showToast('订单无效');return;} const content=vl.join('\n'); const date=document.getElementById('filterDate')?.value||getTodayCST(); const total=computeCurrentOrderTotal(); await saveReportOrderRecordToIDB(content,user,date,total); processCurrentOrder(content,user,false,date); const si=document.querySelector('.source-order-input'); if(si)si.value=''; if(resultEl)resultEl.innerHTML=''; updateOrderTotalDisplay(); document.querySelectorAll('.category-btn').forEach(b=>b.classList.remove('active')); }
+async function saveOrder(){ const user=document.getElementById('orderUserSelect')?.value; if(!user){showToast('请选择用户');return;} const resultEl=document.getElementById('orderResult'); const rawText=resultEl?resultEl.innerText:''; const inputText=document.querySelector('.source-order-input')?.value.trim(); const textToUse=rawText||inputText; if(!textToUse)return; const vl=textToUse.split('\n').filter(l=>{const m=l.match(/各数\s+(\d+)/);return m&&parseInt(m[1])>0;}); if(!vl.length){showToast('订单无效');return;} const content=vl.join('\n'); const date=document.getElementById('filterDate')?.value||getTodayCST(); const total=computeCurrentOrderTotal(); await saveOrderRecordToIDB(content,user,date,total); processCurrentOrder(content,user,true,date); const si=document.querySelector('.source-order-input'); if(si)si.value=''; if(resultEl)resultEl.innerHTML=''; updateOrderTotalDisplay(); document.querySelectorAll('.category-btn').forEach(b=>b.classList.remove('active')); calculateStorageUsage(); }
+async function saveReportOrder(){ const user=document.getElementById('orderUserSelect')?.value; if(!user){showToast('请选择用户');return;} const resultEl=document.getElementById('orderResult'); const rawText=resultEl?resultEl.innerText:''; const inputText=document.querySelector('.source-order-input')?.value.trim(); const textToUse=rawText||inputText; if(!textToUse)return; const vl=textToUse.split('\n').filter(l=>{const m=l.match(/各数\s+(\d+)/);return m&&parseInt(m[1])>0;}); if(!vl.length){showToast('订单无效');return;} const content=vl.join('\n'); const date=document.getElementById('filterDate')?.value||getTodayCST(); const total=computeCurrentOrderTotal(); await saveReportOrderRecordToIDB(content,user,date,total); processCurrentOrder(content,user,false,date); const si=document.querySelector('.source-order-input'); if(si)si.value=''; if(resultEl)resultEl.innerHTML=''; updateOrderTotalDisplay(); document.querySelectorAll('.category-btn').forEach(b=>b.classList.remove('active')); calculateStorageUsage(); }
 function countItemsInLine(line,cfg,keys){ const m=line.match(/([\u4e00-\u9fa5\d\-]+)\s+各数\s+(\d+)/); if(!m)return{numbers:[],zodiacs:[],amount:0}; let cont=m[1]; const amt=parseInt(m[2])||0; const items=cont.split('-').map(i=>i.trim()).filter(i=>i); const nums=[],zods=[]; items.forEach(item=>{ if(/^\d+$/.test(item))nums.push(item.padStart(2,'0')); else if(cfg.shengxiaoAttr[item]){ const zs=cfg.shengxiaoAttr[item]||[]; zs.forEach(z=>zods.push(z)); } else if(cfg.zodiac[item])zods.push(item); else if(cfg.toushuDanshuang&&cfg.toushuDanshuang[item]){ (cfg.toushuDanshuang[item]||[]).forEach(n=>nums.push(n.padStart(2,'0'))); } else { const nl=cfg.wuxing[item]||cfg.bose[item]||cfg.banbo[item]||cfg.danshuang[item]||cfg.weishu[item]||cfg.daxiaodanshuang[item]||cfg.daxiao[item]||cfg.heshu[item]||cfg.toushu[item]||cfg.menshu[item]||cfg.duanwei[item]||cfg.hedahexiao[item]||cfg.weidaweixiao[item]||cfg.hewei[item]||cfg.heshudanshuang[item]||cfg.toushuDanshuang[item]; if(nl)nl.forEach(n=>nums.push(n.padStart(2,'0'))); } }); return{numbers:nums,zodiacs:zods,amount:amt}; }
 function processCurrentOrder(input,user,isNormal,date=null){ const cfg=getAllConfigData(); const keys=getAllValidCategories(cfg); const lines=input.split('\n').filter(l=>l.trim()); if(!userBetData[user])userBetData[user]={}; const curZod=localStorage.getItem('selectedStartZodiac')||'马'; lines.forEach(line=>{ const{numbers,zodiacs,amount}=countItemsInLine(line,cfg,keys); const nMin=parseInt(document.getElementById('numAmountMin')?.value)||1,nMax=parseInt(document.getElementById('numAmountMax')?.value)||50000; const zMin=parseInt(document.getElementById('zodiacAmountMin')?.value)||1,zMax=parseInt(document.getElementById('zodiacAmountMax')?.value)||50000; if(isNormal){ if(zodiacs.length>0){ zodiacs.forEach(z=>{ const w=z===curZod?5:4; zodiacWeightedTotal+=amount*w; }); }else if(numbers.length>0){ numberOrderTotal+=numbers.length*amount; } } numbers.forEach(num=>{ if(isNormal){ userBetData[user][num]=(userBetData[user][num]||0)+amount; tableBetData[num]=(tableBetData[num]||0)+amount; reportBetData[num]=(reportBetData[num]||0)+amount; numberCount[num]=(numberCount[num]||0)+1; if(amount>=nMin&&amount<=nMax)numberAmountCount[num]=(numberAmountCount[num]||0)+1; }else{ userBetData[user][num]=(userBetData[user][num]||0)-amount; reportBetData[num]=(reportBetData[num]||0)-amount; reportAmountData[num]=(reportAmountData[num]||0)+amount; } }); zodiacs.forEach(z=>{ if(isNormal){ zodiacCount[z]=(zodiacCount[z]||0)+1; if(amount>=zMin&&amount<=zMax)zodiacAmountCount[z]=(zodiacAmountCount[z]||0)+1; (cfg.zodiac[z]||[]).forEach(n=>{ const num=n.padStart(2,'0'); userBetData[user][num]=(userBetData[user][num]||0)+amount; tableBetData[num]=(tableBetData[num]||0)+amount; reportBetData[num]=(reportBetData[num]||0)+amount; }); }else{ (cfg.zodiac[z]||[]).forEach(n=>{ const num=n.padStart(2,'0'); userBetData[user][num]=(userBetData[user][num]||0)-amount; reportBetData[num]=(reportBetData[num]||0)-amount; reportAmountData[num]=(reportAmountData[num]||0)+amount; }); } }); }); generateRiskTable(); generateReportTable(); renderFrequencyCards(); renderAmountFrequencyCards(); renderReportAmountTable(); updateReportAmountTotal(); updateAmountDisplays(); }
 
@@ -1820,6 +1820,7 @@ async function resetTable(){
   await clearAllReportOrderRecordsFromIDB();
   renderAllTablesPlaceholder();
   calculateStorageUsage();
+  updateAmountDisplays();
   showToast("清空完成");
 }
 function clearAllInput(){ const si=document.querySelector('.source-order-input'); if(si)si.value=''; const re=document.getElementById('orderResult'); if(re)re.innerHTML=''; updateOrderTotalDisplay(); }
@@ -1827,7 +1828,56 @@ async function pasteOrder(){ try{ const text=await navigator.clipboard.readText(
 
 // ===== 导出导入 =====
 async function exportData(){ try{ const orders=await getOrderRecords(); const reports=await getReportOrderRecords(); const config=localStorage.getItem('customDataConfigObj'); const presets=localStorage.getItem('replacePresets'); const aliases=localStorage.getItem('categoryAliases'); const prefixes=localStorage.getItem('customPrefixes'); const suffixes=localStorage.getItem('customSuffixes'); const amountSuffixes=localStorage.getItem('customAmountSuffixes'); const amountPrefixes=localStorage.getItem('customAmountPrefixes'); const data={orders,reports,config,presets,aliases,prefixes,suffixes,amountSuffixes,amountPrefixes,exportTime:new Date().toISOString()}; const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'}); const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download=`港澳识别数据_${getTodayCST()}.json`; a.click(); URL.revokeObjectURL(url); }catch(e){showToast('导出失败');} }
-async function importData(){ const inp=document.createElement('input'); inp.type='file'; inp.accept='.json'; inp.style.display='none'; document.body.appendChild(inp); inp.onchange=async(e)=>{ const file=e.target.files[0]; if(!file){document.body.removeChild(inp);return;} const reader=new FileReader(); reader.onload=async(ev)=>{ try{ const data=JSON.parse(ev.target.result); if(!data.orders||!data.reports){showToast('无效格式');document.body.removeChild(inp);return;} const eo=await getOrderRecords(); const er=await getReportOrderRecords(); let so=0,no=0; for(const r of data.orders){if(eo.find(o=>o.timestamp===r.timestamp&&o.content===r.content&&o.user===r.user))so++;else no++;} let sr=0,nr=0; for(const r of data.reports){if(er.find(o=>o.timestamp===r.timestamp&&o.content===r.content&&o.user===r.user))sr++;else nr++;} const tn=no+nr; if(tn===0){showToast(`没有新记录。\n当前已有下单${eo.length}条，上报${er.length}条。`);document.body.removeChild(inp);return;} const msg=`当前已有：\n下单${eo.length}条\n上报${er.length}条\n\n导入文件：\n下单${data.orders.length}条（重复${so}，新增${no}）\n上报${data.reports.length}条（重复${sr}，新增${nr}）\n\n是否导入新增${tn}条？`; const cf=await confirm(msg); if(!cf){document.body.removeChild(inp);return;} for(const r of data.orders){if(!eo.find(o=>o.timestamp===r.timestamp&&o.content===r.content&&o.user===r.user))await saveOrderRecordToIDB(r.content,r.user,r.date,r.totalAmount||0);} for(const r of data.reports){if(!er.find(o=>o.timestamp===r.timestamp&&o.content===r.content&&o.user===r.user))await saveReportOrderRecordToIDB(r.content,r.user,r.date,r.totalAmount||0);} if(data.config)localStorage.setItem('customDataConfigObj',data.config); if(data.presets)localStorage.setItem('replacePresets',data.presets); if(data.aliases)localStorage.setItem('categoryAliases',data.aliases); if(data.prefixes)localStorage.setItem('customPrefixes',data.prefixes); if(data.suffixes)localStorage.setItem('customSuffixes',data.suffixes); if(data.amountSuffixes)localStorage.setItem('customAmountSuffixes',data.amountSuffixes); if(data.amountPrefixes)localStorage.setItem('customAmountPrefixes',data.amountPrefixes); await updateTableFromRecords(); calculateStorageUsage(); showToast(`成功导入${tn}条新记录。`); document.body.removeChild(inp); }catch(err){showToast('导入失败');document.body.removeChild(inp);} }; reader.onerror=()=>{showToast('读取失败');document.body.removeChild(inp);}; reader.readAsText(file); }; inp.addEventListener('cancel',()=>{document.body.removeChild(inp);}); inp.click(); }
+async function importData(){
+  const inp=document.createElement('input'); inp.type='file'; inp.accept='.json'; inp.style.display='none';
+  document.body.appendChild(inp);
+  inp.onchange=async(e)=>{
+    const file=e.target.files[0];
+    if(!file){document.body.removeChild(inp);return;}
+    const reader=new FileReader();
+    reader.onload=async(ev)=>{
+      try{
+        const data=JSON.parse(ev.target.result);
+        if(!data.orders||!data.reports){showToast('无效格式');document.body.removeChild(inp);return;}
+        const eo=await getOrderRecords();
+        const er=await getReportOrderRecords();
+        let so=0,no=0;
+        for(const r of data.orders){
+          if(eo.find(o=>o.content===r.content&&o.user===r.user&&o.date===r.date))so++;
+          else{
+            try{await saveOrderRecordToIDB(r.content,r.user,r.date,r.totalAmount||0);no++;}
+            catch(e){console.error('导入订单失败',e);}
+          }
+        }
+        let sr=0,nr=0;
+        for(const r of data.reports){
+          if(er.find(o=>o.content===r.content&&o.user===r.user&&o.date===r.date))sr++;
+          else{
+            try{await saveReportOrderRecordToIDB(r.content,r.user,r.date,r.totalAmount||0);nr++;}
+            catch(e){console.error('导入上报失败',e);}
+          }
+        }
+        const tn=no+nr;
+        if(tn===0){showToast(`没有新记录。\n当前已有下单${eo.length}条，上报${er.length}条。`);document.body.removeChild(inp);return;}
+        if(data.config)localStorage.setItem('customDataConfigObj',data.config);
+        if(data.presets)localStorage.setItem('replacePresets',data.presets);
+        if(data.aliases)localStorage.setItem('categoryAliases',data.aliases);
+        if(data.prefixes)localStorage.setItem('customPrefixes',data.prefixes);
+        if(data.suffixes)localStorage.setItem('customSuffixes',data.suffixes);
+        if(data.amountSuffixes)localStorage.setItem('customAmountSuffixes',data.amountSuffixes);
+        if(data.amountPrefixes)localStorage.setItem('customAmountPrefixes',data.amountPrefixes);
+        await updateTableFromRecords();
+        calculateStorageUsage();
+        showToast(`成功导入${tn}条新记录。`);
+        document.body.removeChild(inp);
+      }catch(err){showToast('导入失败');document.body.removeChild(inp);}
+    };
+    reader.onerror=()=>{showToast('读取失败');document.body.removeChild(inp);};
+    reader.readAsText(file);
+  };
+  inp.addEventListener('cancel',()=>{document.body.removeChild(inp);});
+  inp.click();
+}
 
 // ===== 卡密管理 =====
 function showCardManager() {
