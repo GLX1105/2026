@@ -426,6 +426,17 @@ tr.selected-row {background-color: #dceeff !important; font-weight: bold; box-sh
 .parse-inline {
   font-size:12px; color:blue; line-height:1.6; white-space:pre-wrap; word-break:break-word;
 }
+
+/* 统计区域对齐样式（缩小字体和间距） */
+.stats-block { display:inline-flex; flex-direction:column; gap:1px; vertical-align:middle; }
+.stats-row { display:flex; gap:4px; white-space:nowrap; align-items:center; }
+.stat-col { display:inline-flex; align-items:center; min-width:68px; font-size:12px; }
+.stat-col .slabel { color:#000; }
+.stat-val-amount { color:#3498db; }
+.stat-val-special { color:#e74c3c; }
+.stat-val-profit { color:#27ae60; }
+.stat-val-loss { color:#e74c3c; }
+.stat-val-count { color:#000; }
 </style>
 </head>
 <body>
@@ -867,7 +878,7 @@ function showRecognizeModal() {
           <button class="btn btn-amount-prefix" onclick="showAmountPrefixManager()">金额前缀</button>
           <button class="btn btn-amount-prefix2" onclick="showAmountSuffixManager()">金额后缀</button>
         </div>
-        <div class="order-input-container" style="flex:1;"><div class="input-column"><div class="box-label">订单输入框</div><textarea class="source-order-input" placeholder="" oninput="convertOrderText()"></textarea></div><div class="result-column"><div class="box-label">识别结果</div><div class="result-area-new"><div class="result-content" id="orderResult" contenteditable="false"></div></div></div></div>
+        <div class="order-input-container" style="flex:1;"><div class="input-column"><div class="box-label">订单输入框</div><textarea class="source-order-input" oninput="convertOrderText()"></textarea></div><div class="result-column"><div class="box-label">识别结果</div><div class="result-area-new"><div class="result-content" id="orderResult" contenteditable="false"></div></div></div></div>
         <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;">
           <button class="btn btn-paste" onclick="pasteOrder()">粘贴订单</button><button class="btn btn-save-order" onclick="saveOrder()">保存下单</button><button class="btn btn-report" onclick="saveReportOrder()">上报</button><button class="btn btn-clear" onclick="clearAllInput()">清空</button><button class="btn btn-replace-sep" onclick="replaceSeparators()">换分隔</button><button class="btn btn-remove-sep" onclick="removeSeparators()">去分隔</button><button class="btn btn-mark" onclick="markSelection()">标记</button><button class="btn btn-cancel" onclick="semanticReplace()">语义转换</button>
           <span id="invalidTokensDisplay" style="color:red; font-size:12px; display:none; white-space:pre-line; margin-left:auto;"></span>
@@ -1037,13 +1048,13 @@ function renderCustomConfigContainer() {
 async function addCustomCategory() {
   const label = await prompt('请输入新分类名称（如：大尾）');
   if (!label) return;
-  const value = await prompt(`请输入“${label}”对应的号码或分类名（空格分隔，例如：01 02 牛 马）`);
+  const value = await prompt(`请输入"${label}"对应的号码或分类名（空格分隔，例如：01 02 牛 马）`);
   if (value === null) return;
   const cats = loadCustomCategories();
   cats.push({ label, value: value.trim() });
   saveCustomCategories(cats);
   renderCustomConfigContainer();
-  showToast('自定义分类已添加，请点击“保存”按钮存储配置');
+  showToast('自定义分类已添加，请点击"保存"按钮存储配置');
 }
 
 async function deleteCustomCategory() {
@@ -1057,7 +1068,7 @@ async function deleteCustomCategory() {
   cats.splice(idx, 1);
   saveCustomCategories(cats);
   renderCustomConfigContainer();
-  showToast('自定义分类已删除，请点击“保存”按钮使更改生效');
+  showToast('自定义分类已删除，请点击"保存"按钮使更改生效');
 }
 
 function deleteCustomCategoryByIndex(index) {
@@ -1275,7 +1286,7 @@ function convertOrderText() {
     return /^(0[1-9]|[1-4][0-9]|49?|[1-9])$/.test(token);
   }
 
-  const PUNCT_REGEX = /[\s,，.。、+\-*＊\/\\|!@#$%^&*()=+_{}\[\]:;"'<>,.?\/~！@#￥%…&*（）—+【】{}|：“”；‘’《》，。？、]/g;
+  const PUNCT_REGEX = /[\s,，.。、+\-*＊\/\\|!@#$%^&*()=+_{}\[\]:;"'<>,.?\/~！@#￥%…&*（）—+【】{}|："；"''《》，。？、]/g;
 
   function isValidToken(token) {
     const clean = token.replace(PUNCT_REGEX, '');
@@ -1670,66 +1681,89 @@ function orderContainsTarget(content,targetNum,cfg){ if(!targetNum)return true; 
 function formatTimestampToCST(iso){ const d=new Date(iso); return new Intl.DateTimeFormat('zh-CN',{year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false,timeZone:'Asia/Shanghai'}).format(d); }
 function getUserColor(u){ let h=0; for(let i=0;i<u.length;i++)h=u.charCodeAt(i)+((h<<5)-h); const hue=(h%360+360)%360; return`hsl(${hue},70%,45%)`; }
 
+// ===== 独立的统计区域渲染函数 =====
+function renderOrderStats(allOrders, allReports, filterUser, prizeNum) {
+  const container = document.getElementById('orderStatsContainer');
+  if (!container) return;
+
+  const mul = parseFloat(document.getElementById('multipleVal')?.value) || 1;
+  const rr = parseFloat(document.getElementById('rebateRate')?.value) || 0;
+  const cfg = getAllConfigData();
+
+  // 总额：基于全部订单（不随对奖号码）
+  let totalAmountSum = 0;
+  allOrders.forEach(it => { totalAmountSum += it.totalAmount || 0; });
+
+  // 上报金额：基于全部上报（不随对奖号码）
+  let reportTotalAmount = 0;
+  allReports.forEach(it => { reportTotalAmount += it.totalAmount || 0; });
+
+  // 以下统计基于对奖号码
+  let totalSpecial = 0, reportSpecial = 0, hitCount = 0;
+  if (prizeNum) {
+    const num = prizeNum.padStart(2, '0');
+    // 总特
+    if (filterUser === 'all' || !filterUser) {
+      totalSpecial = tableBetData[num] || 0;
+    } else {
+      const userData = userBetData[filterUser] || {};
+      totalSpecial = userData[num] || 0;
+    }
+    // 中几条
+    allOrders.forEach(it => {
+      if (orderContainsTarget(it.content, prizeNum, cfg)) hitCount++;
+    });
+    // 上报特
+    allReports.forEach(it => {
+      if (orderContainsTarget(it.content, prizeNum, cfg)) {
+        reportSpecial += it.totalAmount || 0;
+      }
+    });
+  }
+
+  // 计算盈亏
+  const totalProfit = totalAmountSum - totalSpecial * mul - totalAmountSum * (rr / 100);
+  const reportProfit = reportTotalAmount - reportSpecial * mul - reportTotalAmount * (rr / 100);
+  const netProfit = totalProfit - reportProfit;
+
+  const showStats = prizeNum && prizeNum.trim() !== '';
+  let html = '<div class="stats-block">';
+  html += '<div class="stats-row">';
+  // 总额（始终显示，但有数据才显示）
+  if (totalAmountSum > 0) {
+    html += `<span class="stat-col"><span class="slabel">总额:</span><span class="stat-val-amount">${totalAmountSum}</span></span>`;
+  }
+  if (showStats) {
+    html += `<span class="stat-col"><span class="slabel">总特:</span><span class="stat-val-special">${totalSpecial}</span></span>`;
+    const tp = Math.round(totalProfit);
+    const tlabel = tp >= 0 ? '总盈' : '总亏';
+    const tcls = tp >= 0 ? 'stat-val-profit' : 'stat-val-loss';
+    html += `<span class="stat-col"><span class="slabel">${tlabel}:</span><span class="${tcls}">${tp}</span></span>`;
+    html += `<span class="stat-col"><span class="slabel">中:</span><span class="stat-val-count">${hitCount}条</span></span>`;
+  }
+  html += '</div>';
+  html += '<div class="stats-row">';
+  if (reportTotalAmount > 0) {
+    html += `<span class="stat-col"><span class="slabel">上报金额:</span><span class="stat-val-amount">${reportTotalAmount}</span></span>`;
+  }
+  if (showStats) {
+    html += `<span class="stat-col"><span class="slabel">上报特:</span><span class="stat-val-special">${reportSpecial}</span></span>`;
+    const rp = Math.round(reportProfit);
+    const rlabel = rp >= 0 ? '报盈' : '报亏';
+    const rcls = rp >= 0 ? 'stat-val-profit' : 'stat-val-loss';
+    html += `<span class="stat-col"><span class="slabel">${rlabel}:</span><span class="${rcls}">${rp}</span></span>`;
+    const np = Math.round(netProfit);
+    const nlabel = np >= 0 ? '盈' : '亏';
+    const ncls = np >= 0 ? 'stat-val-profit' : 'stat-val-loss';
+    html += `<span class="stat-col"><span class="slabel">${nlabel}:</span><span class="${ncls}">${np}</span></span>`;
+  }
+  html += '</div>';
+  html += '</div>';
+  container.innerHTML = html;
+}
+
 function updatePrizeStats(pn) {
-  const totalBetEl = document.getElementById('prizeTotalBet');
-  const totalSpecialEl = document.getElementById('prizeTotalSpecial');
-  const specialEl = document.getElementById('prizeSpecial');
-  const profitEl = document.getElementById('prizeProfit');
-
-  if (!totalBetEl || !totalSpecialEl || !specialEl || !profitEl) return;
-
-  if (!pn) {
-    totalBetEl.style.display = 'none';
-    totalBetEl.textContent = '';
-    totalSpecialEl.style.display = 'none';
-    totalSpecialEl.textContent = '';
-    specialEl.style.display = 'none';
-    specialEl.textContent = '';
-    profitEl.style.display = 'none';
-    profitEl.textContent = '';
-    return;
-  }
-
-  const num = pn.padStart(2, '0');
-
-  const totalBet = Object.values(tableBetData).reduce((sum, val) => sum + val, 0);
-  if (totalBet > 0) {
-    totalBetEl.style.display = 'inline';
-    totalBetEl.innerHTML = `<span style="color:black;">总额:</span><span style="color:blue;">${totalBet}</span>`;
-  } else {
-    totalBetEl.style.display = 'none';
-    totalBetEl.textContent = '';
-  }
-
-  const totalBetNum = tableBetData[num] || 0;
-  if (totalBetNum > 0) {
-    totalSpecialEl.style.display = 'inline';
-    totalSpecialEl.innerHTML = `<span style="color:black;">总特:</span><span style="color:red;">${totalBetNum}</span>`;
-  } else {
-    totalSpecialEl.style.display = 'none';
-    totalSpecialEl.textContent = '';
-  }
-
-  const reportBetNum = reportBetData[num] || 0;
-  if (reportBetNum > 0) {
-    specialEl.style.display = 'inline';
-    specialEl.innerHTML = `<span style="color:black;">特:</span><span style="color:red;">${reportBetNum}</span>`;
-  } else {
-    specialEl.style.display = 'none';
-    specialEl.textContent = '';
-  }
-
-  const risk = reportRiskData[num] !== undefined ? reportRiskData[num] : 0;
-  if (risk > 0) {
-    profitEl.style.display = 'inline';
-    profitEl.innerHTML = `<span style="color:black;">盈:</span><span style="color:blue;">${risk}</span>`;
-  } else if (risk < 0) {
-    profitEl.style.display = 'inline';
-    profitEl.innerHTML = `<span style="color:black;">亏:</span><span style="color:red;">${risk}</span>`;
-  } else {
-    profitEl.style.display = 'none';
-    profitEl.textContent = '';
-  }
+  // 保留兼容，实际由renderOrderStats处理
 }
 
 async function applyPrizeFilter(){
@@ -1738,45 +1772,52 @@ async function applyPrizeFilter(){
   const sd = document.getElementById('filterDate')?.value;
   const pn=pi.value.trim(),uv=uf.value;
   const recs=await getOrderRecords();
-  let filtered=uv==='all'?recs:recs.filter(r=>r.user===uv);
-  if(sd)filtered=filtered.filter(r=>r.date===sd);
-  const cfg=getAllConfigData();
-  let final=[];
-  if(pn){for(const it of filtered){if(orderContainsTarget(it.content,pn,cfg))final.push(it);}}else{final=filtered;}
+  const reports=await getReportOrderRecords();
+  const fRecs = sd ? recs.filter(r=>r.date===sd) : recs;
+  const fReps = sd ? reports.filter(r=>r.date===sd) : reports;
+  const userOrders = uv==='all' ? fRecs : fRecs.filter(r=>r.user===uv);
+  const userReports = uv==='all' ? fReps : fReps.filter(r=>r.user===uv);
+  let filtered=pn ? [] : [...userOrders];
+  if(pn){
+    const cfg=getAllConfigData();
+    for(const it of userOrders){ if(orderContainsTarget(it.content,pn,cfg)) filtered.push(it); }
+  }
   const cont=document.getElementById('orderListContainer');
   if(!cont)return;
-  if(final.length===0){cont.innerHTML='<div style="padding:20px;text-align:center;color:#666;">暂无匹配订单</div>';}
+  if(filtered.length===0){cont.innerHTML='<div style="padding:20px;text-align:center;color:#666;">暂无匹配订单</div>';}
   else{
-    cont.innerHTML=final.map(it=>{
+    const cfg=getAllConfigData();
+    cont.innerHTML=filtered.map(it=>{
       const ts=formatTimestampToCST(it.timestamp),ud=it.user||'未知',col=getUserColor(ud),ta=it.totalAmount||0;
       const lines=it.content.split('\n');
       const hl=lines.map(l=>{const m=l.match(/^(.+?)\s+各数\s+(\d+)$/);if(!m)return l;const cont=m[1],amt=m[2];const hc=highlightContent(cont,pn,cfg);return`${hc} 各数 ${amt}`;}).join('<br>');
       return`<div class="order-item"><input type="checkbox" class="order-check" data-id="${it.id}"><div class="order-content">${hl}</div><div class="order-info"><span class="order-total" style="color:#000;">合计：${ta}</span><span class="order-meta"><span style="color:${col};">用户：${ud}</span> &nbsp; ${ts}</span></div><button class="order-del" onclick="deleteOrderRecord('${it.id}')">删除</button></div>`;
     }).join('');
   }
-  updatePrizeStats(pn);
+  renderOrderStats(userOrders, userReports, uv, pn);
 }
 
 async function showOrderRecord(filter='all'){
   try{
     const recs=await getOrderRecords(),users=getUsers(),today=getTodayCST();
+    const reports=await getReportOrderRecords();
+    const fd=document.getElementById('filterDate')?.value;
+    const fRecs=fd?recs.filter(r=>r.date===fd):recs;
+    const fReps=fd?reports.filter(r=>r.date===fd):reports;
     if(document.getElementById('orderWin'))document.getElementById('orderWin').remove();
     const w=document.createElement('div'); w.className='floating-window'; w.id='orderWin';
     w.style.width='750px'; w.style.height='600px'; w.style.left='50%'; w.style.top='50%'; w.style.transform='translate(-50%,-50%)';
     let html=`<div class="modal-header"><h3>下单记录</h3><div class="window-controls"><button onclick="maximizeWindow('orderWin')">🗖</button><button onclick="document.getElementById('orderWin').remove()">×</button></div></div><div class="modal-body" style="display:flex; flex-direction:column; height: calc(100% - 120px);">`;
-    html+=`<div style="margin-bottom:10px;display:flex;gap:12px;flex-wrap:wrap;align-items:center;position:sticky;top:0;background:rgba(255,255,255,0.9);z-index:2;padding:5px 0;"><select id="recordUserFilter" onchange="applyPrizeFilter()" style="padding:4px 8px;border-radius:4px;border:1px solid #ccc;"><option value="all" ${filter==='all'?'selected':''}>全部用户</option>`;
+    html+=`<div style="margin-bottom:6px;display:flex;gap:12px;flex-wrap:wrap;align-items:center;position:sticky;top:0;background:rgba(255,255,255,0.9);z-index:2;padding:5px 0;"><select id="recordUserFilter" onchange="applyPrizeFilter()" style="padding:4px 8px;border-radius:4px;border:1px solid #ccc;"><option value="all" ${filter==='all'?'selected':''}>全部用户</option>`;
     users.forEach(u=>html+=`<option value="${u}" ${u===filter?'selected':''}>${u}</option>`);
     html+=`</select><button onclick="checkAll()" style="padding:6px 12px;background:#007bff;color:#fff;border:none;border-radius:4px;">全选</button><button onclick="uncheckAll()" style="padding:6px 12px;background:#6c757d;color:#fff;border:none;border-radius:4px;">取消全选</button><button onclick="deleteChecked()" style="padding:6px 12px;background:#e74c3c;color:#fff;border:none;border-radius:4px;">批量删除</button>
-    <span style="display:inline-flex; align-items:center; gap:16px; margin-left:auto;">
-      <span id="prizeTotalBet" style="display:none;"></span>
-      <span id="prizeTotalSpecial" style="display:none;"></span>
-      <span id="prizeSpecial" style="display:none;"></span>
-      <span id="prizeProfit" style="display:none;"></span>
-      <span>对奖:</span><input type="text" id="prizeNumberInput" maxlength="2" oninput="applyPrizeFilter()" style="padding:4px;border-radius:4px;border:1px solid #ccc;width:50px;margin-left:0;">
+    <span style="display:flex;align-items:center;gap:3px;margin-left:auto;">
+      <span id="orderStatsContainer" style="margin-right:4px;"></span>
+      <span style="display:flex;align-items:center;gap:2px;"><span>对奖:</span><input type="text" id="prizeNumberInput" maxlength="2" oninput="applyPrizeFilter()" style="padding:4px;border-radius:4px;border:1px solid #ccc;width:50px;"></span>
     </span></div>`;
     html+=`<div id="orderListContainer" style="flex:1; overflow-y:auto;">`;
-    const filterDateVal = document.getElementById('filterDate')?.value || today;
-    const df=recs.filter(r=>r.date===filterDateVal);
+    const filterDateVal = fd || today;
+    const df=fRecs;
     const fin=(filter==='all')?df:df.filter(r=>r.user===filter);
     if(fin.length===0)html+=`<div style="padding:20px;text-align:center;color:#666;">暂无订单记录</div>`;
     else{
@@ -1788,14 +1829,11 @@ async function showOrderRecord(filter='all'){
     html+=`</div></div><div class="modal-footer"><button onclick="document.getElementById('orderWin').remove()" style="padding:8px 16px;background:#6c757d;color:#fff;border:none;border-radius:4px;">关闭</button></div>`;
     w.innerHTML=html; document.body.appendChild(w);
     makeWindowDraggable('orderWin'); highestZ+=1; w.style.zIndex=highestZ;
-    setTimeout(() => {
-      const pi = document.getElementById('prizeNumberInput');
-      if (pi && pi.value.trim()) {
-        applyPrizeFilter();
-      } else {
-        updatePrizeStats('');
-      }
-    }, 0);
+    // 初始渲染统计
+    const uv = filter || 'all';
+    const userOrders = uv==='all' ? fRecs : fRecs.filter(r=>r.user===uv);
+    const userReports = uv==='all' ? fReps : fReps.filter(r=>r.user===uv);
+    renderOrderStats(userOrders, userReports, uv, '');
   }catch(e){showToast('加载失败');}
 }
 
@@ -2393,30 +2431,6 @@ applyReportCap = function() {
     document.getElementById('parseResultArea').innerText = '';
   }
 };
-
-// ===== 剪贴板自动检测填入（从微信等外部应用切回浏览器时） =====
-document.addEventListener('visibilitychange', async () => {
-  if (document.visibilityState === 'visible') {
-    // 页面变为可见，检查是否打开了识别弹窗
-    const recognizeWin = document.getElementById('recognizeWin');
-    if (recognizeWin) {
-      try {
-        const text = await navigator.clipboard.readText();
-        if (text && text.trim()) {
-          const textarea = recognizeWin.querySelector('.source-order-input');
-          if (textarea && textarea.value.trim() === '') {
-            // 只有输入框为空时才自动填入，避免覆盖已输入内容
-            textarea.value = text;
-            convertOrderText();
-            showToast('已从剪贴板填入文本');
-          }
-        }
-      } catch (err) {
-        // 无权限或剪贴板为空，忽略
-      }
-    }
-  }
-});
 
 window.onload = async () => {
   await initIndexedDB();
