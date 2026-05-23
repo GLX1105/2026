@@ -1678,6 +1678,31 @@ function getNumberListForCategory(cat,cfg){ const nums=[]; if(cfg.shengxiaoAttr[
 function isTokenMatching(token,targetNum,cfg){ const t=targetNum.padStart(2,'0'); if(/^\d{1,2}$/.test(token))return token.padStart(2,'0')===t; const vc=getAllValidCategories(cfg); if(vc.has(token)){const nums=getNumberListForCategory(token,cfg);return nums.includes(t);} return false; }
 function highlightContent(content,targetNum,cfg){ if(!targetNum)return content; const t=targetNum.padStart(2,'0'); const parts=[];let tmp=''; for(const ch of content){if(ch==='-'||ch===' '){if(tmp)parts.push(tmp);parts.push(ch);tmp='';}else{tmp+=ch;}} if(tmp)parts.push(tmp); return parts.map(p=>{if(p==='-'||p===' ')return p;if(isTokenMatching(p,targetNum,cfg))return`<span class="highlight-number">${p}</span>`;return p;}).join(''); }
 function orderContainsTarget(content,targetNum,cfg){ if(!targetNum)return true; const t=targetNum.padStart(2,'0'); const lines=content.split('\n'); for(const line of lines){ const m=line.match(/^(.+?)\s+各数\s+(\d+)$/); if(!m)continue; const cont=m[1]; const parts=[];let tmp=''; for(const ch of cont){if(ch==='-'||ch===' '){if(tmp)parts.push(tmp);tmp='';}else{tmp+=ch;}} if(tmp)parts.push(tmp); for(const p of parts){if(p!=='-'&&p!==' '&&isTokenMatching(p,targetNum,cfg))return true;} } return false; }
+// 【新增】获取上报订单中，包含目标号码的行的金额总和
+function getSpecialAmountFromOrder(content, prizeNum, cfg) {
+  if (!prizeNum) return 0;
+  const targetNum = prizeNum.padStart(2, '0');
+  const lines = content.split('\n');
+  let total = 0;
+  for (const line of lines) {
+    const match = line.match(/^(.+?)\s+各数\s+(\d+)$/);
+    if (!match) continue;
+    const tokensPart = match[1];
+    const amount = parseInt(match[2]) || 0;
+    const tokens = tokensPart.split('-').map(t => t.trim()).filter(t => t);
+    let hit = false;
+    for (const token of tokens) {
+      if (isTokenMatching(token, targetNum, cfg)) {
+        hit = true;
+        break;
+      }
+    }
+    if (hit) {
+      total += amount;
+    }
+  }
+  return total;
+}
 function formatTimestampToCST(iso){ const d=new Date(iso); return new Intl.DateTimeFormat('zh-CN',{year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false,timeZone:'Asia/Shanghai'}).format(d); }
 function getUserColor(u){ let h=0; for(let i=0;i<u.length;i++)h=u.charCodeAt(i)+((h<<5)-h); const hue=(h%360+360)%360; return`hsl(${hue},70%,45%)`; }
 
@@ -1713,11 +1738,9 @@ function renderOrderStats(allOrders, allReports, filterUser, prizeNum) {
     allOrders.forEach(it => {
       if (orderContainsTarget(it.content, prizeNum, cfg)) hitCount++;
     });
-    // 上报特
+    // 上报特：修改为只统计包含该号码的行的金额
     allReports.forEach(it => {
-      if (orderContainsTarget(it.content, prizeNum, cfg)) {
-        reportSpecial += it.totalAmount || 0;
-      }
+      reportSpecial += getSpecialAmountFromOrder(it.content, prizeNum, cfg);
     });
   }
 
