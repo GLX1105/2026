@@ -161,6 +161,15 @@ input[type="number"] {
     box-shadow: 0 0 12px rgba(46,134,193,0.7);
     border-color: #7fb3d8 !important;
 }
+/* 识别按钮绿色 */
+.btn-recognize {
+    background: #27ae60 !important;
+    border-color: #2ecc71 !important;
+    color: #fff !important;
+}
+.btn-recognize:hover {
+    background: #2ecc71 !important;
+}
 
 .container {width:100%;max-width:1400px;margin:0 auto;padding:10px;display:flex;flex-direction:row;gap:15px;align-items:flex-start;}
 .recognize-wrap {flex:1;min-width:0;display:flex;flex-direction:column;gap:15px;}
@@ -479,8 +488,8 @@ tr.selected-row {background-color: #dceeff !important; font-weight: bold; box-sh
     <button class="btn btn-hongkong" id="btnHongkong" onclick="switchRegion('hongkong')">香港</button>
   </div>
   <div class="navbar-actions" id="navbarActions">
-    <button class="btn" onclick="showRecognizeModal()">识别</button>
-    <button class="btn btn-reset" onclick="resetTable()">清空</button>
+    <button class="btn btn-recognize" onclick="showRecognizeModal()">识别</button>
+    <button class="btn btn-reset" id="resetBtn" onclick="resetTable()">清空</button>
     <button class="btn btn-save-order" onclick="showOrderRecord()">订单记录</button>
     <button class="btn btn-primary" onclick="showReportOrderRecord()">上报数据</button>
     <button class="btn btn-primary" onclick="showUserManager()">添加用户</button>
@@ -2018,6 +2027,58 @@ async function deleteCheckedReport(){
   }
 }
 
+// ===== 清空功能（默认清空当前地区，长按3秒清空全部） =====
+let resetLongPressTimer = null;
+const resetBtn = document.getElementById('resetBtn');
+if (resetBtn) {
+  resetBtn.addEventListener('mousedown', () => {
+    resetLongPressTimer = setTimeout(async () => {
+      resetLongPressTimer = null;
+      const confirmed = await confirm('长按清空：确定要清空香港和澳门全部订单和上报数据吗？此操作不可恢复！');
+      if (!confirmed) return;
+      const pwd = await prompt("输入清空密码：","");
+      if (pwd !== PASSWORD) { await alert("密码错误"); return; }
+      await clearAllOrderRecordsFromIDB();
+      await clearAllReportOrderRecordsFromIDB();
+      clearMemoryData();
+      renderAllTablesPlaceholder();
+      calculateStorageUsage();
+      updateAmountDisplays();
+      showToast('已清空香港和澳门全部数据');
+    }, 3000);
+  });
+  resetBtn.addEventListener('mouseup', () => {
+    if (resetLongPressTimer) { clearTimeout(resetLongPressTimer); resetLongPressTimer = null; }
+  });
+  resetBtn.addEventListener('mouseleave', () => {
+    if (resetLongPressTimer) { clearTimeout(resetLongPressTimer); resetLongPressTimer = null; }
+  });
+  // 触摸事件
+  resetBtn.addEventListener('touchstart', (e) => {
+    resetLongPressTimer = setTimeout(async () => {
+      resetLongPressTimer = null;
+      const confirmed = await confirm('长按清空：确定要清空香港和澳门全部订单和上报数据吗？此操作不可恢复！');
+      if (!confirmed) return;
+      const pwd = await prompt("输入清空密码：","");
+      if (pwd !== PASSWORD) { await alert("密码错误"); return; }
+      await clearAllOrderRecordsFromIDB();
+      await clearAllReportOrderRecordsFromIDB();
+      clearMemoryData();
+      renderAllTablesPlaceholder();
+      calculateStorageUsage();
+      updateAmountDisplays();
+      showToast('已清空香港和澳门全部数据');
+    }, 3000);
+    e.preventDefault();
+  });
+  resetBtn.addEventListener('touchend', () => {
+    if (resetLongPressTimer) { clearTimeout(resetLongPressTimer); resetLongPressTimer = null; }
+  });
+  resetBtn.addEventListener('touchcancel', () => {
+    if (resetLongPressTimer) { clearTimeout(resetLongPressTimer); resetLongPressTimer = null; }
+  });
+}
+
 async function resetTable(){
   const regionName = currentRegion === 'macau' ? '澳门' : '香港';
   const confirmed = await confirm(`确定清空当前地区（${regionName}）的所有订单和上报数据吗？此操作不可恢复。`);
@@ -2025,9 +2086,7 @@ async function resetTable(){
   const pwd = await prompt("输入清空密码：","");
   if (pwd !== PASSWORD) { await alert("密码错误"); return; }
 
-  tableBetData={};userBetData={};reportBetData={};reportAmountData={};reportRiskData={};
-  numberCount={};zodiacCount={};numberAmountCount={};zodiacAmountCount={};
-  numberOrderTotal=0;zodiacWeightedTotal=0;
+  clearMemoryData();
   await clearAllOrderRecordsFromIDB(currentRegion);
   await clearAllReportOrderRecordsFromIDB(currentRegion);
   renderAllTablesPlaceholder();
