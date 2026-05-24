@@ -40,9 +40,21 @@ body {background:#f5f7fa;font-size:14px;line-height:1.4;overflow-x:hidden;positi
     .extra-input-group {flex-direction:column!important;gap:6px!important;}
     .extra-long-input,.extra-short-input {width:100%!important;}
     .navbar {padding:8px 10px!important;flex-wrap:wrap!important;}
-    .navbar-title {font-size:16px!important;margin-bottom:5px!important;width:100%!important;text-align:center!important;}
+    .navbar > div:first-child {
+        width: 100% !important;
+        justify-content: center !important;
+        margin-bottom: 5px !important;
+    }
+    .navbar-title {font-size:16px!important;margin-bottom:0!important;width:auto!important;text-align:center!important;}
     .navbar-actions {width:100%!important;justify-content:center!important;flex-wrap:wrap!important;gap:5px!important;}
     .btn {padding:6px 8px!important;font-size:12px!important;min-height:32px!important;flex:1!important;min-width:60px!important;}
+    .btn-macau, .btn-hongkong {
+        padding: 4px 10px !important;
+        font-size: 12px !important;
+        min-height: 28px !important;
+        flex: none !important;
+        min-width: auto !important;
+    }
     .floating-window {width:95%!important;min-width:300px!important;}
     .modal-header {padding:8px 10px!important;}
     .modal-body {padding:8px!important;}
@@ -71,7 +83,6 @@ select {
     vertical-align: middle;
 }
 
-/* 去掉数字输入框的微调按钮 */
 input[type="number"]::-webkit-inner-spin-button,
 input[type="number"]::-webkit-outer-spin-button {
   -webkit-appearance: none;
@@ -122,6 +133,33 @@ input[type="number"] {
 .navbar-actions .btn:active {
     transform: translateY(1px);
     box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+.btn-macau {
+    background: #c0392b !important;
+    border-color: #e74c3c !important;
+    color: #fff !important;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    box-shadow: 0 2px 8px rgba(192,57,43,0.4);
+}
+.btn-macau.region-active {
+    background: #e74c3c !important;
+    box-shadow: 0 0 12px rgba(231,76,60,0.7);
+    border-color: #f1948a !important;
+}
+.btn-hongkong {
+    background: #2471a3 !important;
+    border-color: #2e86c1 !important;
+    color: #fff !important;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    box-shadow: 0 2px 8px rgba(36,113,163,0.4);
+}
+.btn-hongkong.region-active {
+    background: #2e86c1 !important;
+    box-shadow: 0 0 12px rgba(46,134,193,0.7);
+    border-color: #7fb3d8 !important;
 }
 
 .container {width:100%;max-width:1400px;margin:0 auto;padding:10px;display:flex;flex-direction:row;gap:15px;align-items:flex-start;}
@@ -190,7 +228,6 @@ td {border:1px solid #ddd;padding:5px 6px;text-align:center;white-space:nowrap;}
 #riskTable th:nth-child(5),#riskTable td:nth-child(5),#reportTable th:nth-child(5),#reportTable td:nth-child(5) {width:50px;text-align:center;}
 tr.selected-row {background-color: #dceeff !important; font-weight: bold; box-shadow: inset 0 0 5px rgba(52,152,219,0.5);}
 
-/* 浮动窗口通用样式 */
 .floating-window {
   position: fixed;
   background: rgba(255,255,255,0.9);
@@ -291,7 +328,6 @@ tr.selected-row {background-color: #dceeff !important; font-weight: bold; box-sh
 .login-box .btn { width:100%; margin-bottom:8px; }
 .login-box .link { font-size:13px; color:#3498db; cursor:pointer; margin-top:5px; }
 
-/* 订单输入容器：自适应高度，只在内容超出时出现滚动条 */
 .order-input-container {
   display:flex;
   width:100%;
@@ -337,7 +373,6 @@ tr.selected-row {background-color: #dceeff !important; font-weight: bold; box-sh
 .black-text {color:#000000!important;font-weight:normal;}
 .range-input {width:70px;padding:2px 4px;font-size:11px;border:1px solid #ccc;border-radius:3px;}
 
-/* 订单记录/上报数据列表项样式 */
 .order-item {
   padding: 8px;
   border: 1px solid #eee;
@@ -394,7 +429,6 @@ tr.selected-row {background-color: #dceeff !important; font-weight: bold; box-sh
   margin-left: auto;
 }
 
-/* 数据库弹窗 */
 .database-modal {
   position:fixed;top:0;left:0;width:100%;height:100%;
   background:rgba(0,0,0,0.4); z-index:1001;
@@ -422,12 +456,10 @@ tr.selected-row {background-color: #dceeff !important; font-weight: bold; box-sh
 .close-database-btn {background:none;border:none;color:#fff;font-size:18px;cursor:pointer;padding:0;width:30px;height:30px;display:flex;align-items:center;justify-content:center;border-radius:50%;transition:background 0.2s;}
 .close-database-btn:hover {background:rgba(255,255,255,0.1);}
 
-/* 解析结果内联文本（蓝色） */
 .parse-inline {
   font-size:12px; color:blue; line-height:1.6; white-space:pre-wrap; word-break:break-word;
 }
 
-/* 统计区域对齐样式（缩小字体和间距） */
 .stats-block { display:inline-flex; flex-direction:column; gap:1px; vertical-align:middle; }
 .stats-row { display:flex; gap:4px; white-space:nowrap; align-items:center; }
 .stat-col { display:inline-flex; align-items:center; min-width:68px; font-size:12px; }
@@ -441,7 +473,11 @@ tr.selected-row {background-color: #dceeff !important; font-weight: bold; box-sh
 </head>
 <body>
 <div class="navbar" id="mainNavbar">
-  <div class="navbar-title">港澳识别系统</div>
+  <div style="display:flex; align-items:center; gap:12px;">
+    <div class="navbar-title">港澳识别系统</div>
+    <button class="btn btn-macau region-active" id="btnMacau" onclick="switchRegion('macau')">澳门</button>
+    <button class="btn btn-hongkong" id="btnHongkong" onclick="switchRegion('hongkong')">香港</button>
+  </div>
   <div class="navbar-actions" id="navbarActions">
     <button class="btn" onclick="showRecognizeModal()">识别</button>
     <button class="btn btn-reset" onclick="resetTable()">清空</button>
@@ -571,7 +607,6 @@ tr.selected-row {background-color: #dceeff !important; font-weight: bold; box-sh
   <p><span class="label">剩余空间：</span><span class="value" id="freeSpace">50 MB</span></p>
 </div>
 
-<!-- 数据库弹窗（完整静态分类号码） -->
 <div class="database-modal" id="databaseModal" style="display:none;">
   <div class="database-modal-box" id="databaseModalBox">
     <div class="database-modal-header" id="databaseModalHeader"><h3>📊 数据库配置</h3><div class="window-controls"><button onclick="maximizeWindow('databaseModalBox')" title="最大化">🗖</button><button class="close-database-btn" onclick="hideDatabase()">×</button></div></div>
@@ -751,7 +786,6 @@ tr.selected-row {background-color: #dceeff !important; font-weight: bold; box-sh
           <div class="config-item"><div class="config-label long-label">4头双</div><div class="config-colon">：</div><input type="text" class="config-input" id="config_tds_4shuang" value="40 42 44 46 48"></div>
         </div>
 
-        <!-- 动态自定义分类容器 -->
         <div id="customConfigContainer"></div>
 
         <div class="data-config-actions">
@@ -779,7 +813,7 @@ function showCustomDialog({ title = '提示', message = '', type = 'alert', defa
     if (inputEl) { inputEl.addEventListener('keypress', (e) => { if (e.key === 'Enter') confirmBtn.click(); }); inputEl.focus(); }
   });
 }
-function showToast(message) { const toast = document.createElement('div'); toast.className = 'toast-message'; toast.textContent = message; document.body.appendChild(toast); requestAnimationFrame(() => { toast.classList.add('show'); }); setTimeout(() => { toast.classList.remove('show'); setTimeout(() => { document.body.removeChild(toast); }, 300); }, 1000); }
+function showToast(message) { const toast = document.createElement('div'); toast.className = 'toast-message'; toast.textContent = message; document.body.appendChild(toast); requestAnimationFrame(() => { toast.classList.add('show'); }); setTimeout(() => { toast.classList.remove('show'); setTimeout(() => { document.body.removeChild(toast); }, 300); }, 1500); }
 async function customAlert(message) { await showCustomDialog({ title: '提示', message, type: 'alert' }); }
 async function customConfirm(message) { return await showCustomDialog({ title: '请确认', message, type: 'confirm' }); }
 async function customPrompt(message, defaultValue = '') { return await showCustomDialog({ title: '请输入', message, type: 'prompt', defaultValue }); }
@@ -807,6 +841,54 @@ function showLoginScreen() { const overlay = document.createElement('div'); over
 }
 function logout() { clearAuthSession(); location.reload(); }
 function initMainSystem() { document.getElementById('mainContent').style.display = ''; if (isAdmin()) document.getElementById('cardMgrBtn').style.display = ''; window._systemReady(); }
+
+// ===== 地区切换核心逻辑 =====
+let currentRegion = localStorage.getItem('currentRegion') || 'macau';
+function getCurrentRegion() { return currentRegion; }
+function setCurrentRegion(region) {
+  currentRegion = region;
+  localStorage.setItem('currentRegion', region);
+  document.getElementById('btnMacau').classList.toggle('region-active', region === 'macau');
+  document.getElementById('btnHongkong').classList.toggle('region-active', region === 'hongkong');
+}
+
+async function switchRegion(region) {
+  if (region === currentRegion) return;
+
+  const recognizeWin = document.getElementById('recognizeWin');
+  const sourceInput = document.querySelector('.source-order-input');
+  if (recognizeWin && sourceInput && sourceInput.value.trim()) {
+    const confirmed = await confirm('识别弹窗中有未保存的订单内容，切换地区将清空输入，确定切换吗？');
+    if (!confirmed) return;
+    sourceInput.value = '';
+    const resultEl = document.getElementById('orderResult');
+    if (resultEl) resultEl.innerHTML = '';
+    updateOrderTotalDisplay();
+  }
+
+  setCurrentRegion(region);
+  clearMemoryData();
+  await updateTableFromRecords();
+  updateSelects();
+  renderAllTablesPlaceholder();
+  const orderWin = document.getElementById('orderWin');
+  if (orderWin) {
+    const userFilter = document.getElementById('recordUserFilter')?.value || 'all';
+    await showOrderRecord(userFilter);
+  }
+  const reportWin = document.getElementById('reportWin');
+  if (reportWin) {
+    const userFilter = document.getElementById('reportRecordUserFilter')?.value || 'all';
+    await showReportOrderRecord(userFilter);
+  }
+  showToast(`已切换至${region === 'macau' ? '澳门' : '香港'}`);
+}
+
+function clearMemoryData() {
+  tableBetData = {}; userBetData = {}; reportBetData = {}; reportAmountData = {}; reportRiskData = {};
+  numberCount = {}; zodiacCount = {}; numberAmountCount = {}; zodiacAmountCount = {};
+  numberOrderTotal = 0; zodiacWeightedTotal = 0;
+}
 
 // ===== 浮动窗口控制 =====
 let highestZ = 2000;
@@ -859,7 +941,7 @@ function pinWindow(winId) {}
 async function showDatabase() { const pwd = await prompt("请输入数据库密码：",""); if (pwd === PASSWORD) { const modal = document.getElementById('databaseModal'); if (!modal) return; modal.style.display = 'flex'; highestZ += 1; modal.style.zIndex = highestZ; renderCustomConfigContainer(); makeWindowDraggable('databaseModalBox'); } else { await alert("密码错误"); } }
 function hideDatabase() { const modal = document.getElementById('databaseModal'); if (modal) modal.style.display = 'none'; }
 
-// ===== 识别弹窗（无置顶按钮，支持拖拽文本到输入框） =====
+// ===== 识别弹窗 =====
 function showRecognizeModal() {
   if (document.getElementById('recognizeWin')) return;
   const win = document.createElement('div'); win.className = 'floating-window'; win.id = 'recognizeWin';
@@ -891,7 +973,6 @@ function showRecognizeModal() {
   document.body.appendChild(win);
   updateSelects();
   const today = getTodayCST(); const dateInput = win.querySelector('#orderDate'); if (dateInput) dateInput.value = today;
-  // 绑定拖拽事件
   const textarea = win.querySelector('.source-order-input');
   if (textarea) {
     textarea.addEventListener('dragover', (e) => { e.preventDefault(); });
@@ -908,7 +989,6 @@ function showRecognizeModal() {
   makeWindowDraggable('recognizeWin'); highestZ += 1; win.style.zIndex = highestZ;
 }
 
-// ===== 标记功能 =====
 function markSelection() {
   const ta = document.querySelector('.source-order-input');
   if (!ta) return;
@@ -922,7 +1002,7 @@ function markSelection() {
   convertOrderText();
 }
 
-// ===== 数据库配置读写（基于静态HTML input，并支持自定义分类） =====
+// ===== 数据库配置读写 =====
 function getAllConfigData() {
   const configData = {
     zodiac:{}, shengxiaoAttr:{}, wuxing:{}, bose:{}, banbo:{}, danshuang:{}, weishu:{},
@@ -1028,7 +1108,6 @@ async function resetDataConfig() {
   location.reload();
 }
 
-// ===== 自定义分类管理 =====
 function loadCustomCategories() { try { return JSON.parse(localStorage.getItem('customConfigCategories') || '[]'); } catch(e) { return []; } }
 function saveCustomCategories(cats) { localStorage.setItem('customConfigCategories', JSON.stringify(cats)); }
 
@@ -1083,7 +1162,7 @@ let tableBetData = {}, userBetData = {}, reportBetData = {}, reportAmountData = 
 let numberCount = {}, zodiacCount = {}, numberAmountCount = {}, zodiacAmountCount = {};
 let numberOrderTotal = 0, zodiacWeightedTotal = 0;
 const PASSWORD = "891105", YEAR_ZODIAC_PASSWORD = "150408";
-const DB_NAME = 'OrderDatabase', DB_VERSION = 3, STORE_NAME = 'orders', REPORT_STORE_NAME = 'report_orders';
+const DB_NAME = 'OrderDatabase', DB_VERSION = 4, STORE_NAME = 'orders', REPORT_STORE_NAME = 'report_orders';
 let db = null;
 const zodiacOrder = ['马','蛇','龙','兔','虎','牛','鼠','猪','狗','鸡','猴','羊'];
 let currentZodiacMap = {};
@@ -1098,17 +1177,17 @@ function switchRiskReport() { const val = document.getElementById('riskReportSwi
   document.querySelectorAll('#riskTable .selected-row, #reportTable .selected-row').forEach(el => el.classList.remove('selected-row'));
   if (val === 'total') { document.getElementById('riskSection').style.display = ''; document.getElementById('reportSection').style.display = 'none'; document.getElementById('viewUserSelect').style.display = 'none'; generateRiskTable(); } else if (val === 'user') { document.getElementById('riskSection').style.display = ''; document.getElementById('reportSection').style.display = 'none'; document.getElementById('viewUserSelect').style.display = 'inline-block'; generateRiskTable(); } else if (val === 'report') { document.getElementById('riskSection').style.display = 'none'; document.getElementById('reportSection').style.display = ''; generateReportTable(); } }
 
-function initIndexedDB() { return new Promise((resolve) => { const request = indexedDB.open(DB_NAME, DB_VERSION); request.onerror = () => { resolve(false); }; request.onsuccess = (event) => { db = event.target.result; resolve(true); }; request.onupgradeneeded = (event) => { db = event.target.result; if (!db.objectStoreNames.contains(STORE_NAME)) db.createObjectStore(STORE_NAME, { keyPath: 'id' }); if (!db.objectStoreNames.contains(REPORT_STORE_NAME)) db.createObjectStore(REPORT_STORE_NAME, { keyPath: 'id' }); }; }); }
-async function getOrderRecords() { return new Promise((resolve) => { if (!db) resolve([]); const tx = db.transaction([STORE_NAME],'readonly'); const store = tx.objectStore(STORE_NAME); const req = store.getAll(); req.onsuccess = (e) => resolve(e.target.result || []); }); }
-async function getReportOrderRecords() { return new Promise((resolve) => { if (!db) resolve([]); const tx = db.transaction([REPORT_STORE_NAME],'readonly'); const store = tx.objectStore(REPORT_STORE_NAME); const req = store.getAll(); req.onsuccess = (e) => resolve(e.target.result || []); }); }
-async function saveOrderRecordToIDB(content, user, date, totalAmount = 0, ts = null) { return new Promise((resolve) => { if (!db) resolve(false); const tx = db.transaction([STORE_NAME],'readwrite'); const store = tx.objectStore(STORE_NAME); const record = { id: Date.now() + '-' + Math.random().toString(36).substr(2, 9), content, user, date, totalAmount, timestamp: ts || new Date().toISOString() }; const req = store.add(record); req.onsuccess = () => resolve(true); }); }
-async function saveReportOrderRecordToIDB(content, user, date, totalAmount = 0, ts = null) { return new Promise((resolve) => { if (!db) resolve(false); const tx = db.transaction([REPORT_STORE_NAME],'readwrite'); const store = tx.objectStore(REPORT_STORE_NAME); const record = { id: Date.now() + '-' + Math.random().toString(36).substr(2, 9), content, user, date, totalAmount, timestamp: ts || new Date().toISOString() }; const req = store.add(record); req.onsuccess = () => resolve(true); }); }
+function initIndexedDB() { return new Promise((resolve) => { const request = indexedDB.open(DB_NAME, DB_VERSION); request.onerror = () => { resolve(false); }; request.onsuccess = (event) => { db = event.target.result; resolve(true); }; request.onupgradeneeded = (event) => { db = event.target.result; if (!db.objectStoreNames.contains(STORE_NAME)) { db.createObjectStore(STORE_NAME, { keyPath: 'id' }); } if (!db.objectStoreNames.contains(REPORT_STORE_NAME)) { db.createObjectStore(REPORT_STORE_NAME, { keyPath: 'id' }); } const tx = event.target.transaction; const orderStore = tx.objectStore(STORE_NAME); const reportStore = tx.objectStore(REPORT_STORE_NAME); const addRegion = (store) => { const allReq = store.getAll(); allReq.onsuccess = () => { const records = allReq.result; records.forEach(r => { if (!r.region) { r.region = 'macau'; store.put(r); } }); }; }; addRegion(orderStore); addRegion(reportStore); }; }); }
+async function getOrderRecords() { return new Promise((resolve) => { if (!db) resolve([]); const tx = db.transaction([STORE_NAME],'readonly'); const store = tx.objectStore(STORE_NAME); const req = store.getAll(); req.onsuccess = (e) => resolve((e.target.result || []).filter(r => r.region === currentRegion)); }); }
+async function getReportOrderRecords() { return new Promise((resolve) => { if (!db) resolve([]); const tx = db.transaction([REPORT_STORE_NAME],'readonly'); const store = tx.objectStore(REPORT_STORE_NAME); const req = store.getAll(); req.onsuccess = (e) => resolve((e.target.result || []).filter(r => r.region === currentRegion)); }); }
+async function saveOrderRecordToIDB(content, user, date, totalAmount = 0, ts = null) { return new Promise((resolve) => { if (!db) resolve(false); const tx = db.transaction([STORE_NAME],'readwrite'); const store = tx.objectStore(STORE_NAME); const record = { id: Date.now() + '-' + Math.random().toString(36).substr(2, 9), content, user, date, totalAmount, region: currentRegion, timestamp: ts || new Date().toISOString() }; const req = store.add(record); req.onsuccess = () => resolve(true); }); }
+async function saveReportOrderRecordToIDB(content, user, date, totalAmount = 0, ts = null) { return new Promise((resolve) => { if (!db) resolve(false); const tx = db.transaction([REPORT_STORE_NAME],'readwrite'); const store = tx.objectStore(REPORT_STORE_NAME); const record = { id: Date.now() + '-' + Math.random().toString(36).substr(2, 9), content, user, date, totalAmount, region: currentRegion, timestamp: ts || new Date().toISOString() }; const req = store.add(record); req.onsuccess = () => resolve(true); }); }
 async function deleteOrderRecordFromIDB(id) { return new Promise((resolve) => { if (!db) { resolve(false); return; } const tx = db.transaction([STORE_NAME],'readwrite'); const store = tx.objectStore(STORE_NAME); const req = store.delete(id); req.onsuccess = () => resolve(true); req.onerror = () => resolve(false); }); }
 async function deleteReportOrderRecordFromIDB(id) { return new Promise((resolve) => { if (!db) { resolve(false); return; } const tx = db.transaction([REPORT_STORE_NAME],'readwrite'); const store = tx.objectStore(REPORT_STORE_NAME); const req = store.delete(id); req.onsuccess = () => resolve(true); req.onerror = () => resolve(false); }); }
 async function batchDeleteOrderRecordFromIDB(ids) { return new Promise((resolve) => { if (!db) { resolve(false); return; } const tx = db.transaction([STORE_NAME],'readwrite'); const store = tx.objectStore(STORE_NAME); let count = 0; ids.forEach(id => { const req = store.delete(id); req.onsuccess = () => { count++; if (count === ids.length) resolve(true); }; req.onerror = () => { console.error('删除订单失败', id); }; }); }); }
 async function batchDeleteReportOrderRecordFromIDB(ids) { return new Promise((resolve) => { if (!db) { resolve(false); return; } const tx = db.transaction([REPORT_STORE_NAME],'readwrite'); const store = tx.objectStore(REPORT_STORE_NAME); let count = 0; ids.forEach(id => { const req = store.delete(id); req.onsuccess = () => { count++; if (count === ids.length) resolve(true); }; req.onerror = () => { console.error('删除上报失败', id); }; }); }); }
-async function clearAllOrderRecordsFromIDB() { return new Promise((resolve) => { if (!db) resolve(false); const tx = db.transaction([STORE_NAME],'readwrite'); const store = tx.objectStore(STORE_NAME); const req = store.clear(); req.onsuccess = () => resolve(true); }); }
-async function clearAllReportOrderRecordsFromIDB() { return new Promise((resolve) => { if (!db) resolve(false); const tx = db.transaction([REPORT_STORE_NAME],'readwrite'); const store = tx.objectStore(REPORT_STORE_NAME); const req = store.clear(); req.onsuccess = () => resolve(true); }); }
+async function clearAllOrderRecordsFromIDB(region = null) { return new Promise((resolve) => { if (!db) resolve(false); const tx = db.transaction([STORE_NAME],'readwrite'); const store = tx.objectStore(STORE_NAME); if (region) { const allReq = store.getAll(); allReq.onsuccess = () => { const records = allReq.result.filter(r => r.region === region); records.forEach(r => store.delete(r.id)); resolve(true); }; } else { const req = store.clear(); req.onsuccess = () => resolve(true); } }); }
+async function clearAllReportOrderRecordsFromIDB(region = null) { return new Promise((resolve) => { if (!db) resolve(false); const tx = db.transaction([REPORT_STORE_NAME],'readwrite'); const store = tx.objectStore(REPORT_STORE_NAME); if (region) { const allReq = store.getAll(); allReq.onsuccess = () => { const records = allReq.result.filter(r => r.region === region); records.forEach(r => store.delete(r.id)); resolve(true); }; } else { const req = store.clear(); req.onsuccess = () => resolve(true); } }); }
 
 async function calculateStorageUsage() {
   const records = await getOrderRecords();
@@ -1130,8 +1209,8 @@ async function calculateStorageUsage() {
   document.getElementById('todayOrderCount').textContent = todayRecords.length;
 }
 
-function getUsers() { return JSON.parse(localStorage.getItem('users') || '[]'); }
-function saveUsers(users) { localStorage.setItem('users', JSON.stringify(users)); }
+function getUsers() { const key = `users_${currentRegion}`; return JSON.parse(localStorage.getItem(key) || '[]'); }
+function saveUsers(users) { const key = `users_${currentRegion}`; localStorage.setItem(key, JSON.stringify(users)); }
 function addUser(name) { const users = getUsers(); if (users.includes(name)) { showToast('用户已存在'); return false; } users.push(name); saveUsers(users); return true; }
 async function deleteUser(name) { let users = getUsers(); users = users.filter(u => u !== name); saveUsers(users); if (userBetData[name]) delete userBetData[name]; rebuildTotal(); refreshAll(); }
 function rebuildTotal() { tableBetData = {}; for (const u in userBetData) for (const n in userBetData[u]) tableBetData[n] = (tableBetData[n]||0) + userBetData[u][n]; }
@@ -1151,41 +1230,34 @@ function saveCustomAmountPrefixes(list) { localStorage.setItem('customAmountPref
 function removeSeparators() { const ta = document.querySelector('.source-order-input'); if(!ta) return; const s=ta.selectionStart,e=ta.selectionEnd; if(s===e){showToast('请先选择文本');return;} const sel=ta.value.substring(s,e); const cleaned=sel.replace(/[\s,，.。、+\-*＊\/\\|]+/g,''); ta.value=ta.value.substring(0,s)+cleaned+ta.value.substring(e); convertOrderText(); }
 function replaceSeparators() { const ta=document.querySelector('.source-order-input'); if(!ta) return; const s=ta.selectionStart,e=ta.selectionEnd; if(s===e){showToast('请先选择文本');return;} const sel=ta.value.substring(s,e); const replaced=sel.replace(/[\s,，.。、+\-*＊\/\\|]+/g,'-'); ta.value=ta.value.substring(0,s)+replaced+ta.value.substring(e); convertOrderText(); }
 
-// ===== 各类管理弹窗（无置顶按钮） =====
 function showPrefixManager() { if(document.getElementById('prefixWin'))return; const prefixes=getCustomPrefixes(); const w=document.createElement('div'); w.className='floating-window'; w.id='prefixWin'; w.style.width='500px'; w.style.height='400px'; w.style.left='50%'; w.style.top='50%'; w.style.transform='translate(-50%,-50%)'; w.innerHTML=`<div class="modal-header"><h3>前缀管理</h3><div class="window-controls"><button onclick="maximizeWindow('prefixWin')">🗖</button><button onclick="document.getElementById('prefixWin').remove()">×</button></div></div><div class="modal-body"><div style="margin-bottom:12px;display:flex;gap:6px;"><input type="text" id="newPrefix" placeholder="新增行首忽略词" style="flex:1;padding:6px;border:1px solid #ccc;border-radius:4px;"><button onclick="addPrefix()" style="padding:6px 12px;background:#3498db;color:#fff;border:none;border-radius:4px;">添加</button></div><div id="prefixList"></div></div><div class="modal-footer"><button onclick="document.getElementById('prefixWin').remove()" style="padding:8px 16px;background:#6c757d;color:#fff;border:none;border-radius:4px;">关闭</button></div>`; document.body.appendChild(w); renderPrefixList(); makeWindowDraggable('prefixWin'); highestZ+=1; w.style.zIndex=highestZ; }
 function renderPrefixList(){ const p=getCustomPrefixes(); const c=document.getElementById('prefixList'); if(!c)return; c.innerHTML=p.length===0?'<div style="text-align:center;color:#666;padding:10px;">暂无自定义前缀</div>':p.map((x,i)=>`<div class="replace-preset-item"><span>${x}</span><button onclick="deletePrefix(${i})" style="margin-left:auto;padding:2px 8px;background:#e74c3c;color:#fff;border:none;border-radius:3px;">删除</button></div>`).join(''); }
 async function addPrefix(){ const v=document.getElementById('newPrefix')?.value.trim(); if(!v){showToast('请输入前缀');return;} const p=getCustomPrefixes(); if(p.includes(v)){showToast('已存在');return;} p.push(v); localStorage.setItem('customPrefixes',JSON.stringify(p)); document.getElementById('newPrefix').value=''; renderPrefixList(); }
 async function deletePrefix(i){ if(!(await confirm('确定删除？')))return; const p=getCustomPrefixes(); p.splice(i,1); localStorage.setItem('customPrefixes',JSON.stringify(p)); renderPrefixList(); }
 
-// ===== 金额前缀管理弹窗（无置顶按钮，已删除硬编码提示） =====
 function showAmountPrefixManager() { if(document.getElementById('amountPrefixWin'))return; const list = getCustomAmountPrefixes(); const w=document.createElement('div'); w.className='floating-window'; w.id='amountPrefixWin'; w.style.width='500px'; w.style.height='450px'; w.style.left='50%'; w.style.top='50%'; w.style.transform='translate(-50%,-50%)'; w.innerHTML=`<div class="modal-header"><h3>金额前缀管理</h3><div class="window-controls"><button onclick="maximizeWindow('amountPrefixWin')">🗖</button><button onclick="document.getElementById('amountPrefixWin').remove()">×</button></div></div><div class="modal-body"><div style="margin-bottom:12px;display:flex;gap:6px;"><input type="text" id="newAmountPrefix" placeholder="新增金额前缀（如 投、买）" style="flex:1;padding:6px;border:1px solid #ccc;border-radius:4px;"><button onclick="addAmountPrefix()" style="padding:6px 12px;background:#e67e22;color:#fff;border:none;border-radius:4px;">添加</button></div><div id="amountPrefixList"></div></div><div class="modal-footer"><button onclick="document.getElementById('amountPrefixWin').remove()" style="padding:8px 16px;background:#6c757d;color:#fff;border:none;border-radius:4px;">关闭</button></div>`; document.body.appendChild(w); renderAmountPrefixList(); makeWindowDraggable('amountPrefixWin'); highestZ+=1; w.style.zIndex=highestZ; }
 function renderAmountPrefixList() { const list = getCustomAmountPrefixes(); const container = document.getElementById('amountPrefixList'); if(!container)return; container.innerHTML = list.length===0 ? '<div style="text-align:center;color:#666;padding:10px;">暂无自定义金额前缀</div>' : list.map((x,i) => `<div class="replace-preset-item"><span>${x}</span><button onclick="deleteAmountPrefix(${i})" style="margin-left:auto;padding:2px 8px;background:#e74c3c;color:#fff;border:none;border-radius:3px;">删除</button></div>`).join(''); }
 async function addAmountPrefix() { const v = document.getElementById('newAmountPrefix')?.value.trim(); if(!v){ showToast('请输入金额前缀'); return; } const list = getCustomAmountPrefixes(); if(list.includes(v)){ showToast('已存在'); return; } list.push(v); saveCustomAmountPrefixes(list); document.getElementById('newAmountPrefix').value = ''; renderAmountPrefixList(); showToast('已添加（即时生效）'); }
 async function deleteAmountPrefix(i) { if(!(await confirm('确定删除？')))return; const list = getCustomAmountPrefixes(); list.splice(i,1); saveCustomAmountPrefixes(list); renderAmountPrefixList(); }
 
-// ===== 金额后缀管理弹窗（无置顶按钮） =====
 function showAmountSuffixManager() { if(document.getElementById('amountSuffixWin'))return; const s=getCustomAmountSuffixes(); const w=document.createElement('div'); w.className='floating-window'; w.id='amountSuffixWin'; w.style.width='500px'; w.style.height='400px'; w.style.left='50%'; w.style.top='50%'; w.style.transform='translate(-50%,-50%)'; w.innerHTML=`<div class="modal-header"><h3>金额后缀管理</h3><div class="window-controls"><button onclick="maximizeWindow('amountSuffixWin')">🗖</button><button onclick="document.getElementById('amountSuffixWin').remove()">×</button></div></div><div class="modal-body"><div style="margin-bottom:12px;display:flex;gap:6px;"><input type="text" id="newAmountSuffix" placeholder="新增后缀(如米、斤)" style="flex:1;padding:6px;border:1px solid #ccc;border-radius:4px;"><button onclick="addAmountSuffix()" style="padding:6px 12px;background:#e67e22;color:#fff;border:none;border-radius:4px;">添加</button></div><div id="amountSuffixList"></div></div><div class="modal-footer"><button onclick="document.getElementById('amountSuffixWin').remove()" style="padding:8px 16px;background:#6c757d;color:#fff;border:none;border-radius:4px;">关闭</button></div>`; document.body.appendChild(w); renderAmountSuffixList(); makeWindowDraggable('amountSuffixWin'); highestZ+=1; w.style.zIndex=highestZ; }
 function renderAmountSuffixList(){ const s=getCustomAmountSuffixes(); const c=document.getElementById('amountSuffixList'); if(!c)return; c.innerHTML=s.length===0?'<div style="text-align:center;color:#666;padding:10px;">暂无自定义金额后缀</div>':s.map((x,i)=>`<div class="replace-preset-item"><span>${x}</span><button onclick="deleteAmountSuffix(${i})" style="margin-left:auto;padding:2px 8px;background:#e74c3c;color:#fff;border:none;border-radius:3px;">删除</button></div>`).join(''); }
 async function addAmountSuffix(){ const v=document.getElementById('newAmountSuffix')?.value.trim(); if(!v){showToast('请输入后缀');return;} const s=getCustomAmountSuffixes(); if(s.includes(v)){showToast('已存在');return;} s.push(v); localStorage.setItem('customAmountSuffixes',JSON.stringify(s)); document.getElementById('newAmountSuffix').value=''; renderAmountSuffixList(); }
 async function deleteAmountSuffix(i){ if(!(await confirm('确定删除？')))return; const s=getCustomAmountSuffixes(); s.splice(i,1); localStorage.setItem('customAmountSuffixes',JSON.stringify(s)); renderAmountSuffixList(); }
 
-// ===== 分类缩写管理弹窗（无置顶按钮） =====
 function showCategoryAliases() { if(document.getElementById('categoryAliasWin'))return; const a=getCategoryAliases(); const w=document.createElement('div'); w.className='floating-window'; w.id='categoryAliasWin'; w.style.width='500px'; w.style.height='450px'; w.style.left='50%'; w.style.top='50%'; w.style.transform='translate(-50%,-50%)'; w.innerHTML=`<div class="modal-header"><h3>分类缩写</h3><div class="window-controls"><button onclick="maximizeWindow('categoryAliasWin')">🗖</button><button onclick="document.getElementById('categoryAliasWin').remove()">×</button></div></div><div class="modal-body"><div style="margin-bottom:12px;"><div style="display:flex;gap:6px;margin-bottom:8px;"><input type="text" id="aliasOld" placeholder="缩写（如 红蓝波）" style="flex:1;padding:6px;border:1px solid #ccc;border-radius:4px;"><span style="align-self:center;">→</span><input type="text" id="aliasNew" placeholder="正规分类（如 红波-蓝波）" style="flex:1;padding:6px;border:1px solid #ccc;border-radius:4px;"></div><button onclick="addCategoryAlias()" style="padding:6px 12px;background:#007bff;color:#fff;border:none;border-radius:4px;">添加</button></div><div id="aliasList"></div></div><div class="modal-footer"><button onclick="document.getElementById('categoryAliasWin').remove()" style="padding:8px 16px;background:#6c757d;color:#fff;border:none;border-radius:4px;">关闭</button></div>`; document.body.appendChild(w); renderAliasList(); makeWindowDraggable('categoryAliasWin'); highestZ+=1; w.style.zIndex=highestZ; }
 function renderAliasList(){ const a=getCategoryAliases(); const c=document.getElementById('aliasList'); if(!c)return; c.innerHTML=a.length===0?'<div style="text-align:center;color:#666;padding:10px;">暂无分类缩写</div>':a.map((x,i)=>`<div class="replace-preset-item"><span>${x.alias} → ${x.target}</span><button onclick="deleteCategoryAlias(${i})" style="margin-left:auto;padding:2px 8px;background:#e74c3c;color:#fff;border:none;border-radius:3px;">删除</button></div>`).join(''); }
 async function addCategoryAlias(){ const alias=document.getElementById('aliasOld')?.value.trim(); const target=document.getElementById('aliasNew')?.value.trim(); if(!alias||!target){showToast('请输入缩写和目标分类');return;} const a=getCategoryAliases(); if(a.some(x=>x.alias===alias)){showToast('该缩写已存在');return;} a.push({alias,target}); a.sort((x,y)=>y.alias.length-x.alias.length); localStorage.setItem('categoryAliases',JSON.stringify(a)); document.getElementById('aliasOld').value=''; document.getElementById('aliasNew').value=''; renderAliasList(); }
 async function deleteCategoryAlias(i){ if(!(await confirm('确定删除？')))return; const a=getCategoryAliases(); a.splice(i,1); localStorage.setItem('categoryAliases',JSON.stringify(a)); renderAliasList(); }
 
-// ===== 替换预设管理弹窗（无置顶按钮） =====
 function showReplacePreset() { if(document.getElementById('replacePresetWin'))return; const p=getReplacePresets(); const w=document.createElement('div'); w.className='floating-window'; w.id='replacePresetWin'; w.style.width='500px'; w.style.height='450px'; w.style.left='50%'; w.style.top='50%'; w.style.transform='translate(-50%,-50%)'; w.innerHTML=`<div class="modal-header"><h3>替换预设</h3><div class="window-controls"><button onclick="maximizeWindow('replacePresetWin')">🗖</button><button onclick="document.getElementById('replacePresetWin').remove()">×</button></div></div><div class="modal-body"><div style="margin-bottom:12px;"><div style="display:flex;gap:6px;margin-bottom:8px;"><input type="text" id="presetOld" placeholder="原文字" style="flex:1;padding:6px;border:1px solid #ccc;border-radius:4px;"><span style="align-self:center;">→</span><input type="text" id="presetNew" placeholder="替换为" style="flex:1;padding:6px;border:1px solid #ccc;border-radius:4px;"></div><button onclick="addReplacePreset()" style="padding:6px 12px;background:#007bff;color:#fff;border:none;border-radius:4px;">添加</button></div><div id="presetList"></div></div><div class="modal-footer"><button onclick="document.getElementById('replacePresetWin').remove()" style="padding:8px 16px;background:#6c757d;color:#fff;border:none;border-radius:4px;">关闭</button></div>`; document.body.appendChild(w); renderPresetList(); makeWindowDraggable('replacePresetWin'); highestZ+=1; w.style.zIndex=highestZ; }
 function renderPresetList(){ const p=getReplacePresets(); const c=document.getElementById('presetList'); if(!c)return; c.innerHTML=p.length===0?'<div style="text-align:center;color:#666;padding:10px;">暂无替换预设</div>':p.map((x,i)=>`<div class="replace-preset-item"><span>${x.old} → ${x.new}</span><button onclick="deleteReplacePreset(${i})" style="margin-left:auto;padding:2px 8px;background:#e74c3c;color:#fff;border:none;border-radius:3px;">删除</button></div>`).join(''); }
 async function addReplacePreset(){ const o=document.getElementById('presetOld')?.value.trim(); const n=document.getElementById('presetNew')?.value.trim(); if(!o||!n){showToast('请输入原文字和替换文字');return;} const p=getReplacePresets(); if(p.some(x=>x.old===o)){showToast('已存在');return;} p.push({old:o,new:n}); localStorage.setItem('replacePresets',JSON.stringify(p)); document.getElementById('presetOld').value=''; document.getElementById('presetNew').value=''; renderPresetList(); }
 async function deleteReplacePreset(i){ if(!(await confirm('确定删除？')))return; const p=getReplacePresets(); p.splice(i,1); localStorage.setItem('replacePresets',JSON.stringify(p)); renderPresetList(); }
 
-// ===== 辅助函数 =====
 function applyCategoryAliases(text) { const a=getCategoryAliases(); if(!a.length)return text; const s=[...a].sort((x,y)=>y.alias.length-x.alias.length); let r=text; s.forEach(x=>{ if(x.alias&&x.target)r=r.split(x.alias).join(x.target); }); return r; }
 function applyReplacePresets(text) { const p=getReplacePresets(); let r=text; p.forEach(x=>{ if(x.old&&x.new)r=r.split(x.old).join(x.new); }); return r; }
 
-// ===== 语义转换 =====
 async function semanticReplace() { const ta=document.querySelector('.source-order-input'); if(!ta)return; const s=ta.selectionStart,e=ta.selectionEnd; if(s===e){showToast('请先选择文本');return;} const sel=ta.value.substring(s,e); const cfg=getAllConfigData(); const vc=getAllValidCategories(cfg); const tokens=sel.split(/[\s,，.。、+\-*＊\/\\|]+/).filter(t=>t.trim()); const matched=tokens.filter(t=>vc.has(t)); if(!matched.length){showToast('未识别有效分类');return;} let sets=matched.map(cat=>{ let nums=[]; if(cfg.shengxiaoAttr[cat]){ cfg.shengxiaoAttr[cat].forEach(z=>{ if(cfg.zodiac[z])nums.push(...cfg.zodiac[z].map(n=>n.toString().padStart(2,'0'))); }); } const dir=cfg.wuxing[cat]||cfg.bose[cat]||cfg.banbo[cat]||cfg.danshuang[cat]||cfg.weishu[cat]||cfg.daxiaodanshuang[cat]||cfg.daxiao[cat]||cfg.heshu[cat]||cfg.toushu[cat]||cfg.menshu[cat]||cfg.duanwei[cat]||cfg.hedahexiao[cat]||cfg.weidaweixiao[cat]||cfg.hewei[cat]||cfg.heshudanshuang[cat]||cfg.toushuDanshuang[cat]; if(dir)nums.push(...dir.map(n=>n.toString().padStart(2,'0'))); if(cfg.zodiac[cat])nums.push(...cfg.zodiac[cat].map(n=>n.toString().padStart(2,'0'))); return new Set(nums); }); let inter=sets[0]; for(let i=1;i<sets.length;i++)inter=new Set([...inter].filter(x=>sets[i].has(x))); const res=[...inter].sort((a,b)=>parseInt(a)-parseInt(b)); if(!res.length){showToast('无共同号码');return;} const str=res.join('-'); const cf=await confirm(`转换结果：${str}\n是否替换选中文本？`); if(cf){ta.value=ta.value.substring(0,s)+str+ta.value.substring(e);convertOrderText();} }
 
 function tokenizeAndJoin(content) {
@@ -1219,7 +1291,6 @@ function tokenizeAndJoin(content) {
   return res.join('-');
 }
 
-// ===== 修改后的订单识别核心（容错识别、行标红、无效token显示） =====
 function convertOrderText() {
   const inputEl = document.querySelector('.source-order-input');
   const resultEl = document.getElementById('orderResult');
@@ -1489,7 +1560,6 @@ function convertOrderText() {
 
 function getAllValidCategories(cfg) { const s=new Set(); Object.keys(cfg.zodiac).forEach(k=>s.add(k)); Object.keys(cfg.shengxiaoAttr).forEach(k=>s.add(k)); Object.keys(cfg.wuxing).forEach(k=>s.add(k)); Object.keys(cfg.bose).forEach(k=>s.add(k)); Object.keys(cfg.banbo).forEach(k=>s.add(k)); Object.keys(cfg.danshuang).forEach(k=>s.add(k)); Object.keys(cfg.weishu).forEach(k=>s.add(k)); Object.keys(cfg.daxiaodanshuang).forEach(k=>s.add(k)); Object.keys(cfg.daxiao).forEach(k=>s.add(k)); Object.keys(cfg.heshu).forEach(k=>s.add(k)); Object.keys(cfg.toushu).forEach(k=>s.add(k)); Object.keys(cfg.menshu).forEach(k=>s.add(k)); Object.keys(cfg.duanwei).forEach(k=>s.add(k)); Object.keys(cfg.hedahexiao).forEach(k=>s.add(k)); Object.keys(cfg.weidaweixiao).forEach(k=>s.add(k)); Object.keys(cfg.hewei).forEach(k=>s.add(k)); Object.keys(cfg.heshudanshuang).forEach(k=>s.add(k)); Object.keys(cfg.toushuDanshuang).forEach(k=>s.add(k)); return s; }
 
-// ===== 保存订单（日期使用 filterDate） =====
 async function saveOrder(){ const user=document.getElementById('orderUserSelect')?.value; if(!user){showToast('请选择用户');return;} const resultEl=document.getElementById('orderResult'); const rawText=resultEl?resultEl.innerText:''; const inputText=document.querySelector('.source-order-input')?.value.trim(); const textToUse=rawText||inputText; if(!textToUse)return; const vl=textToUse.split('\n').filter(l=>{const m=l.match(/各数\s+(\d+)/);return m&&parseInt(m[1])>0;}); if(!vl.length){showToast('订单无效');return;} const content=vl.join('\n'); const date=document.getElementById('filterDate')?.value||getTodayCST(); const total=computeCurrentOrderTotal(); await saveOrderRecordToIDB(content,user,date,total); processCurrentOrder(content,user,true,date); const si=document.querySelector('.source-order-input'); if(si)si.value=''; if(resultEl)resultEl.innerHTML=''; updateOrderTotalDisplay(); document.querySelectorAll('.category-btn').forEach(b=>b.classList.remove('active')); calculateStorageUsage(); }
 async function saveReportOrder(){ const user=document.getElementById('orderUserSelect')?.value; if(!user){showToast('请选择用户');return;} const resultEl=document.getElementById('orderResult'); const rawText=resultEl?resultEl.innerText:''; const inputText=document.querySelector('.source-order-input')?.value.trim(); const textToUse=rawText||inputText; if(!textToUse)return; const vl=textToUse.split('\n').filter(l=>{const m=l.match(/各数\s+(\d+)/);return m&&parseInt(m[1])>0;}); if(!vl.length){showToast('订单无效');return;} const content=vl.join('\n'); const date=document.getElementById('filterDate')?.value||getTodayCST(); const total=computeCurrentOrderTotal(); await saveReportOrderRecordToIDB(content,user,date,total); processCurrentOrder(content,user,false,date); const si=document.querySelector('.source-order-input'); if(si)si.value=''; if(resultEl)resultEl.innerHTML=''; updateOrderTotalDisplay(); document.querySelectorAll('.category-btn').forEach(b=>b.classList.remove('active')); calculateStorageUsage(); }
 function countItemsInLine(line,cfg,keys){ const m=line.match(/([\u4e00-\u9fa5\d\-]+)\s+各数\s+(\d+)/); if(!m)return{numbers:[],zodiacs:[],amount:0}; let cont=m[1]; const amt=parseInt(m[2])||0; const items=cont.split('-').map(i=>i.trim()).filter(i=>i); const nums=[],zods=[]; items.forEach(item=>{ if(/^\d+$/.test(item))nums.push(item.padStart(2,'0')); else if(cfg.shengxiaoAttr[item]){ const zs=cfg.shengxiaoAttr[item]||[]; zs.forEach(z=>zods.push(z)); } else if(cfg.zodiac[item])zods.push(item); else if(cfg.toushuDanshuang&&cfg.toushuDanshuang[item]){ (cfg.toushuDanshuang[item]||[]).forEach(n=>nums.push(n.padStart(2,'0'))); } else { const nl=cfg.wuxing[item]||cfg.bose[item]||cfg.banbo[item]||cfg.danshuang[item]||cfg.weishu[item]||cfg.daxiaodanshuang[item]||cfg.daxiao[item]||cfg.heshu[item]||cfg.toushu[item]||cfg.menshu[item]||cfg.duanwei[item]||cfg.hedahexiao[item]||cfg.weidaweixiao[item]||cfg.hewei[item]||cfg.heshudanshuang[item]||cfg.toushuDanshuang[item]; if(nl)nl.forEach(n=>nums.push(n.padStart(2,'0'))); } }); return{numbers:nums,zodiacs:zods,amount:amt}; }
@@ -1582,7 +1652,6 @@ function computeCurrentOrderTotal(){ const re=document.getElementById('orderResu
 function updateAmountDisplays(){ const nb=document.getElementById('numberTotalBox'); const zb=document.getElementById('zodiacTotalBox'); if(numberOrderTotal>0){document.getElementById('numberTotalAmount').textContent=numberOrderTotal;nb.style.display='inline-flex';}else{nb.style.display='none';} if(zodiacWeightedTotal>0){document.getElementById('zodiacTotalAmount').textContent=zodiacWeightedTotal;zb.style.display='inline-flex';}else{zb.style.display='none';} }
 function updateReportAmountTotal(){ const box=document.getElementById('reportAmountTotalBox'); const span=document.getElementById('reportAmountTotalValue'); let total=0; for(let n in reportAmountData)total+=reportAmountData[n]||0; if(total>0){span.textContent=total;box.style.display='inline-flex';}else{box.style.display='none';} }
 
-// ===== 表格初始占位渲染 =====
 function renderAllTablesPlaceholder() {
   const tbody = document.getElementById('tableBody');
   if (tbody) {
@@ -1673,12 +1742,10 @@ function renderReportAmountTable(){ const tbl=document.getElementById('reportAmo
 function renderFrequencyCards(){ const nt=document.getElementById('numberFreqTable'); if(!nt)return; nt.innerHTML=''; const cols=[...Array(5)].map((_,c)=>Array.from({length:c===4?9:10},(_,r)=>(c*10+r+1).toString().padStart(2,'0'))); let th='<thead><tr>'; for(let c=0;c<5;c++)th+='<th>号码</th><th>次数</th>'; th+='</tr></thead>'; let tb='<tbody>'; for(let r=0;r<10;r++){ tb+='<tr>'; for(let c=0;c<5;c++){ const n=cols[c][r]||''; if(n){ const cnt=numberCount[n]||0; const cls=redNumbers.includes(n)?'red-text':(blueNumbers.includes(n)?'blue-text':'green-text'); tb+=`<td class="${cls}">${n}</td><td class="black-text">${cnt||''}</td>`; }else{tb+='<td></td><td></td>';} } tb+='</tr>'; } tb+='</tbody>'; nt.innerHTML=th+tb; const zt=document.getElementById('zodiacFreqTable'); if(!zt)return; zt.innerHTML=''; const lz=['鼠','牛','虎','兔','龙','蛇'],rz=['马','羊','猴','鸡','狗','猪']; const zcm={'鼠':'red-text','兔':'red-text','马':'red-text','鸡':'red-text','虎':'blue-text','蛇':'blue-text','猴':'blue-text','猪':'blue-text','牛':'green-text','龙':'green-text','羊':'green-text','狗':'green-text'}; let zth='<thead><tr><th>生肖</th><th>次数</th><th>生肖</th><th>次数</th></tr></thead>',ztb='<tbody>'; for(let r=0;r<6;r++){ const l=lz[r],r2=rz[r]; const lc=zodiacCount[l]||0,rc=zodiacCount[r2]||0; ztb+=`<tr><td class="${zcm[l]}">${l}</td><td class="black-text">${lc||''}</td><td class="${zcm[r2]}">${r2}</td><td class="black-text">${rc||''}</td></tr>`; } ztb+='</tbody>'; zt.innerHTML=zth+ztb; }
 function renderAmountFrequencyCards(){ const nt=document.getElementById('numberAmountFreqTable'); if(!nt)return; nt.innerHTML=''; const cols=[...Array(5)].map((_,c)=>Array.from({length:c===4?9:10},(_,r)=>(c*10+r+1).toString().padStart(2,'0'))); let th='<thead><tr>'; for(let c=0;c<5;c++)th+='<th>号码</th><th>次数</th>'; th+='</tr></thead>'; let tb='<tbody>'; for(let r=0;r<10;r++){ tb+='<tr>'; for(let c=0;c<5;c++){ const n=cols[c][r]||''; if(n){ const cnt=numberAmountCount[n]||0; const cls=redNumbers.includes(n)?'red-text':(blueNumbers.includes(n)?'blue-text':'green-text'); tb+=`<td class="${cls}">${n}</td><td class="black-text">${cnt||''}</td>`; }else{tb+='<td></td><td></td>';} } tb+='</tr>'; } tb+='</tbody>'; nt.innerHTML=th+tb; const zt=document.getElementById('zodiacAmountFreqTable'); if(!zt)return; zt.innerHTML=''; const lz=['鼠','牛','虎','兔','龙','蛇'],rz=['马','羊','猴','鸡','狗','猪']; const zcm={'鼠':'red-text','兔':'red-text','马':'red-text','鸡':'red-text','虎':'blue-text','蛇':'blue-text','猴':'blue-text','猪':'blue-text','牛':'green-text','龙':'green-text','羊':'green-text','狗':'green-text'}; let zth='<thead><tr><th>生肖</th><th>次数</th><th>生肖</th><th>次数</th></tr></thead>',ztb='<tbody>'; for(let r=0;r<6;r++){ const l=lz[r],r2=rz[r]; const lc=zodiacAmountCount[l]||0,rc=zodiacAmountCount[r2]||0; ztb+=`<tr><td class="${zcm[l]}">${l}</td><td class="black-text">${lc||''}</td><td class="${zcm[r2]}">${r2}</td><td class="black-text">${rc||''}</td></tr>`; } ztb+='</tbody>'; zt.innerHTML=zth+ztb; }
 
-// ===== 对奖相关 =====
 function getNumberListForCategory(cat,cfg){ const nums=[]; if(cfg.shengxiaoAttr[cat]){ cfg.shengxiaoAttr[cat].forEach(z=>{if(cfg.zodiac[z])nums.push(...cfg.zodiac[z].map(n=>n.toString().padStart(2,'0')));}); } const dir=cfg.wuxing[cat]||cfg.bose[cat]||cfg.banbo[cat]||cfg.danshuang[cat]||cfg.weishu[cat]||cfg.daxiaodanshuang[cat]||cfg.daxiao[cat]||cfg.heshu[cat]||cfg.toushu[cat]||cfg.menshu[cat]||cfg.duanwei[cat]||cfg.hedahexiao[cat]||cfg.weidaweixiao[cat]||cfg.hewei[cat]||cfg.heshudanshuang[cat]||cfg.toushuDanshuang[cat]; if(dir)nums.push(...dir.map(n=>n.toString().padStart(2,'0'))); if(cfg.zodiac[cat])nums.push(...cfg.zodiac[cat].map(n=>n.toString().padStart(2,'0'))); return [...new Set(nums)]; }
 function isTokenMatching(token,targetNum,cfg){ const t=targetNum.padStart(2,'0'); if(/^\d{1,2}$/.test(token))return token.padStart(2,'0')===t; const vc=getAllValidCategories(cfg); if(vc.has(token)){const nums=getNumberListForCategory(token,cfg);return nums.includes(t);} return false; }
 function highlightContent(content,targetNum,cfg){ if(!targetNum)return content; const t=targetNum.padStart(2,'0'); const parts=[];let tmp=''; for(const ch of content){if(ch==='-'||ch===' '){if(tmp)parts.push(tmp);parts.push(ch);tmp='';}else{tmp+=ch;}} if(tmp)parts.push(tmp); return parts.map(p=>{if(p==='-'||p===' ')return p;if(isTokenMatching(p,targetNum,cfg))return`<span class="highlight-number">${p}</span>`;return p;}).join(''); }
 function orderContainsTarget(content,targetNum,cfg){ if(!targetNum)return true; const t=targetNum.padStart(2,'0'); const lines=content.split('\n'); for(const line of lines){ const m=line.match(/^(.+?)\s+各数\s+(\d+)$/); if(!m)continue; const cont=m[1]; const parts=[];let tmp=''; for(const ch of cont){if(ch==='-'||ch===' '){if(tmp)parts.push(tmp);tmp='';}else{tmp+=ch;}} if(tmp)parts.push(tmp); for(const p of parts){if(p!=='-'&&p!==' '&&isTokenMatching(p,targetNum,cfg))return true;} } return false; }
-// 【新增】获取上报订单中，包含目标号码的行的金额总和
 function getSpecialAmountFromOrder(content, prizeNum, cfg) {
   if (!prizeNum) return 0;
   const targetNum = prizeNum.padStart(2, '0');
@@ -1706,7 +1773,6 @@ function getSpecialAmountFromOrder(content, prizeNum, cfg) {
 function formatTimestampToCST(iso){ const d=new Date(iso); return new Intl.DateTimeFormat('zh-CN',{year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false,timeZone:'Asia/Shanghai'}).format(d); }
 function getUserColor(u){ let h=0; for(let i=0;i<u.length;i++)h=u.charCodeAt(i)+((h<<5)-h); const hue=(h%360+360)%360; return`hsl(${hue},70%,45%)`; }
 
-// ===== 独立的统计区域渲染函数 =====
 function renderOrderStats(allOrders, allReports, filterUser, prizeNum) {
   const container = document.getElementById('orderStatsContainer');
   if (!container) return;
@@ -1715,36 +1781,29 @@ function renderOrderStats(allOrders, allReports, filterUser, prizeNum) {
   const rr = parseFloat(document.getElementById('rebateRate')?.value) || 0;
   const cfg = getAllConfigData();
 
-  // 总额：基于全部订单（不随对奖号码）
   let totalAmountSum = 0;
   allOrders.forEach(it => { totalAmountSum += it.totalAmount || 0; });
 
-  // 上报金额：基于全部上报（不随对奖号码）
   let reportTotalAmount = 0;
   allReports.forEach(it => { reportTotalAmount += it.totalAmount || 0; });
 
-  // 以下统计基于对奖号码
   let totalSpecial = 0, reportSpecial = 0, hitCount = 0;
   if (prizeNum) {
     const num = prizeNum.padStart(2, '0');
-    // 总特
     if (filterUser === 'all' || !filterUser) {
       totalSpecial = tableBetData[num] || 0;
     } else {
       const userData = userBetData[filterUser] || {};
       totalSpecial = userData[num] || 0;
     }
-    // 中几条
     allOrders.forEach(it => {
       if (orderContainsTarget(it.content, prizeNum, cfg)) hitCount++;
     });
-    // 上报特：修改为只统计包含该号码的行的金额
     allReports.forEach(it => {
       reportSpecial += getSpecialAmountFromOrder(it.content, prizeNum, cfg);
     });
   }
 
-  // 计算盈亏
   const totalProfit = totalAmountSum - totalSpecial * mul - totalAmountSum * (rr / 100);
   const reportProfit = reportTotalAmount - reportSpecial * mul - reportTotalAmount * (rr / 100);
   const netProfit = totalProfit - reportProfit;
@@ -1752,7 +1811,6 @@ function renderOrderStats(allOrders, allReports, filterUser, prizeNum) {
   const showStats = prizeNum && prizeNum.trim() !== '';
   let html = '<div class="stats-block">';
   html += '<div class="stats-row">';
-  // 总额（始终显示，但有数据才显示）
   if (totalAmountSum > 0) {
     html += `<span class="stat-col"><span class="slabel">总额:</span><span class="stat-val-amount">${totalAmountSum}</span></span>`;
   }
@@ -1786,7 +1844,6 @@ function renderOrderStats(allOrders, allReports, filterUser, prizeNum) {
 }
 
 function updatePrizeStats(pn) {
-  // 保留兼容，实际由renderOrderStats处理
 }
 
 async function applyPrizeFilter(){
@@ -1852,7 +1909,6 @@ async function showOrderRecord(filter='all'){
     html+=`</div></div><div class="modal-footer"><button onclick="document.getElementById('orderWin').remove()" style="padding:8px 16px;background:#6c757d;color:#fff;border:none;border-radius:4px;">关闭</button></div>`;
     w.innerHTML=html; document.body.appendChild(w);
     makeWindowDraggable('orderWin'); highestZ+=1; w.style.zIndex=highestZ;
-    // 初始渲染统计
     const uv = filter || 'all';
     const userOrders = uv==='all' ? fRecs : fRecs.filter(r=>r.user===uv);
     const userReports = uv==='all' ? fReps : fReps.filter(r=>r.user===uv);
@@ -1962,24 +2018,40 @@ async function deleteCheckedReport(){
   }
 }
 
-// ===== 清空、粘贴、切换 =====
 async function resetTable(){
-  if((await prompt("输入清空密码：",""))!==PASSWORD){await alert("密码错误");return;}
+  const regionName = currentRegion === 'macau' ? '澳门' : '香港';
+  const confirmed = await confirm(`确定清空当前地区（${regionName}）的所有订单和上报数据吗？此操作不可恢复。`);
+  if (!confirmed) return;
+  const pwd = await prompt("输入清空密码：","");
+  if (pwd !== PASSWORD) { await alert("密码错误"); return; }
+
   tableBetData={};userBetData={};reportBetData={};reportAmountData={};reportRiskData={};
   numberCount={};zodiacCount={};numberAmountCount={};zodiacAmountCount={};
   numberOrderTotal=0;zodiacWeightedTotal=0;
-  await clearAllOrderRecordsFromIDB();
-  await clearAllReportOrderRecordsFromIDB();
+  await clearAllOrderRecordsFromIDB(currentRegion);
+  await clearAllReportOrderRecordsFromIDB(currentRegion);
   renderAllTablesPlaceholder();
   calculateStorageUsage();
   updateAmountDisplays();
-  showToast("清空完成");
+  showToast(`已清空${regionName}的所有订单和上报记录`);
 }
 function clearAllInput(){ const si=document.querySelector('.source-order-input'); if(si)si.value=''; const re=document.getElementById('orderResult'); if(re)re.innerHTML=''; updateOrderTotalDisplay(); }
 async function pasteOrder(){ try{ const text=await navigator.clipboard.readText(); if(text){const si=document.querySelector('.source-order-input');if(si){si.value=text;convertOrderText();}} }catch(err){showToast('无法访问剪贴板');} }
 
-// ===== 导出导入 =====
-async function exportData(){ try{ const orders=await getOrderRecords(); const reports=await getReportOrderRecords(); const config=localStorage.getItem('customDataConfigObj'); const presets=localStorage.getItem('replacePresets'); const aliases=localStorage.getItem('categoryAliases'); const prefixes=localStorage.getItem('customPrefixes'); const suffixes=localStorage.getItem('customSuffixes'); const amountSuffixes=localStorage.getItem('customAmountSuffixes'); const amountPrefixes=localStorage.getItem('customAmountPrefixes'); const data={orders,reports,config,presets,aliases,prefixes,suffixes,amountSuffixes,amountPrefixes,exportTime:new Date().toISOString()}; const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'}); const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download=`港澳识别数据_${getTodayCST()}.json`; a.click(); URL.revokeObjectURL(url); }catch(e){showToast('导出失败');} }
+async function exportData(){
+  try{
+    const orders=await getOrderRecords(); const reports=await getReportOrderRecords();
+    const config=localStorage.getItem('customDataConfigObj'); const presets=localStorage.getItem('replacePresets');
+    const aliases=localStorage.getItem('categoryAliases'); const prefixes=localStorage.getItem('customPrefixes');
+    const suffixes=localStorage.getItem('customSuffixes'); const amountSuffixes=localStorage.getItem('customAmountSuffixes');
+    const amountPrefixes=localStorage.getItem('customAmountPrefixes');
+    const data={orders,reports,config,presets,aliases,prefixes,suffixes,amountSuffixes,amountPrefixes,exportTime:new Date().toISOString(), region: currentRegion};
+    const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+    const url=URL.createObjectURL(blob); const a=document.createElement('a');
+    a.href=url; a.download=`港澳识别数据_${currentRegion==='macau'?'澳门':'香港'}_${getTodayCST()}.json`; a.click();
+    URL.revokeObjectURL(url);
+  }catch(e){showToast('导出失败');}
+}
 async function importData(){
   const inp=document.createElement('input'); inp.type='file'; inp.accept='.json'; inp.style.display='none';
   document.body.appendChild(inp);
@@ -1991,38 +2063,31 @@ async function importData(){
       try{
         const data=JSON.parse(ev.target.result);
         if(!data.orders||!data.reports){showToast('无效格式');document.body.removeChild(inp);return;}
-
         const totalToImport = data.orders.length + data.reports.length;
         if(totalToImport === 0){
           showToast('文件中没有订单或上报记录');
           document.body.removeChild(inp);
           return;
         }
-
         const cf = await confirm(`文件包含 ${totalToImport} 条记录（下单${data.orders.length}条，上报${data.reports.length}条），是否导入？`);
         if(!cf){document.body.removeChild(inp);return;}
 
-        const eo=await getOrderRecords();
-        const er=await getReportOrderRecords();
+        const eo=await getOrderRecords(); const er=await getReportOrderRecords();
         let so=0,no=0;
-
         for(const r of data.orders){
-          const dup = eo.find(o => o.content === r.content && o.user === r.user && o.timestamp === r.timestamp);
+          const dup = eo.find(o => o.content === r.content && o.user === r.user && o.timestamp === r.timestamp && o.region === r.region);
           if(dup){ so++; continue; }
           try{ await saveOrderRecordToIDB(r.content, r.user, r.date, r.totalAmount || 0, r.timestamp); no++; }
           catch(e){ console.error('导入订单失败', e); }
         }
-
         let sr=0,nr=0;
         for(const r of data.reports){
-          const dup = er.find(o => o.content === r.content && o.user === r.user && o.timestamp === r.timestamp);
+          const dup = er.find(o => o.content === r.content && o.user === r.user && o.timestamp === r.timestamp && o.region === r.region);
           if(dup){ sr++; continue; }
           try{ await saveReportOrderRecordToIDB(r.content, r.user, r.date, r.totalAmount || 0, r.timestamp); nr++; }
           catch(e){ console.error('导入上报失败', e); }
         }
-
         const tn=no+nr;
-
         if(data.config)localStorage.setItem('customDataConfigObj',data.config);
         if(data.presets)localStorage.setItem('replacePresets',data.presets);
         if(data.aliases)localStorage.setItem('categoryAliases',data.aliases);
@@ -2033,7 +2098,6 @@ async function importData(){
 
         await updateTableFromRecords();
         calculateStorageUsage();
-
         let msg = `成功导入 ${tn} 条新记录。`;
         if(so+sr > 0) msg += `\n跳过 ${so+sr} 条重复记录。`;
         showToast(msg);
@@ -2047,7 +2111,6 @@ async function importData(){
   inp.click();
 }
 
-// ===== 卡密管理 =====
 function showCardManager() {
   if (!isAdmin()) { showToast('需要管理员权限'); return; }
   if (document.getElementById('cardManagerWin')) return;
@@ -2099,7 +2162,6 @@ async function disableCard(index) { if (!(await confirm('确定禁用该卡密�
 async function enableCard(index) { const keys = getCardKeys(); keys[index].status = 'active'; saveCardKeys(keys); renderCardList(); }
 async function deleteCard(index) { if (!(await confirm('确定删除该卡密？'))) return; const keys = getCardKeys(); keys.splice(index, 1); saveCardKeys(keys); renderCardList(); }
 
-// ===== 用户管理 =====
 function showUserManager() {
   if (document.getElementById('userManagerWin')) return;
   const win = document.createElement('div'); win.className = 'floating-window'; win.id = 'userManagerWin';
@@ -2127,7 +2189,6 @@ function renderUserList() {
 async function addUserAction() { const name = document.getElementById('newUserName')?.value.trim(); if (!name) { showToast('请输入用户名'); return; } if (addUser(name)) { document.getElementById('newUserName').value = ''; renderUserList(); updateSelects(); showToast('用户添加成功'); } }
 async function deleteUserAction(name) { if (!(await confirm(`确定删除用户"${name}"及其数据吗？`))) return; deleteUser(name); renderUserList(); updateSelects(); showToast('用户已删除'); }
 
-// ===== 框选与复制功能（手机端长按1秒触发连选，短按/轻点保持单选，未触发连选时页面正常滑动） =====
 window.dragSelectionActive = false;
 
 function enableRowDragSelect(tableId) {
@@ -2153,7 +2214,6 @@ function enableRowDragSelect(tableId) {
     }
   }
 
-  // 桌面端鼠标事件
   tbody.addEventListener('mousedown', (e) => {
     if (e.button !== 0) return;
     if (e.ctrlKey || e.shiftKey) return;
@@ -2188,14 +2248,12 @@ function enableRowDragSelect(tableId) {
     }
   });
 
-  // 手机端触摸事件（长按1秒后激活连选，短按/轻点触发click单选，未触发长按时页面正常滑动）
   let longPressTimer = null;
   let longPressTriggered = false;
 
   tbody.addEventListener('touchstart', (e) => {
     const targetRow = e.target.closest('tr');
     if (!targetRow) return;
-    // 启动长按定时器，1秒
     longPressTriggered = false;
     longPressTimer = setTimeout(() => {
       longPressTriggered = true;
@@ -2205,11 +2263,9 @@ function enableRowDragSelect(tableId) {
       endRow = targetRow;
       targetRow.classList.add('selected-row');
     }, 1000);
-    // 注意：不调用 e.preventDefault()，保持页面可正常滑动
   }, { passive: true });
 
   tbody.addEventListener('touchmove', (e) => {
-    // 如果尚未触发长按，取消定时器，让浏览器自由滚动（不阻止默认行为）
     if (!longPressTriggered) {
       if (longPressTimer) {
         clearTimeout(longPressTimer);
@@ -2217,7 +2273,6 @@ function enableRowDragSelect(tableId) {
       }
       return;
     }
-    // 长按已触发，进行连选，阻止页面滚动
     if (!window.dragSelectionActive) return;
     const touch = e.touches[0];
     const target = document.elementFromPoint(touch.clientX, touch.clientY);
@@ -2287,8 +2342,7 @@ if (filterDateEl) {
   filterDateEl.addEventListener('input', updateTableFromRecords);
 }
 
-// ===== 解析功能（聚类分组已移至第一位，金额紧贴各数，解析方案记忆） =====
-let currentParseMethod = parseInt(localStorage.getItem('savedParseMethod') || '0'); // 0:聚类分组, 1:贪心合并, 2:固定50→10→5→2→1, 3:100递减, 4:固定100→...→1
+let currentParseMethod = parseInt(localStorage.getItem('savedParseMethod') || '0');
 
 function parseExcessText(text, method) {
   const lines = text.trim().split('\n').filter(l => l.trim());
@@ -2308,7 +2362,6 @@ function parseExcessText(text, method) {
     const result = [];
 
     if (method === 0) {
-      // 聚类分组
       while (data.some(d => d.amount > 0)) {
         const maxAmount = Math.max(...data.map(d => d.amount));
         if (maxAmount <= 0) break;
@@ -2326,7 +2379,6 @@ function parseExcessText(text, method) {
         result.push(`${group.join('-')}各数${groupAmount}`);
       }
     } else if (method === 1) {
-      // 贪心合并
       while (data.some(d => d.amount > 0)) {
         let bestAmount = 0;
         let bestCount = 0;
@@ -2353,7 +2405,6 @@ function parseExcessText(text, method) {
         result.push(`${group.join('-')}各数${bestAmount}`);
       }
     } else if (method === 2) {
-      // 固定50→10→5→2→1
       const levels = [50, 10, 5, 2, 1];
       for (const lv of levels) {
         let again = true;
@@ -2373,7 +2424,6 @@ function parseExcessText(text, method) {
         }
       }
     } else if (method === 3) {
-      // 100递减
       for (let lv = 100; lv >= 1; lv--) {
         let again = true;
         while (again) {
@@ -2392,7 +2442,6 @@ function parseExcessText(text, method) {
         }
       }
     } else if (method === 4) {
-      // 固定100→...→1
       const levels = [];
       for (let lv = 100; lv >= 5; lv -= 5) levels.push(lv);
       levels.push(3, 2, 1);
@@ -2435,7 +2484,6 @@ function switchParseMethod() {
   showToast(`当前方案：${methodNames[currentParseMethod]}`);
 
   currentParseMethod = (currentParseMethod + 1) % 5;
-  // 存入 localStorage，下次刷新自动恢复
   localStorage.setItem('savedParseMethod', currentParseMethod);
 }
 
@@ -2445,7 +2493,6 @@ function copyOrderGroup() {
   navigator.clipboard.writeText(text).then(() => showToast('订单组已复制'));
 }
 
-// applyReportCap后清空解析结果
 const originalApplyReportCap = applyReportCap;
 applyReportCap = function() {
   originalApplyReportCap();
@@ -2456,6 +2503,7 @@ applyReportCap = function() {
 };
 
 window.onload = async () => {
+  setCurrentRegion(currentRegion);
   await initIndexedDB();
   initDataConfig();
   const today = getTodayCST();
