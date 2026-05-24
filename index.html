@@ -161,7 +161,6 @@ input[type="number"] {
     box-shadow: 0 0 12px rgba(46,134,193,0.7);
     border-color: #7fb3d8 !important;
 }
-/* 识别按钮绿色 */
 .btn-recognize {
     background: #27ae60 !important;
     border-color: #2ecc71 !important;
@@ -875,21 +874,17 @@ async function switchRegion(region) {
     updateOrderTotalDisplay();
   }
 
+  // 关闭已打开的订单记录/上报数据窗口
+  const orderWin = document.getElementById('orderWin');
+  if (orderWin) orderWin.remove();
+  const reportWin = document.getElementById('reportWin');
+  if (reportWin) reportWin.remove();
+
   setCurrentRegion(region);
   clearMemoryData();
   await updateTableFromRecords();
   updateSelects();
   renderAllTablesPlaceholder();
-  const orderWin = document.getElementById('orderWin');
-  if (orderWin) {
-    const userFilter = document.getElementById('recordUserFilter')?.value || 'all';
-    await showOrderRecord(userFilter);
-  }
-  const reportWin = document.getElementById('reportWin');
-  if (reportWin) {
-    const userFilter = document.getElementById('reportRecordUserFilter')?.value || 'all';
-    await showReportOrderRecord(userFilter);
-  }
   showToast(`已切换至${region === 'macau' ? '澳门' : '香港'}`);
 }
 
@@ -950,15 +945,16 @@ function pinWindow(winId) {}
 async function showDatabase() { const pwd = await prompt("请输入数据库密码：",""); if (pwd === PASSWORD) { const modal = document.getElementById('databaseModal'); if (!modal) return; modal.style.display = 'flex'; highestZ += 1; modal.style.zIndex = highestZ; renderCustomConfigContainer(); makeWindowDraggable('databaseModalBox'); } else { await alert("密码错误"); } }
 function hideDatabase() { const modal = document.getElementById('databaseModal'); if (modal) modal.style.display = 'none'; }
 
-// ===== 识别弹窗 =====
+// ===== 识别弹窗（标题显示当前地区） =====
 function showRecognizeModal() {
   if (document.getElementById('recognizeWin')) return;
+  const regionLabel = currentRegion === 'macau' ? '澳门' : '香港';
   const win = document.createElement('div'); win.className = 'floating-window'; win.id = 'recognizeWin';
   win.style.width = '850px'; win.style.height = '650px'; win.style.left = '50%'; win.style.top = '50%'; win.style.transform = 'translate(-50%, -50%)';
   win.setAttribute('data-orig-width', '850px');
   win.setAttribute('data-orig-height', '650px');
   win.innerHTML = `
-    <div class="modal-header">订单输入<div class="window-controls"><button onclick="maximizeWindow('recognizeWin')">🗖</button><button onclick="document.getElementById('recognizeWin').remove()">×</button></div></div>
+    <div class="modal-header">${regionLabel}订单输入<div class="window-controls"><button onclick="maximizeWindow('recognizeWin')">🗖</button><button onclick="document.getElementById('recognizeWin').remove()">×</button></div></div>
     <div class="modal-body" style="display:flex; flex-direction:column; gap:10px;">
       <div class="card recognize-card" style="flex:1; display:flex; flex-direction:column;">
         <div class="card-title" style="display:flex; align-items:center; gap:5px;">
@@ -1187,10 +1183,13 @@ function switchRiskReport() { const val = document.getElementById('riskReportSwi
   if (val === 'total') { document.getElementById('riskSection').style.display = ''; document.getElementById('reportSection').style.display = 'none'; document.getElementById('viewUserSelect').style.display = 'none'; generateRiskTable(); } else if (val === 'user') { document.getElementById('riskSection').style.display = ''; document.getElementById('reportSection').style.display = 'none'; document.getElementById('viewUserSelect').style.display = 'inline-block'; generateRiskTable(); } else if (val === 'report') { document.getElementById('riskSection').style.display = 'none'; document.getElementById('reportSection').style.display = ''; generateReportTable(); } }
 
 function initIndexedDB() { return new Promise((resolve) => { const request = indexedDB.open(DB_NAME, DB_VERSION); request.onerror = () => { resolve(false); }; request.onsuccess = (event) => { db = event.target.result; resolve(true); }; request.onupgradeneeded = (event) => { db = event.target.result; if (!db.objectStoreNames.contains(STORE_NAME)) { db.createObjectStore(STORE_NAME, { keyPath: 'id' }); } if (!db.objectStoreNames.contains(REPORT_STORE_NAME)) { db.createObjectStore(REPORT_STORE_NAME, { keyPath: 'id' }); } const tx = event.target.transaction; const orderStore = tx.objectStore(STORE_NAME); const reportStore = tx.objectStore(REPORT_STORE_NAME); const addRegion = (store) => { const allReq = store.getAll(); allReq.onsuccess = () => { const records = allReq.result; records.forEach(r => { if (!r.region) { r.region = 'macau'; store.put(r); } }); }; }; addRegion(orderStore); addRegion(reportStore); }; }); }
-async function getOrderRecords() { return new Promise((resolve) => { if (!db) resolve([]); const tx = db.transaction([STORE_NAME],'readonly'); const store = tx.objectStore(STORE_NAME); const req = store.getAll(); req.onsuccess = (e) => resolve((e.target.result || []).filter(r => r.region === currentRegion)); }); }
-async function getReportOrderRecords() { return new Promise((resolve) => { if (!db) resolve([]); const tx = db.transaction([REPORT_STORE_NAME],'readonly'); const store = tx.objectStore(REPORT_STORE_NAME); const req = store.getAll(); req.onsuccess = (e) => resolve((e.target.result || []).filter(r => r.region === currentRegion)); }); }
-async function saveOrderRecordToIDB(content, user, date, totalAmount = 0, ts = null) { return new Promise((resolve) => { if (!db) resolve(false); const tx = db.transaction([STORE_NAME],'readwrite'); const store = tx.objectStore(STORE_NAME); const record = { id: Date.now() + '-' + Math.random().toString(36).substr(2, 9), content, user, date, totalAmount, region: currentRegion, timestamp: ts || new Date().toISOString() }; const req = store.add(record); req.onsuccess = () => resolve(true); }); }
-async function saveReportOrderRecordToIDB(content, user, date, totalAmount = 0, ts = null) { return new Promise((resolve) => { if (!db) resolve(false); const tx = db.transaction([REPORT_STORE_NAME],'readwrite'); const store = tx.objectStore(REPORT_STORE_NAME); const record = { id: Date.now() + '-' + Math.random().toString(36).substr(2, 9), content, user, date, totalAmount, region: currentRegion, timestamp: ts || new Date().toISOString() }; const req = store.add(record); req.onsuccess = () => resolve(true); }); }
+// 获取所有记录（不分地区，用于导出）
+async function getAllOrdersUnfiltered() { return new Promise((resolve) => { if (!db) resolve([]); const tx = db.transaction([STORE_NAME],'readonly'); const store = tx.objectStore(STORE_NAME); const req = store.getAll(); req.onsuccess = (e) => resolve(e.target.result || []); }); }
+async function getAllReportsUnfiltered() { return new Promise((resolve) => { if (!db) resolve([]); const tx = db.transaction([REPORT_STORE_NAME],'readonly'); const store = tx.objectStore(REPORT_STORE_NAME); const req = store.getAll(); req.onsuccess = (e) => resolve(e.target.result || []); }); }
+async function getOrderRecords() { const all = await getAllOrdersUnfiltered(); return all.filter(r => r.region === currentRegion); }
+async function getReportOrderRecords() { const all = await getAllReportsUnfiltered(); return all.filter(r => r.region === currentRegion); }
+async function saveOrderRecordToIDB(content, user, date, totalAmount = 0, ts = null, regionOverride = null) { return new Promise((resolve) => { if (!db) resolve(false); const tx = db.transaction([STORE_NAME],'readwrite'); const store = tx.objectStore(STORE_NAME); const record = { id: Date.now() + '-' + Math.random().toString(36).substr(2, 9), content, user, date, totalAmount, region: regionOverride || currentRegion, timestamp: ts || new Date().toISOString() }; const req = store.add(record); req.onsuccess = () => resolve(true); }); }
+async function saveReportOrderRecordToIDB(content, user, date, totalAmount = 0, ts = null, regionOverride = null) { return new Promise((resolve) => { if (!db) resolve(false); const tx = db.transaction([REPORT_STORE_NAME],'readwrite'); const store = tx.objectStore(REPORT_STORE_NAME); const record = { id: Date.now() + '-' + Math.random().toString(36).substr(2, 9), content, user, date, totalAmount, region: regionOverride || currentRegion, timestamp: ts || new Date().toISOString() }; const req = store.add(record); req.onsuccess = () => resolve(true); }); }
 async function deleteOrderRecordFromIDB(id) { return new Promise((resolve) => { if (!db) { resolve(false); return; } const tx = db.transaction([STORE_NAME],'readwrite'); const store = tx.objectStore(STORE_NAME); const req = store.delete(id); req.onsuccess = () => resolve(true); req.onerror = () => resolve(false); }); }
 async function deleteReportOrderRecordFromIDB(id) { return new Promise((resolve) => { if (!db) { resolve(false); return; } const tx = db.transaction([REPORT_STORE_NAME],'readwrite'); const store = tx.objectStore(REPORT_STORE_NAME); const req = store.delete(id); req.onsuccess = () => resolve(true); req.onerror = () => resolve(false); }); }
 async function batchDeleteOrderRecordFromIDB(ids) { return new Promise((resolve) => { if (!db) { resolve(false); return; } const tx = db.transaction([STORE_NAME],'readwrite'); const store = tx.objectStore(STORE_NAME); let count = 0; ids.forEach(id => { const req = store.delete(id); req.onsuccess = () => { count++; if (count === ids.length) resolve(true); }; req.onerror = () => { console.error('删除订单失败', id); }; }); }); }
@@ -2053,7 +2052,6 @@ if (resetBtn) {
   resetBtn.addEventListener('mouseleave', () => {
     if (resetLongPressTimer) { clearTimeout(resetLongPressTimer); resetLongPressTimer = null; }
   });
-  // 触摸事件
   resetBtn.addEventListener('touchstart', (e) => {
     resetLongPressTimer = setTimeout(async () => {
       resetLongPressTimer = null;
@@ -2097,17 +2095,18 @@ async function resetTable(){
 function clearAllInput(){ const si=document.querySelector('.source-order-input'); if(si)si.value=''; const re=document.getElementById('orderResult'); if(re)re.innerHTML=''; updateOrderTotalDisplay(); }
 async function pasteOrder(){ try{ const text=await navigator.clipboard.readText(); if(text){const si=document.querySelector('.source-order-input');if(si){si.value=text;convertOrderText();}} }catch(err){showToast('无法访问剪贴板');} }
 
+// ===== 导出导入（导出全部数据，导入按地区区分） =====
 async function exportData(){
   try{
-    const orders=await getOrderRecords(); const reports=await getReportOrderRecords();
+    const orders=await getAllOrdersUnfiltered(); const reports=await getAllReportsUnfiltered();
     const config=localStorage.getItem('customDataConfigObj'); const presets=localStorage.getItem('replacePresets');
     const aliases=localStorage.getItem('categoryAliases'); const prefixes=localStorage.getItem('customPrefixes');
     const suffixes=localStorage.getItem('customSuffixes'); const amountSuffixes=localStorage.getItem('customAmountSuffixes');
     const amountPrefixes=localStorage.getItem('customAmountPrefixes');
-    const data={orders,reports,config,presets,aliases,prefixes,suffixes,amountSuffixes,amountPrefixes,exportTime:new Date().toISOString(), region: currentRegion};
+    const data={orders,reports,config,presets,aliases,prefixes,suffixes,amountSuffixes,amountPrefixes,exportTime:new Date().toISOString()};
     const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
     const url=URL.createObjectURL(blob); const a=document.createElement('a');
-    a.href=url; a.download=`港澳识别数据_${currentRegion==='macau'?'澳门':'香港'}_${getTodayCST()}.json`; a.click();
+    a.href=url; a.download=`港澳识别数据_全部_${getTodayCST()}.json`; a.click();
     URL.revokeObjectURL(url);
   }catch(e){showToast('导出失败');}
 }
@@ -2131,19 +2130,21 @@ async function importData(){
         const cf = await confirm(`文件包含 ${totalToImport} 条记录（下单${data.orders.length}条，上报${data.reports.length}条），是否导入？`);
         if(!cf){document.body.removeChild(inp);return;}
 
-        const eo=await getOrderRecords(); const er=await getReportOrderRecords();
+        const eo=await getAllOrdersUnfiltered(); const er=await getAllReportsUnfiltered();
         let so=0,no=0;
         for(const r of data.orders){
-          const dup = eo.find(o => o.content === r.content && o.user === r.user && o.timestamp === r.timestamp && o.region === r.region);
+          const region = r.region || currentRegion;
+          const dup = eo.find(o => o.content === r.content && o.user === r.user && o.timestamp === r.timestamp && o.region === region);
           if(dup){ so++; continue; }
-          try{ await saveOrderRecordToIDB(r.content, r.user, r.date, r.totalAmount || 0, r.timestamp); no++; }
+          try{ await saveOrderRecordToIDB(r.content, r.user, r.date, r.totalAmount || 0, r.timestamp, region); no++; }
           catch(e){ console.error('导入订单失败', e); }
         }
         let sr=0,nr=0;
         for(const r of data.reports){
-          const dup = er.find(o => o.content === r.content && o.user === r.user && o.timestamp === r.timestamp && o.region === r.region);
+          const region = r.region || currentRegion;
+          const dup = er.find(o => o.content === r.content && o.user === r.user && o.timestamp === r.timestamp && o.region === region);
           if(dup){ sr++; continue; }
-          try{ await saveReportOrderRecordToIDB(r.content, r.user, r.date, r.totalAmount || 0, r.timestamp); nr++; }
+          try{ await saveReportOrderRecordToIDB(r.content, r.user, r.date, r.totalAmount || 0, r.timestamp, region); nr++; }
           catch(e){ console.error('导入上报失败', e); }
         }
         const tn=no+nr;
