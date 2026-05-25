@@ -66,7 +66,6 @@ body {background:#f5f7fa;font-size:14px;line-height:1.4;overflow-x:hidden;positi
     .database-modal-body {padding:10px!important;max-height:70vh!important;}
     .freq-container {flex-direction:column!important;gap:10px!important;}
     .freq-card {width:100%!important;}
-    /* 新增：号码统计表格手机端横向滚动 */
     #originalAmountTable {
         min-width: 100% !important;
         font-size: 11px !important;
@@ -85,7 +84,6 @@ body {background:#f5f7fa;font-size:14px;line-height:1.4;overflow-x:hidden;positi
     #originalAmountTable td:nth-child(3) { width: 44px !important; }
     #originalAmountTable th:nth-child(4),
     #originalAmountTable td:nth-child(4) { width: 44px !important; }
-    /* 号码统计卡片横向滚动容器 */
     .number-stats-scroll {
         overflow-x: auto !important;
         -webkit-overflow-scrolling: touch !important;
@@ -523,6 +521,8 @@ tr.selected-row {background-color: #dceeff !important; font-weight: bold; box-sh
     <button class="btn btn-primary" onclick="showCategoryAliases()">分类缩写</button>
     <button class="btn btn-export" onclick="exportData()">导出</button>
     <button class="btn btn-import" onclick="importData()">导入</button>
+    <!-- 新增回收站按钮 -->
+    <button class="btn btn-primary" onclick="showRecycleBin()">🗑️ 回收站</button>
     <button class="btn btn-primary" id="cardMgrBtn" style="display:none;" onclick="showCardManager()">卡密管理</button>
     <button class="btn btn-clear" onclick="logout()">退出登录</button>
   </div>
@@ -558,7 +558,6 @@ tr.selected-row {background-color: #dceeff !important; font-weight: bold; box-sh
         </div>
       </div>
 
-      <!-- 新增：号码统计卡片 -->
       <div class="card" style="margin-top:0;">
         <div class="card-title">号码统计</div>
         <div class="freq-container">
@@ -1215,18 +1214,19 @@ let zodiacDirectAmount = {}, zodiacFilteredAmount = {};
 let zodiacReportAmount = {}, zodiacFilteredReportAmount = {};
 let numberOrderTotal = 0, zodiacWeightedTotal = 0;
 let originalOrderAmount = {};
-// 新增：仅直接号码/分类金额
+// 仅直接号码/分类金额
 let directOrderAmount = {};
 let directReportAmount = {};
 
 const PASSWORD = "891105", YEAR_ZODIAC_PASSWORD = "150408";
-const DB_NAME = 'OrderDatabase', DB_VERSION = 4, STORE_NAME = 'orders', REPORT_STORE_NAME = 'report_orders';
+const DB_NAME = 'OrderDatabase', DB_VERSION = 5, STORE_NAME = 'orders', REPORT_STORE_NAME = 'report_orders', RECYCLE_STORE_NAME = 'recycle_bin';
 let db = null;
 const zodiacOrder = ['马','蛇','龙','兔','虎','牛','鼠','猪','狗','鸡','猴','羊'];
 let currentZodiacMap = {};
 const redNumbers = ['01','02','07','08','12','13','18','19','23','24','29','30','34','35','40','45','46'];
 const blueNumbers = ['03','04','09','10','14','15','20','25','26','31','36','37','41','42','47','48'];
 const greenNumbers = ['05','06','11','16','17','21','22','27','28','32','33','38','39','43','44','49'];
+const RECYCLE_RETENTION_DAYS = 30; // 回收站保留天数
 
 function getTodayCST() { const now = new Date(); const offset = 8*60; const localTime = now.getTime() + (now.getTimezoneOffset() + offset) * 60000; const cstDate = new Date(localTime); return `${cstDate.getFullYear()}-${String(cstDate.getMonth()+1).padStart(2,'0')}-${String(cstDate.getDate()).padStart(2,'0')}`; }
 function buildZodiacMap(startZodiac) { const map = {}; const startIndex = zodiacOrder.indexOf(startZodiac); const idx = startIndex !== -1 ? startIndex : 0; for (let i=1; i<=49; i++) map[i.toString().padStart(2,'0')] = zodiacOrder[(idx+i-1)%12]; return map; }
@@ -1235,17 +1235,47 @@ function switchRiskReport() { const val = document.getElementById('riskReportSwi
   document.querySelectorAll('#riskTable .selected-row, #reportTable .selected-row').forEach(el => el.classList.remove('selected-row'));
   if (val === 'total') { document.getElementById('riskSection').style.display = ''; document.getElementById('reportSection').style.display = 'none'; document.getElementById('viewUserSelect').style.display = 'none'; generateRiskTable(); } else if (val === 'user') { document.getElementById('riskSection').style.display = ''; document.getElementById('reportSection').style.display = 'none'; document.getElementById('viewUserSelect').style.display = 'inline-block'; generateRiskTable(); } else if (val === 'report') { document.getElementById('riskSection').style.display = 'none'; document.getElementById('reportSection').style.display = ''; generateReportTable(); } }
 
-function initIndexedDB() { return new Promise((resolve) => { const request = indexedDB.open(DB_NAME, DB_VERSION); request.onerror = () => { resolve(false); }; request.onsuccess = (event) => { db = event.target.result; resolve(true); }; request.onupgradeneeded = (event) => { db = event.target.result; if (!db.objectStoreNames.contains(STORE_NAME)) { db.createObjectStore(STORE_NAME, { keyPath: 'id' }); } if (!db.objectStoreNames.contains(REPORT_STORE_NAME)) { db.createObjectStore(REPORT_STORE_NAME, { keyPath: 'id' }); } const tx = event.target.transaction; const orderStore = tx.objectStore(STORE_NAME); const reportStore = tx.objectStore(REPORT_STORE_NAME); const addRegion = (store) => { const allReq = store.getAll(); allReq.onsuccess = () => { const records = allReq.result; records.forEach(r => { if (!r.region) { r.region = 'macau'; store.put(r); } }); }; }; addRegion(orderStore); addRegion(reportStore); }; }); }
+function initIndexedDB() { return new Promise((resolve) => { const request = indexedDB.open(DB_NAME, DB_VERSION); request.onerror = () => { resolve(false); }; request.onsuccess = (event) => { db = event.target.result; resolve(true); }; request.onupgradeneeded = (event) => { db = event.target.result; if (!db.objectStoreNames.contains(STORE_NAME)) { db.createObjectStore(STORE_NAME, { keyPath: 'id' }); } if (!db.objectStoreNames.contains(REPORT_STORE_NAME)) { db.createObjectStore(REPORT_STORE_NAME, { keyPath: 'id' }); } if (!db.objectStoreNames.contains(RECYCLE_STORE_NAME)) { db.createObjectStore(RECYCLE_STORE_NAME, { keyPath: 'id' }); } const tx = event.target.transaction; const orderStore = tx.objectStore(STORE_NAME); const reportStore = tx.objectStore(REPORT_STORE_NAME); const addRegion = (store) => { const allReq = store.getAll(); allReq.onsuccess = () => { const records = allReq.result; records.forEach(r => { if (!r.region) { r.region = 'macau'; store.put(r); } }); }; }; addRegion(orderStore); addRegion(reportStore); }; }); }
 async function getAllOrdersUnfiltered() { return new Promise((resolve) => { if (!db) resolve([]); const tx = db.transaction([STORE_NAME],'readonly'); const store = tx.objectStore(STORE_NAME); const req = store.getAll(); req.onsuccess = (e) => resolve(e.target.result || []); }); }
 async function getAllReportsUnfiltered() { return new Promise((resolve) => { if (!db) resolve([]); const tx = db.transaction([REPORT_STORE_NAME],'readonly'); const store = tx.objectStore(REPORT_STORE_NAME); const req = store.getAll(); req.onsuccess = (e) => resolve(e.target.result || []); }); }
 async function getOrderRecords() { const all = await getAllOrdersUnfiltered(); return all.filter(r => r.region === currentRegion); }
 async function getReportOrderRecords() { const all = await getAllReportsUnfiltered(); return all.filter(r => r.region === currentRegion); }
 async function saveOrderRecordToIDB(content, user, date, totalAmount = 0, ts = null, regionOverride = null) { return new Promise((resolve) => { if (!db) resolve(false); const tx = db.transaction([STORE_NAME],'readwrite'); const store = tx.objectStore(STORE_NAME); const record = { id: Date.now() + '-' + Math.random().toString(36).substr(2, 9), content, user, date, totalAmount, region: regionOverride || currentRegion, timestamp: ts || new Date().toISOString() }; const req = store.add(record); req.onsuccess = () => resolve(true); }); }
 async function saveReportOrderRecordToIDB(content, user, date, totalAmount = 0, ts = null, regionOverride = null) { return new Promise((resolve) => { if (!db) resolve(false); const tx = db.transaction([REPORT_STORE_NAME],'readwrite'); const store = tx.objectStore(REPORT_STORE_NAME); const record = { id: Date.now() + '-' + Math.random().toString(36).substr(2, 9), content, user, date, totalAmount, region: regionOverride || currentRegion, timestamp: ts || new Date().toISOString() }; const req = store.add(record); req.onsuccess = () => resolve(true); }); }
-async function deleteOrderRecordFromIDB(id) { return new Promise((resolve) => { if (!db) { resolve(false); return; } const tx = db.transaction([STORE_NAME],'readwrite'); const store = tx.objectStore(STORE_NAME); const req = store.delete(id); req.onsuccess = () => resolve(true); req.onerror = () => resolve(false); }); }
-async function deleteReportOrderRecordFromIDB(id) { return new Promise((resolve) => { if (!db) { resolve(false); return; } const tx = db.transaction([REPORT_STORE_NAME],'readwrite'); const store = tx.objectStore(REPORT_STORE_NAME); const req = store.delete(id); req.onsuccess = () => resolve(true); req.onerror = () => resolve(false); }); }
-async function batchDeleteOrderRecordFromIDB(ids) { return new Promise((resolve) => { if (!db) { resolve(false); return; } const tx = db.transaction([STORE_NAME],'readwrite'); const store = tx.objectStore(STORE_NAME); let count = 0; ids.forEach(id => { const req = store.delete(id); req.onsuccess = () => { count++; if (count === ids.length) resolve(true); }; req.onerror = () => { console.error('删除订单失败', id); }; }); }); }
-async function batchDeleteReportOrderRecordFromIDB(ids) { return new Promise((resolve) => { if (!db) { resolve(false); return; } const tx = db.transaction([REPORT_STORE_NAME],'readwrite'); const store = tx.objectStore(REPORT_STORE_NAME); let count = 0; ids.forEach(id => { const req = store.delete(id); req.onsuccess = () => { count++; if (count === ids.length) resolve(true); }; req.onerror = () => { console.error('删除上报失败', id); }; }); }); }
+// ===== 回收站数据操作 =====
+async function getRecycleBinRecords() { return new Promise((resolve) => { if (!db) resolve([]); const tx = db.transaction([RECYCLE_STORE_NAME],'readonly'); const store = tx.objectStore(RECYCLE_STORE_NAME); const req = store.getAll(); req.onsuccess = (e) => resolve(e.target.result || []); }); }
+async function moveToRecycleBin(record, type) {
+  return new Promise((resolve) => {
+    if (!db) { resolve(false); return; }
+    const tx = db.transaction([RECYCLE_STORE_NAME],'readwrite');
+    const store = tx.objectStore(RECYCLE_STORE_NAME);
+    const recycleRecord = {
+      id: record.id,
+      type: type, // 'order' 或 'report'
+      content: record.content,
+      user: record.user,
+      date: record.date,
+      totalAmount: record.totalAmount || 0,
+      region: record.region || currentRegion,
+      timestamp: record.timestamp,
+      deletedAt: new Date().toISOString()
+    };
+    const req = store.add(recycleRecord);
+    req.onsuccess = () => resolve(true);
+    req.onerror = () => resolve(false);
+  });
+}
+async function deleteFromRecycleBin(id) { return new Promise((resolve) => { if (!db) { resolve(false); return; } const tx = db.transaction([RECYCLE_STORE_NAME],'readwrite'); const store = tx.objectStore(RECYCLE_STORE_NAME); const req = store.delete(id); req.onsuccess = () => resolve(true); req.onerror = () => resolve(false); }); }
+async function clearRecycleBin(region = null) { return new Promise((resolve) => { if (!db) resolve(false); const tx = db.transaction([RECYCLE_STORE_NAME],'readwrite'); const store = tx.objectStore(RECYCLE_STORE_NAME); if (region) { const allReq = store.getAll(); allReq.onsuccess = () => { const records = allReq.result.filter(r => r.region === region); records.forEach(r => store.delete(r.id)); resolve(true); }; } else { const req = store.clear(); req.onsuccess = () => resolve(true); } }); }
+async function batchDeleteFromRecycleBin(ids) { return new Promise((resolve) => { if (!db) { resolve(false); return; } const tx = db.transaction([RECYCLE_STORE_NAME],'readwrite'); const store = tx.objectStore(RECYCLE_STORE_NAME); let count = 0; ids.forEach(id => { const req = store.delete(id); req.onsuccess = () => { count++; if (count === ids.length) resolve(true); }; req.onerror = () => { console.error('彻底删除失败', id); }; }); }); }
+
+// 修改原有的删除函数，改为软删除（移入回收站）
+async function deleteOrderRecordFromIDB(id) { return new Promise(async (resolve) => { if (!db) { resolve(false); return; } const tx = db.transaction([STORE_NAME],'readwrite'); const store = tx.objectStore(STORE_NAME); const getReq = store.get(id); getReq.onsuccess = async () => { const record = getReq.result; if (!record) { resolve(false); return; } await moveToRecycleBin(record, 'order'); const delReq = store.delete(id); delReq.onsuccess = () => resolve(true); delReq.onerror = () => resolve(false); }; getReq.onerror = () => resolve(false); }); }
+async function deleteReportOrderRecordFromIDB(id) { return new Promise(async (resolve) => { if (!db) { resolve(false); return; } const tx = db.transaction([REPORT_STORE_NAME],'readwrite'); const store = tx.objectStore(REPORT_STORE_NAME); const getReq = store.get(id); getReq.onsuccess = async () => { const record = getReq.result; if (!record) { resolve(false); return; } await moveToRecycleBin(record, 'report'); const delReq = store.delete(id); delReq.onsuccess = () => resolve(true); delReq.onerror = () => resolve(false); }; getReq.onerror = () => resolve(false); }); }
+// 批量删除也改为软删除
+async function batchDeleteOrderRecordFromIDB(ids) { return new Promise(async (resolve) => { if (!db) { resolve(false); return; } const tx = db.transaction([STORE_NAME],'readwrite'); const store = tx.objectStore(STORE_NAME); let count = 0; for (const id of ids) { const record = await new Promise(res => { const req = store.get(id); req.onsuccess = () => res(req.result); req.onerror = () => res(null); }); if (record) { await moveToRecycleBin(record, 'order'); store.delete(id); } count++; if (count === ids.length) resolve(true); } }); }
+async function batchDeleteReportOrderRecordFromIDB(ids) { return new Promise(async (resolve) => { if (!db) { resolve(false); return; } const tx = db.transaction([REPORT_STORE_NAME],'readwrite'); const store = tx.objectStore(REPORT_STORE_NAME); let count = 0; for (const id of ids) { const record = await new Promise(res => { const req = store.get(id); req.onsuccess = () => res(req.result); req.onerror = () => res(null); }); if (record) { await moveToRecycleBin(record, 'report'); store.delete(id); } count++; if (count === ids.length) resolve(true); } }); }
+// 清空函数保持不变（物理删除，不进入回收站）
 async function clearAllOrderRecordsFromIDB(region = null) { return new Promise((resolve) => { if (!db) resolve(false); const tx = db.transaction([STORE_NAME],'readwrite'); const store = tx.objectStore(STORE_NAME); if (region) { const allReq = store.getAll(); allReq.onsuccess = () => { const records = allReq.result.filter(r => r.region === region); records.forEach(r => store.delete(r.id)); resolve(true); }; } else { const req = store.clear(); req.onsuccess = () => resolve(true); } }); }
 async function clearAllReportOrderRecordsFromIDB(region = null) { return new Promise((resolve) => { if (!db) resolve(false); const tx = db.transaction([REPORT_STORE_NAME],'readwrite'); const store = tx.objectStore(REPORT_STORE_NAME); if (region) { const allReq = store.getAll(); allReq.onsuccess = () => { const records = allReq.result.filter(r => r.region === region); records.forEach(r => store.delete(r.id)); resolve(true); }; } else { const req = store.clear(); req.onsuccess = () => resolve(true); } }); }
 
@@ -1710,7 +1740,6 @@ async function updateTableFromRecords(){
   }catch(e){}
 }
 
-// ===== 新增：更新直接金额合计显示 =====
 function updateDirectAmountTotals() {
   let orderTotal = 0;
   let reportTotal = 0;
@@ -2043,11 +2072,11 @@ async function showOrderRecord(filter='all'){
 }
 
 async function deleteOrderRecord(id) {
-  if (!(await confirm('确定删除？'))) return;
+  if (!(await confirm('确定删除？（可到回收站恢复）'))) return;
   try {
     const result = await deleteOrderRecordFromIDB(id);
     if (result) {
-      showToast('删除成功');
+      showToast('已移入回收站');
       await updateTableFromRecords();
       calculateStorageUsage();
       showOrderRecord();
@@ -2088,11 +2117,11 @@ async function showReportOrderRecord(filter='all'){
 }
 
 async function deleteReportOrderRecord(id) {
-  if (!(await confirm('确定删除？'))) return;
+  if (!(await confirm('确定删除？（可到回收站恢复）'))) return;
   try {
     const result = await deleteReportOrderRecordFromIDB(id);
     if (result) {
-      showToast('删除成功');
+      showToast('已移入回收站');
       await updateTableFromRecords();
       calculateStorageUsage();
       showReportOrderRecord();
@@ -2113,10 +2142,10 @@ function uncheckAllReport(){ document.querySelectorAll('.report-order-check').fo
 async function deleteChecked(){
   const ids=[]; document.querySelectorAll('.order-check:checked').forEach(cb=>ids.push(String(cb.dataset.id)));
   if(ids.length===0){showToast('请选择');return;}
-  if(!(await confirm(`确定要删除选中的 ${ids.length} 条订单记录吗？`))) return;
+  if(!(await confirm(`确定要删除选中的 ${ids.length} 条订单记录吗？（可到回收站恢复）`))) return;
   try {
     await batchDeleteOrderRecordFromIDB(ids);
-    showToast(`成功删除 ${ids.length} 条`);
+    showToast(`已将 ${ids.length} 条移入回收站`);
     await updateTableFromRecords();
     calculateStorageUsage();
     const userFilter = document.getElementById('recordUserFilter')?.value || 'all';
@@ -2130,10 +2159,10 @@ async function deleteChecked(){
 async function deleteCheckedReport(){
   const ids=[]; document.querySelectorAll('.report-order-check:checked').forEach(cb=>ids.push(String(cb.dataset.id)));
   if(ids.length===0){showToast('请选择');return;}
-  if(!(await confirm(`确定要删除选中的 ${ids.length} 条上报记录吗？`))) return;
+  if(!(await confirm(`确定要删除选中的 ${ids.length} 条上报记录吗？（可到回收站恢复）`))) return;
   try {
     await batchDeleteReportOrderRecordFromIDB(ids);
-    showToast(`成功删除 ${ids.length} 条`);
+    showToast(`已将 ${ids.length} 条移入回收站`);
     await updateTableFromRecords();
     calculateStorageUsage();
     const userFilter = document.getElementById('reportRecordUserFilter')?.value || 'all';
@@ -2680,6 +2709,154 @@ applyReportCap = function() {
   }
 };
 
+// ===== 回收站窗口 =====
+async function showRecycleBin() {
+  if (document.getElementById('recycleWin')) return;
+  const records = await getRecycleBinRecords();
+  const win = document.createElement('div'); win.className = 'floating-window'; win.id = 'recycleWin';
+  win.style.width = '750px'; win.style.height = '550px'; win.style.left = '50%'; win.style.top = '50%'; win.style.transform = 'translate(-50%, -50%)';
+  let html = `<div class="modal-header"><h3>🗑️ 回收站</h3><div class="window-controls"><button onclick="maximizeWindow('recycleWin')">🗖</button><button onclick="document.getElementById('recycleWin').remove()">×</button></div></div>`;
+  html += `<div class="modal-body" style="display:flex; flex-direction:column; height: calc(100% - 120px);">`;
+  html += `<div style="margin-bottom:10px;display:flex;gap:12px;flex-wrap:wrap;align-items:center;position:sticky;top:0;background:rgba(255,255,255,0.9);z-index:2;padding:5px 0;">
+    <button onclick="checkAllRecycle()" style="padding:6px 12px;background:#007bff;color:#fff;border:none;border-radius:4px;">全选</button>
+    <button onclick="uncheckAllRecycle()" style="padding:6px 12px;background:#6c757d;color:#fff;border:none;border-radius:4px;">取消全选</button>
+    <button onclick="restoreCheckedRecycle()" style="padding:6px 12px;background:#27ae60;color:#fff;border:none;border-radius:4px;">恢复选中</button>
+    <button onclick="deleteCheckedRecycle()" style="padding:6px 12px;background:#e74c3c;color:#fff;border:none;border-radius:4px;">彻底删除</button>
+    <button onclick="emptyRecycleBin()" style="padding:6px 12px;background:#8e44ad;color:#fff;border:none;border-radius:4px;margin-left:auto;">清空回收站</button>
+  </div>`;
+  html += `<div id="recycleListContainer" style="flex:1; overflow-y:auto;">`;
+  if (records.length === 0) {
+    html += `<div style="padding:20px;text-align:center;color:#666;">回收站为空</div>`;
+  } else {
+    records.sort((a,b) => new Date(b.deletedAt) - new Date(a.deletedAt));
+    records.forEach(rec => {
+      const ts = formatTimestampToCST(rec.deletedAt);
+      const typeLabel = rec.type === 'order' ? '下单' : '上报';
+      const typeColor = rec.type === 'order' ? '#3498db' : '#e67e22';
+      html += `<div class="order-item">
+        <input type="checkbox" class="recycle-check" data-id="${rec.id}">
+        <div class="order-content">${rec.content.replace(/\n/g,'<br>')}</div>
+        <div class="order-info">
+          <span class="order-total" style="color:#000;">合计：${rec.totalAmount || 0}</span>
+          <span class="order-meta">
+            <span style="color:${typeColor};">类型：${typeLabel}</span>
+            <span style="color:#e74c3c;">删除：${ts}</span>
+            <span>地区：${rec.region || '未知'}</span>
+            <span>用户：${rec.user || '未知'}</span>
+          </span>
+        </div>
+        <button class="order-del" onclick="restoreRecycleRecord('${rec.id}')" style="background:#27ae60;margin-right:4px;">恢复</button>
+        <button class="order-del" onclick="permanentlyDeleteRecycleRecord('${rec.id}')">删除</button>
+      </div>`;
+    });
+  }
+  html += `</div></div>`;
+  html += `<div class="modal-footer" style="justify-content:space-between;">
+    <span style="font-size:12px;color:#666;" id="recycleStorageInfo"></span>
+    <button onclick="document.getElementById('recycleWin').remove()" style="padding:8px 16px;background:#6c757d;color:#fff;border:none;border-radius:4px;">关闭</button>
+  </div>`;
+  win.innerHTML = html;
+  document.body.appendChild(win);
+  updateRecycleStorageInfo();
+  makeWindowDraggable('recycleWin'); highestZ += 1; win.style.zIndex = highestZ;
+}
+
+function updateRecycleStorageInfo() {
+  const span = document.getElementById('recycleStorageInfo');
+  if (!span) return;
+  getRecycleBinRecords().then(records => {
+    let bytes = 0;
+    records.forEach(r => bytes += JSON.stringify(r).length * 2);
+    const usedMB = (bytes / (1024*1024)).toFixed(2);
+    span.textContent = `回收站占用：${usedMB} MB（共${records.length}条记录）`;
+  });
+}
+
+function checkAllRecycle() { document.querySelectorAll('.recycle-check').forEach(cb => cb.checked = true); }
+function uncheckAllRecycle() { document.querySelectorAll('.recycle-check').forEach(cb => cb.checked = false); }
+
+async function restoreRecycleRecord(id) {
+  try {
+    const records = await getRecycleBinRecords();
+    const record = records.find(r => r.id === id);
+    if (!record) { showToast('记录不存在'); return; }
+    if (record.type === 'order') {
+      await saveOrderRecordToIDB(record.content, record.user, record.date, record.totalAmount || 0, record.timestamp, record.region);
+    } else {
+      await saveReportOrderRecordToIDB(record.content, record.user, record.date, record.totalAmount || 0, record.timestamp, record.region);
+    }
+    await deleteFromRecycleBin(id);
+    showToast('已恢复');
+    await updateTableFromRecords();
+    calculateStorageUsage();
+    showRecycleBin();
+  } catch(e) { showToast('恢复失败'); }
+}
+
+async function permanentlyDeleteRecycleRecord(id) {
+  if (!(await confirm('确定彻底删除吗？此操作不可恢复！'))) return;
+  await deleteFromRecycleBin(id);
+  showToast('已彻底删除');
+  updateRecycleStorageInfo();
+  showRecycleBin();
+}
+
+async function restoreCheckedRecycle() {
+  const ids = []; document.querySelectorAll('.recycle-check:checked').forEach(cb => ids.push(String(cb.dataset.id)));
+  if (ids.length === 0) { showToast('请选择'); return; }
+  const records = await getRecycleBinRecords();
+  let count = 0;
+  for (const id of ids) {
+    const record = records.find(r => r.id === id);
+    if (!record) continue;
+    if (record.type === 'order') {
+      await saveOrderRecordToIDB(record.content, record.user, record.date, record.totalAmount || 0, record.timestamp, record.region);
+    } else {
+      await saveReportOrderRecordToIDB(record.content, record.user, record.date, record.totalAmount || 0, record.timestamp, record.region);
+    }
+    await deleteFromRecycleBin(id);
+    count++;
+  }
+  showToast(`已恢复 ${count} 条`);
+  await updateTableFromRecords();
+  calculateStorageUsage();
+  showRecycleBin();
+}
+
+async function deleteCheckedRecycle() {
+  const ids = []; document.querySelectorAll('.recycle-check:checked').forEach(cb => ids.push(String(cb.dataset.id)));
+  if (ids.length === 0) { showToast('请选择'); return; }
+  if (!(await confirm(`确定彻底删除选中的 ${ids.length} 条记录吗？此操作不可恢复！`))) return;
+  await batchDeleteFromRecycleBin(ids);
+  showToast(`已彻底删除 ${ids.length} 条`);
+  updateRecycleStorageInfo();
+  showRecycleBin();
+}
+
+async function emptyRecycleBin() {
+  if (!(await confirm('确定清空整个回收站吗？此操作不可恢复！'))) return;
+  const pwd = await prompt("输入清空密码：","");
+  if (pwd !== PASSWORD) { await alert("密码错误"); return; }
+  await clearRecycleBin();
+  showToast('回收站已清空');
+  showRecycleBin();
+}
+
+// 自动清理过期回收站记录（每天检查一次）
+async function autoCleanRecycleBin() {
+  try {
+    const records = await getRecycleBinRecords();
+    const now = Date.now();
+    const expireMs = RECYCLE_RETENTION_DAYS * 24 * 60 * 60 * 1000;
+    for (const record of records) {
+      const deletedTime = new Date(record.deletedAt).getTime();
+      if (now - deletedTime > expireMs) {
+        await deleteFromRecycleBin(record.id);
+      }
+    }
+  } catch(e) { /* 静默处理 */ }
+}
+
 window.onload = async () => {
   setCurrentRegion(currentRegion);
   await initIndexedDB();
@@ -2695,6 +2872,10 @@ window.onload = async () => {
 
   enableRowDragSelect('riskTable');
   enableRowDragSelect('reportTable');
+
+  // 每天自动清理一次回收站过期记录
+  await autoCleanRecycleBin();
+  setInterval(autoCleanRecycleBin, 24 * 60 * 60 * 1000);
 
   window._systemReady = async () => {
     await updateTableFromRecords();
