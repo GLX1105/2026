@@ -85,6 +85,11 @@ body {background:#f5f7fa;font-size:14px;line-height:1.4;overflow-x:hidden;positi
     #originalAmountTable td:nth-child(3) { width: 44px !important; }
     #originalAmountTable th:nth-child(4),
     #originalAmountTable td:nth-child(4) { width: 44px !important; }
+    /* 号码统计卡片横向滚动容器 */
+    .number-stats-scroll {
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+    }
 }
 /* ================= 手机端适配 END ================= */
 
@@ -558,8 +563,14 @@ tr.selected-row {background-color: #dceeff !important; font-weight: bold; box-sh
         <div class="card-title">号码统计</div>
         <div class="freq-container">
           <div class="freq-card">
-            <div class="freq-title">号码金额</div>
-            <table class="freq-table" id="originalAmountTable"></table>
+            <div class="freq-title">
+              号码金额
+              <div class="amount-stat-box" id="directOrderTotalBox" style="display:none; margin-left:8px;"><span>号码合计：</span><span id="directOrderTotalAmount">0</span></div>
+              <div class="amount-stat-box" id="directReportTotalBox" style="display:none; margin-left:8px;"><span>上报合计：</span><span id="directReportTotalAmount">0</span></div>
+            </div>
+            <div class="number-stats-scroll">
+              <table class="freq-table" id="originalAmountTable"></table>
+            </div>
           </div>
         </div>
       </div>
@@ -840,7 +851,7 @@ tr.selected-row {background-color: #dceeff !important; font-weight: bold; box-sh
   </div>
 </div>
 <script>
- // ===== 自定义对话框系统 =====
+// ===== 自定义对话框系统 =====
 function showCustomDialog({ title = '提示', message = '', type = 'alert', defaultValue = '', placeholder = '' }) {
   return new Promise((resolve) => {
     const overlay = document.createElement('div'); overlay.className = 'custom-dialog-overlay';
@@ -1699,6 +1710,36 @@ async function updateTableFromRecords(){
   }catch(e){}
 }
 
+// ===== 新增：更新直接金额合计显示 =====
+function updateDirectAmountTotals() {
+  let orderTotal = 0;
+  let reportTotal = 0;
+  for (let n in directOrderAmount) { orderTotal += directOrderAmount[n] || 0; }
+  for (let n in directReportAmount) { reportTotal += directReportAmount[n] || 0; }
+
+  const orderBox = document.getElementById('directOrderTotalBox');
+  const orderSpan = document.getElementById('directOrderTotalAmount');
+  if (orderBox && orderSpan) {
+    if (orderTotal > 0) {
+      orderSpan.textContent = orderTotal;
+      orderBox.style.display = 'inline-flex';
+    } else {
+      orderBox.style.display = 'none';
+    }
+  }
+
+  const reportBox = document.getElementById('directReportTotalBox');
+  const reportSpan = document.getElementById('directReportTotalAmount');
+  if (reportBox && reportSpan) {
+    if (reportTotal > 0) {
+      reportSpan.textContent = reportTotal;
+      reportBox.style.display = 'inline-flex';
+    } else {
+      reportBox.style.display = 'none';
+    }
+  }
+}
+
 function renderOriginalAmountTable() {
   const tbl = document.getElementById('originalAmountTable');
   if (!tbl) return;
@@ -1728,6 +1769,7 @@ function renderOriginalAmountTable() {
   }
   tb += '</tbody>';
   tbl.innerHTML = th + tb;
+  updateDirectAmountTotals();
 }
 
 function updateOrderTotalDisplay(){ const re=document.getElementById('orderResult'); const box=document.getElementById('orderTotalAmountBox'); const span=document.getElementById('orderTotalAmount'); if(!re||!box||!span)return; const txt=re.innerText.trim(); if(!txt){box.style.display='none';return;} const lines=txt.split('\n'); const cfg=getAllConfigData(); const keys=getAllValidCategories(cfg); let total=0; lines.forEach(line=>{ const{numbers,zodiacs,amount}=countItemsInLine(line,cfg,keys); let cnt=numbers.length; zodiacs.forEach(z=>{cnt+=(cfg.zodiac[z]||[]).length;}); if(cnt>0)total+=cnt*amount; }); span.textContent=total; box.style.display='inline-flex'; }
@@ -2668,4 +2710,4 @@ window.onload = async () => {
 };
 </script>
 </body>
-</html>   
+</html>    
