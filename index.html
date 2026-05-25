@@ -2874,6 +2874,7 @@ function checkAllRecycle() { document.querySelectorAll('.recycle-check').forEach
 function uncheckAllRecycle() { document.querySelectorAll('.recycle-check').forEach(cb => cb.checked = false); }
 
 async function restoreRecycleRecord(id) {
+  if (!(await confirm('确定恢复该记录吗？'))) return;
   try {
     const records = await getRecycleBinRecords();
     const record = records.find(r => r.id === id);
@@ -2902,6 +2903,7 @@ async function permanentlyDeleteRecycleRecord(id) {
 async function restoreCheckedRecycle() {
   const ids = []; document.querySelectorAll('.recycle-check:checked').forEach(cb => ids.push(String(cb.dataset.id)));
   if (ids.length === 0) { showToast('请选择'); return; }
+  if (!(await confirm(`确定恢复选中的 ${ids.length} 条记录吗？`))) return;
   const records = await getRecycleBinRecords();
   let count = 0;
   for (const id of ids) {
