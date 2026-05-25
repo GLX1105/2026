@@ -849,7 +849,7 @@ tr.selected-row {background-color: #dceeff !important; font-weight: bold; box-sh
   </div>
 </div>
 <script>
-    // ===== 自定义对话框系统 =====
+// ===== 自定义对话框系统 =====
 function showCustomDialog({ title = '提示', message = '', type = 'alert', defaultValue = '', placeholder = '' }) {
   return new Promise((resolve) => {
     const overlay = document.createElement('div'); overlay.className = 'custom-dialog-overlay';
@@ -1268,6 +1268,49 @@ async function deleteFromRecycleBin(id) { return new Promise((resolve) => { if (
 async function clearRecycleBin(region = null) { return new Promise((resolve) => { if (!db) resolve(false); const tx = db.transaction([RECYCLE_STORE_NAME],'readwrite'); const store = tx.objectStore(RECYCLE_STORE_NAME); if (region) { const allReq = store.getAll(); allReq.onsuccess = () => { const records = allReq.result.filter(r => r.region === region); records.forEach(r => store.delete(r.id)); resolve(true); }; } else { const req = store.clear(); req.onsuccess = () => resolve(true); } }); }
 async function batchDeleteFromRecycleBin(ids) { return new Promise((resolve) => { if (!db) { resolve(false); return; } const tx = db.transaction([RECYCLE_STORE_NAME],'readwrite'); const store = tx.objectStore(RECYCLE_STORE_NAME); let count = 0; ids.forEach(id => { const req = store.delete(id); req.onsuccess = () => { count++; if (count === ids.length) resolve(true); }; req.onerror = () => { console.error('彻底删除失败', id); }; }); }); }
 
+// ===== 修正后的单条删除函数 =====
+async function deleteOrderRecordFromIDB(id) {
+  if (!db) return false;
+  const record = await new Promise((resolve) => {
+    const tx = db.transaction([STORE_NAME], 'readonly');
+    const store = tx.objectStore(STORE_NAME);
+    const req = store.get(id);
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => resolve(null);
+  });
+  if (!record) return false;
+  await moveToRecycleBin(record, 'order');
+  await new Promise((resolve) => {
+    const tx = db.transaction([STORE_NAME], 'readwrite');
+    const store = tx.objectStore(STORE_NAME);
+    const req = store.delete(id);
+    req.onsuccess = () => resolve(true);
+    req.onerror = () => resolve(false);
+  });
+  return true;
+}
+
+async function deleteReportOrderRecordFromIDB(id) {
+  if (!db) return false;
+  const record = await new Promise((resolve) => {
+    const tx = db.transaction([REPORT_STORE_NAME], 'readonly');
+    const store = tx.objectStore(REPORT_STORE_NAME);
+    const req = store.get(id);
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => resolve(null);
+  });
+  if (!record) return false;
+  await moveToRecycleBin(record, 'report');
+  await new Promise((resolve) => {
+    const tx = db.transaction([REPORT_STORE_NAME], 'readwrite');
+    const store = tx.objectStore(REPORT_STORE_NAME);
+    const req = store.delete(id);
+    req.onsuccess = () => resolve(true);
+    req.onerror = () => resolve(false);
+  });
+  return true;
+}
+
 // ===== 批量删除函数 =====
 async function batchDeleteOrderRecordFromIDB(ids) {
   if (!db) return false;
@@ -1323,59 +1366,6 @@ async function batchDeleteReportOrderRecordFromIDB(ids) {
     return true;
   } catch (e) {
     console.error('批量删除上报记录失败', e);
-    return false;
-  }
-}
-
-// ===== 单条删除函数（修复后，使用正确的 async/await 写法） =====
-async function deleteOrderRecordFromIDB(id) {
-  if (!db) return false;
-  try {
-    const record = await new Promise((resolve) => {
-      const tx = db.transaction([STORE_NAME], 'readonly');
-      const store = tx.objectStore(STORE_NAME);
-      const req = store.get(id);
-      req.onsuccess = () => resolve(req.result);
-      req.onerror = () => resolve(null);
-    });
-    if (!record) return false;
-    await moveToRecycleBin(record, 'order');
-    await new Promise((resolve) => {
-      const tx = db.transaction([STORE_NAME], 'readwrite');
-      const store = tx.objectStore(STORE_NAME);
-      const req = store.delete(id);
-      req.onsuccess = () => resolve(true);
-      req.onerror = () => resolve(false);
-    });
-    return true;
-  } catch (e) {
-    console.error('删除订单失败', e);
-    return false;
-  }
-}
-
-async function deleteReportOrderRecordFromIDB(id) {
-  if (!db) return false;
-  try {
-    const record = await new Promise((resolve) => {
-      const tx = db.transaction([REPORT_STORE_NAME], 'readonly');
-      const store = tx.objectStore(REPORT_STORE_NAME);
-      const req = store.get(id);
-      req.onsuccess = () => resolve(req.result);
-      req.onerror = () => resolve(null);
-    });
-    if (!record) return false;
-    await moveToRecycleBin(record, 'report');
-    await new Promise((resolve) => {
-      const tx = db.transaction([REPORT_STORE_NAME], 'readwrite');
-      const store = tx.objectStore(REPORT_STORE_NAME);
-      const req = store.delete(id);
-      req.onsuccess = () => resolve(true);
-      req.onerror = () => resolve(false);
-    });
-    return true;
-  } catch (e) {
-    console.error('删除上报记录失败', e);
     return false;
   }
 }
@@ -2814,9 +2804,12 @@ applyReportCap = function() {
   }
 };
 
-// ===== 回收站窗口 =====
+// ===== 修正后的回收站窗口 =====
 async function showRecycleBin() {
-  if (document.getElementById('recycleWin')) return;
+  // 先移除旧窗口，确保重新渲染最新数据
+  const existingWin = document.getElementById('recycleWin');
+  if (existingWin) existingWin.remove();
+
   const records = await getRecycleBinRecords();
   const win = document.createElement('div'); win.className = 'floating-window'; win.id = 'recycleWin';
   win.style.width = '750px'; win.style.height = '550px'; win.style.left = '50%'; win.style.top = '50%'; win.style.transform = 'translate(-50%, -50%)';
@@ -2995,4 +2988,4 @@ window.onload = async () => {
 };
 </script>
 </body>
-</html>
+</html>    
