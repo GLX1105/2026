@@ -3262,6 +3262,7 @@ function updateRecentDrawNumbers() {
   const container = document.getElementById('recentDrawNumbers');
   if (!container) return;
 
+  // 区分地区读取期数设置
   const countStr = localStorage.getItem(`recentDrawCount_${currentRegion}`);
   if (!countStr) {
     container.style.display = 'none';
@@ -3284,6 +3285,7 @@ function updateRecentDrawNumbers() {
     return;
   }
 
+  // 区分地区读取开奖数据
   const storageKey = `drawRecord_${currentRegion}_${year}`;
   let savedData = {};
   try {
@@ -3291,7 +3293,8 @@ function updateRecentDrawNumbers() {
   } catch (e) {}
 
   const entries = [];
-  for (let i = currentIssue - count + 1; i <= currentIssue; i++) {
+  // 修改：取前N期，不包含当天
+  for (let i = currentIssue - count; i < currentIssue; i++) {
     if (i < 1) continue;
     const issueId = i.toString().padStart(2, '0');
     const entry = savedData[issueId];
@@ -3324,6 +3327,7 @@ function updateRecentZodiacStats() {
   const container = document.getElementById('recentZodiacStats');
   if (!container) return;
 
+  // 区分地区读取期数设置
   const countStr = localStorage.getItem(`recentDrawCount_${currentRegion}`);
   if (!countStr) {
     container.style.display = 'none';
@@ -3346,6 +3350,7 @@ function updateRecentZodiacStats() {
     return;
   }
 
+  // 区分地区读取开奖数据
   const storageKey = `drawRecord_${currentRegion}_${year}`;
   let savedData = {};
   try {
@@ -3353,7 +3358,8 @@ function updateRecentZodiacStats() {
   } catch (e) {}
 
   const zodiacList = [];
-  for (let i = currentIssue - count + 1; i <= currentIssue; i++) {
+  // 修改：取前N期，不包含当天
+  for (let i = currentIssue - count; i < currentIssue; i++) {
     if (i < 1) continue;
     const issueId = i.toString().padStart(2, '0');
     const entry = savedData[issueId];
@@ -3417,6 +3423,7 @@ function updateFilterDateDrawInfo() {
   }
 
   const issueId = issueNumber.toString().padStart(2, '0');
+  // 区分地区读取开奖数据
   const storageKey = `drawRecord_${currentRegion}_${year}`;
   let savedData = {};
   try {
