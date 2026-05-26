@@ -202,6 +202,7 @@ input[type="number"] {
   font-size:16px; font-weight:bold; color:#333; margin-bottom:12px; padding:10px 12px 8px;
   border-bottom:2px solid #e0e0e0; display:flex; align-items:center; flex-wrap:wrap; gap:6px;
   background-color: #e3f2fd; border-radius: 10px 10px 0 0;
+  overflow: visible;
 }
 .year-zodiac-area {display:flex;align-items:center;gap:6px;font-size:13px;font-weight:normal;}
 .year-zodiac-area select {padding:3px 6px;border-radius:4px;border:1px solid #ccc;font-size:13px;background:#fff;}
@@ -501,6 +502,54 @@ tr.selected-row {background-color: #dceeff !important; font-weight: bold; box-sh
 .stat-val-profit { color:#27ae60; }
 .stat-val-loss { color:#e74c3c; }
 .stat-val-count { color:#000; }
+
+/* ========== 开奖记录表格专用样式 ========== */
+.draw-table-wrap {
+  max-height: 60vh;
+  overflow: auto;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+}
+.draw-table {
+  border-collapse: collapse;
+  font-size: 12px;
+}
+.draw-table th, .draw-table td {
+  border: none;
+  padding: 1px 2px;
+  text-align: center;
+  white-space: nowrap;
+}
+.draw-table th {
+  background: #f0f0f0;
+  font-weight: bold;
+}
+.draw-number-input {
+  width: 36px;
+  padding: 0;
+  text-align: center;
+  font-size: 12px;
+  border: 1px solid #ccc;
+  border-radius: 2px;
+}
+.draw-number-input:disabled {
+  background: #f8f8f8;
+  color: #333;
+}
+
+/* 近期开奖展示文本样式 */
+.recent-draw-text {
+  font-size: 13px;
+  line-height: 1.6;
+  margin-top: 6px;
+  padding: 6px;
+  background: #fff;
+  border: 1px solid #eee;
+  border-radius: 6px;
+  white-space: pre-wrap;
+}
+.recent-draw-text .num { font-weight: bold; }
+.recent-draw-text .slash { color: #000; }
 </style>
 </head>
 <body>
@@ -522,6 +571,7 @@ tr.selected-row {background-color: #dceeff !important; font-weight: bold; box-sh
     <button class="btn btn-export" onclick="exportData()">导出</button>
     <button class="btn btn-import" onclick="importData()">导入</button>
     <button class="btn btn-primary" onclick="showRecycleBin()">🗑️ 回收站</button>
+    <button class="btn btn-primary" onclick="showDrawRecord()">📅 开奖记录</button>
     <button class="btn btn-primary" id="cardMgrBtn" style="display:none;" onclick="showCardManager()">卡密管理</button>
     <button class="btn btn-clear" onclick="logout()">退出登录</button>
   </div>
@@ -530,7 +580,7 @@ tr.selected-row {background-color: #dceeff !important; font-weight: bold; box-sh
 <div class="container" id="mainContent">
   <div class="recognize-wrap">
       <div class="card" style="margin-top:0;">
-        <div class="card-title">下注统计</div>
+        <div class="card-title">下注统计<span id="filterDateDrawInfo" style="margin-left:12px;font-size:14px;font-weight:normal;display:none;"></span></div>
         <div class="freq-container">
           <div class="freq-card">
             <div class="freq-title">号码次数<div class="amount-stat-box" id="numberTotalBox" style="display:none; margin-left:8px;"><span id="numberTotalAmount">0</span></div></div>
@@ -539,6 +589,7 @@ tr.selected-row {background-color: #dceeff !important; font-weight: bold; box-sh
           <div class="freq-card">
             <div class="freq-title">生肖次数<div class="amount-stat-box" id="zodiacTotalBox" style="display:none; margin-left:8px;"><span id="zodiacTotalAmount">0</span></div></div>
             <table class="freq-table" id="zodiacFreqTable"></table>
+            <div id="recentDrawNumbers" class="recent-draw-text" style="display:none;"></div>
           </div>
         </div>
       </div>
@@ -553,6 +604,7 @@ tr.selected-row {background-color: #dceeff !important; font-weight: bold; box-sh
           <div class="freq-card">
             <div class="freq-title">生肖金额次数 <span style="font-size:11px;font-weight:normal;margin-left:8px;">范围：<input type="number" id="zodiacAmountMin" class="range-input" value="1" min="1"> - <input type="number" id="zodiacAmountMax" class="range-input" value="50000" min="1"></span></div>
             <table class="freq-table" id="zodiacAmountFreqTable"></table>
+            <div id="recentZodiacStats" class="recent-draw-text" style="display:none;"></div>
           </div>
         </div>
       </div>
@@ -2640,6 +2692,7 @@ if (filterDateEl) {
       applyPrizeFilter();
     }
     applyReportCap();
+    updateRecentDrawTexts();
   });
   filterDateEl.addEventListener('input', updateTableFromRecords);
 }
@@ -2956,6 +3009,434 @@ async function autoCleanRecycleBin() {
     }
   } catch(e) { }
 }
+// ===== 格式化日期 M/D（仅用于期号计算，表格不再显示日期列） =====
+function formatDateMD(dateStr) {
+  const d = new Date(dateStr + 'T00:00:00');
+  return `${d.getMonth()+1}/${d.getDate()}`;
+}
+
+// ===== 开奖记录窗口 =====
+async function showDrawRecord() {
+  const old = document.getElementById('drawRecordWin');
+  if (old) old.remove();
+
+  let year = new Date().getFullYear();
+  const fd = document.getElementById('filterDate')?.value;
+  if (fd) {
+    const m = fd.match(/^(\d{4})/);
+    if (m) year = parseInt(m[1]);
+  }
+
+  // 阳历：1月1日 = 01期，至12月31日
+  const startDate = new Date(year, 0, 1);
+  const endDate = new Date(year, 11, 31);
+  if (isNaN(startDate) || isNaN(endDate)) {
+    showToast('日期无效');
+    return;
+  }
+
+  const rows = [];
+  let issue = 1;
+  const cur = new Date(startDate);
+  while (cur <= endDate) {
+    rows.push({
+      date: formatDateMD(cur.toISOString().slice(0,10)),
+      issue: issue.toString().padStart(2, '0')
+    });
+    cur.setDate(cur.getDate() + 1);
+    issue++;
+  }
+
+  const totalIssues = issue - 1;
+  const groups = Math.ceil(totalIssues / 100);
+
+  // 读取已保存的数据（区分地区）
+  const storageKey = `drawRecord_${currentRegion}_${year}`;
+  let savedData = {};
+  try {
+    savedData = JSON.parse(localStorage.getItem(storageKey) || '{}');
+  } catch (e) {}
+
+  // 生成表格HTML（去掉日期列，只保留期号、号码、生肖）
+  let tableHtml = '<div class="draw-table-wrap"><table class="draw-table"><thead><tr>';
+  for (let g = 0; g < groups; g++) {
+    tableHtml += '<th>期号</th><th>号码</th><th>生肖</th>';
+  }
+  tableHtml += '</tr></thead><tbody>';
+
+  for (let r = 0; r < 100; r++) {
+    tableHtml += '<tr>';
+    for (let g = 0; g < groups; g++) {
+      const idx = g * 100 + r;
+      if (idx < rows.length) {
+        const row = rows[idx];
+        const iid = row.issue;
+        const savedEntry = savedData[iid] || {};
+        const savedNumber = savedEntry.number || '';
+        const isReadOnly = !!savedNumber;
+
+        // 期号列
+        tableHtml += `<td>${iid}期</td>`;
+        // 号码列（根据已保存号码添加颜色类）
+        const numVal = savedNumber ? savedNumber.padStart(2,'0') : '';
+        const numColorClass = savedNumber ? getNumberColorClass(numVal) : '';
+        const inputDisabled = isReadOnly ? 'disabled' : '';
+        tableHtml += `<td><input type="text" class="draw-number-input draw-num-${iid} ${numColorClass}" value="${savedNumber}" ${inputDisabled} oninput="onDrawNumberInput(this, '${iid}')" maxlength="2"></td>`;
+        // 生肖列（根据已保存号码计算生肖和颜色）
+        const zodiac = savedNumber ? (currentZodiacMap[numVal] || '') : '';
+        const zColorClass = getZodiacColorClass(zodiac);
+        tableHtml += `<td><span class="draw-zodiac-${iid} ${zColorClass}">${zodiac}</span></td>`;
+      } else {
+        tableHtml += '<td></td><td></td><td></td>';
+      }
+    }
+    tableHtml += '</tr>';
+  }
+  tableHtml += '</tbody></table></div>';
+
+  // 创建窗口
+  const win = document.createElement('div');
+  win.className = 'floating-window';
+  win.id = 'drawRecordWin';
+  win.style.width = Math.min(groups * 200 + 40, window.innerWidth - 20) + 'px';
+  win.style.height = '650px';
+  win.style.left = '50%';
+  win.style.top = '50%';
+  win.style.transform = 'translate(-50%, -50%)';
+
+  // 读取已保存的期数（区分地区）
+  const savedCount = localStorage.getItem(`recentDrawCount_${currentRegion}`) || '';
+
+  const regionLabel = currentRegion === 'macau' ? '澳门' : '香港';
+
+  win.innerHTML = `
+    <div class="modal-header">
+      <h3>开奖记录（${regionLabel} ${year}年阳历）</h3>
+      <div class="window-controls">
+        <button onclick="maximizeWindow('drawRecordWin')">🗖</button>
+        <button onclick="document.getElementById('drawRecordWin').remove()">×</button>
+      </div>
+    </div>
+    <div class="modal-body" style="display:flex; flex-direction:column; gap:10px;">
+      <div class="card" style="flex:1; display:flex; flex-direction:column;">
+        <div class="card-title" style="display:flex; align-items:center; gap:8px;">
+          <span>开奖号码记录</span>
+          <input type="number" id="recentDrawCountInput" placeholder="期数" value="${savedCount}" style="width:60px;padding:2px 4px;border:1px solid #ccc;border-radius:4px;font-size:13px;" min="1">
+          <button class="btn btn-primary" onclick="saveRecentDrawCount()" style="padding:4px 12px;font-size:12px;min-height:28px;">保存</button>
+        </div>
+        <div style="overflow:auto; flex:1;">
+          ${tableHtml}
+        </div>
+      </div>
+      <div style="display:flex; gap:10px; justify-content:center; padding:10px;">
+        <button class="btn btn-primary" onclick="editDrawRecord()">修改</button>
+        <button class="btn btn-save-order" onclick="saveDrawRecord(${year})">保存</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(win);
+  makeWindowDraggable('drawRecordWin');
+  highestZ += 1;
+  win.style.zIndex = highestZ;
+
+  // 刷新主界面近期文本
+  updateRecentDrawTexts();
+}
+
+function getZodiacColorClass(zodiac) {
+  if (!zodiac) return '';
+  const redSet = new Set(['鼠','兔','马','鸡']);
+  const blueSet = new Set(['虎','蛇','猴','猪']);
+  const greenSet = new Set(['牛','龙','羊','狗']);
+  if (redSet.has(zodiac)) return 'red-text';
+  if (blueSet.has(zodiac)) return 'blue-text';
+  if (greenSet.has(zodiac)) return 'green-text';
+  return '';
+}
+
+function getNumberColorClass(num) {
+  if (redNumbers.includes(num)) return 'red-text';
+  if (blueNumbers.includes(num)) return 'blue-text';
+  if (greenNumbers.includes(num)) return 'green-text';
+  return '';
+}
+
+function onDrawNumberInput(input, issueId) {
+  let val = input.value.replace(/\D/g, ''); // 只保留数字
+  if (val.length > 2) val = val.slice(0, 2);
+  input.value = val;
+
+  const zodiacSpan = document.querySelector(`.draw-zodiac-${issueId}`);
+  if (!zodiacSpan) return;
+
+  if (val.length === 2) {
+    const num = val.padStart(2, '0');
+    const intVal = parseInt(num);
+    if (intVal >= 1 && intVal <= 49) {
+      const zodiac = currentZodiacMap[num] || '';
+      zodiacSpan.textContent = zodiac;
+      zodiacSpan.className = `draw-zodiac-${issueId} ${getZodiacColorClass(zodiac)}`;
+      input.className = `draw-number-input draw-num-${issueId} ${getNumberColorClass(num)}`;
+      return;
+    }
+  }
+  // 非法或未完成输入：清空生肖显示
+  zodiacSpan.textContent = '';
+  zodiacSpan.className = `draw-zodiac-${issueId}`;
+  input.className = `draw-number-input draw-num-${issueId}`;
+}
+
+function editDrawRecord() {
+  document.querySelectorAll('.draw-number-input').forEach(el => el.disabled = false);
+  showToast('已进入编辑模式，可修改号码');
+}
+
+async function saveDrawRecord(year) {
+  const data = {};
+  const inputs = document.querySelectorAll('.draw-number-input');
+  inputs.forEach(input => {
+    const issueId = input.className.match(/draw-num-(\d+)/)?.[1];
+    if (issueId) {
+      let num = input.value.trim();
+      if (/^\d$/.test(num)) num = '0' + num;
+      if (/^\d{2}$/.test(num) && parseInt(num) >= 1 && parseInt(num) <= 49) {
+        // 有效号码
+      } else if (num === '') {
+        // 空值允许
+      } else {
+        num = '';
+      }
+      data[issueId] = { number: num };
+    }
+  });
+  // 区分地区存储
+  const storageKey = `drawRecord_${currentRegion}_${year}`;
+  localStorage.setItem(storageKey, JSON.stringify(data));
+  document.querySelectorAll('.draw-number-input').forEach(el => el.disabled = true);
+
+  // 刷新主界面近期文本
+  updateRecentDrawTexts();
+
+  showToast('保存成功');
+}
+
+function saveRecentDrawCount() {
+  const input = document.getElementById('recentDrawCountInput');
+  if (!input) return;
+  const val = parseInt(input.value);
+  if (isNaN(val) || val < 1) {
+    showToast('请输入有效的期数（≥1）');
+    return;
+  }
+  // 区分地区存储
+  localStorage.setItem(`recentDrawCount_${currentRegion}`, val.toString());
+  updateRecentDrawTexts();
+  showToast(`已设置显示最近${val}期`);
+}
+
+function getCurrentIssueNumber(year, targetDateStr) {
+  // 阳历：1月1日为第1天，期号=当年第几天
+  const target = new Date(targetDateStr + 'T00:00:00');
+  const start = new Date(year, 0, 1); // 1月1日
+  if (isNaN(target) || isNaN(start)) return null;
+  if (target < start) return null;
+  const diff = target - start;
+  const dayOfYear = Math.floor(diff / (1000 * 60 * 60 * 24)) + 1;
+  return dayOfYear;
+}
+
+function updateRecentDrawTexts() {
+  updateRecentDrawNumbers();
+  updateRecentZodiacStats();
+  updateFilterDateDrawInfo();
+}
+
+function updateRecentDrawNumbers() {
+  const container = document.getElementById('recentDrawNumbers');
+  if (!container) return;
+
+  // 区分地区读取期数设置
+  const countStr = localStorage.getItem(`recentDrawCount_${currentRegion}`);
+  if (!countStr) {
+    container.style.display = 'none';
+    return;
+  }
+  const count = parseInt(countStr);
+  if (isNaN(count) || count < 1) {
+    container.style.display = 'none';
+    return;
+  }
+
+  const fd = document.getElementById('filterDate')?.value || getTodayCST();
+  let year = new Date().getFullYear();
+  const m = fd.match(/^(\d{4})/);
+  if (m) year = parseInt(m[1]);
+
+  const currentIssue = getCurrentIssueNumber(year, fd);
+  if (!currentIssue) {
+    container.style.display = 'none';
+    return;
+  }
+
+  // 区分地区读取开奖数据
+  const storageKey = `drawRecord_${currentRegion}_${year}`;
+  let savedData = {};
+  try {
+    savedData = JSON.parse(localStorage.getItem(storageKey) || '{}');
+  } catch (e) {}
+
+  const entries = [];
+  for (let i = currentIssue - count + 1; i <= currentIssue; i++) {
+    if (i < 1) continue;
+    const issueId = i.toString().padStart(2, '0');
+    const entry = savedData[issueId];
+    if (entry && entry.number && entry.number.trim()) {
+      const num = entry.number.trim().padStart(2, '0');
+      if (/^\d{2}$/.test(num) && parseInt(num) >= 1 && parseInt(num) <= 49) {
+        const zodiac = currentZodiacMap[num] || '';
+        entries.push({ num, zodiac });
+      }
+    }
+  }
+
+  if (entries.length === 0) {
+    container.style.display = 'none';
+    return;
+  }
+
+  let html = '';
+  entries.forEach((entry, idx) => {
+    if (idx > 0) html += '、';
+    html += `<span class="num ${getNumberColorClass(entry.num)}">${entry.num}</span>`;
+    html += `<span class="slash">/</span>`;
+    html += `<span class="${getZodiacColorClass(entry.zodiac)}">${entry.zodiac}</span>`;
+  });
+  container.innerHTML = html;
+  container.style.display = '';
+}
+
+function updateRecentZodiacStats() {
+  const container = document.getElementById('recentZodiacStats');
+  if (!container) return;
+
+  // 区分地区读取期数设置
+  const countStr = localStorage.getItem(`recentDrawCount_${currentRegion}`);
+  if (!countStr) {
+    container.style.display = 'none';
+    return;
+  }
+  const count = parseInt(countStr);
+  if (isNaN(count) || count < 1) {
+    container.style.display = 'none';
+    return;
+  }
+
+  const fd = document.getElementById('filterDate')?.value || getTodayCST();
+  let year = new Date().getFullYear();
+  const m = fd.match(/^(\d{4})/);
+  if (m) year = parseInt(m[1]);
+
+  const currentIssue = getCurrentIssueNumber(year, fd);
+  if (!currentIssue) {
+    container.style.display = 'none';
+    return;
+  }
+
+  // 区分地区读取开奖数据
+  const storageKey = `drawRecord_${currentRegion}_${year}`;
+  let savedData = {};
+  try {
+    savedData = JSON.parse(localStorage.getItem(storageKey) || '{}');
+  } catch (e) {}
+
+  const zodiacList = [];
+  for (let i = currentIssue - count + 1; i <= currentIssue; i++) {
+    if (i < 1) continue;
+    const issueId = i.toString().padStart(2, '0');
+    const entry = savedData[issueId];
+    if (entry && entry.number && entry.number.trim()) {
+      const num = entry.number.trim().padStart(2, '0');
+      if (/^\d{2}$/.test(num) && parseInt(num) >= 1 && parseInt(num) <= 49) {
+        const zodiac = currentZodiacMap[num] || '';
+        if (zodiac) zodiacList.push(zodiac);
+      }
+    }
+  }
+
+  if (zodiacList.length === 0) {
+    container.style.display = 'none';
+    return;
+  }
+
+  const freq = {};
+  zodiacList.forEach(z => {
+    freq[z] = (freq[z] || 0) + 1;
+  });
+
+  const sorted = Object.entries(freq).sort((a, b) => b[1] - a[1]);
+  const repeated = [];
+  const single = [];
+
+  sorted.forEach(([zodiac, cnt]) => {
+    if (cnt > 1) {
+      repeated.push({ zodiac, cnt });
+    } else {
+      single.push(zodiac);
+    }
+  });
+
+  let html = '';
+  repeated.forEach(item => {
+    html += `<div>${item.cnt}次：<span class="${getZodiacColorClass(item.zodiac)}">${item.zodiac}</span></div>`;
+  });
+  if (single.length > 0) {
+    const singleSpans = single.map(z => `<span class="${getZodiacColorClass(z)}">${z}</span>`).join('、');
+    html += `<div>${singleSpans}</div>`;
+  }
+
+  container.innerHTML = html;
+  container.style.display = '';
+}
+
+function updateFilterDateDrawInfo() {
+  const span = document.getElementById('filterDateDrawInfo');
+  if (!span) return;
+
+  const fd = document.getElementById('filterDate')?.value || getTodayCST();
+  let year = new Date().getFullYear();
+  const m = fd.match(/^(\d{4})/);
+  if (m) year = parseInt(m[1]);
+
+  const issueNumber = getCurrentIssueNumber(year, fd);
+  if (!issueNumber) {
+    span.style.display = 'none';
+    return;
+  }
+
+  const issueId = issueNumber.toString().padStart(2, '0');
+  // 区分地区读取开奖数据
+  const storageKey = `drawRecord_${currentRegion}_${year}`;
+  let savedData = {};
+  try {
+    savedData = JSON.parse(localStorage.getItem(storageKey) || '{}');
+  } catch (e) {}
+
+  const entry = savedData[issueId];
+  if (!entry || !entry.number || !entry.number.trim()) {
+    span.style.display = 'none';
+    return;
+  }
+
+  const num = entry.number.trim().padStart(2, '0');
+  if (!/^\d{2}$/.test(num) || parseInt(num) < 1 || parseInt(num) > 49) {
+    span.style.display = 'none';
+    return;
+  }
+
+  const zodiac = currentZodiacMap[num] || '';
+  span.innerHTML = `<span class="num ${getNumberColorClass(num)}">${num}</span><span class="slash" style="color:#000;">/</span><span class="${getZodiacColorClass(zodiac)}">${zodiac}</span>`;
+  span.style.display = '';
+}
 
 window.onload = async () => {
   setCurrentRegion(currentRegion);
@@ -2981,6 +3462,7 @@ window.onload = async () => {
     calculateStorageUsage();
     updateOrderTotalDisplay();
     updateReportAmountTotal();
+    updateRecentDrawTexts();
   };
   if (!checkCurrentAccess()) { showLoginScreen(); }
   else {
