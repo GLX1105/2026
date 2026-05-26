@@ -48,7 +48,7 @@ body {background:#f5f7fa;font-size:14px;line-height:1.4;overflow-x:hidden;positi
     .navbar-title {font-size:16px!important;margin-bottom:0!important;width:auto!important;text-align:center!important;}
     .navbar-actions {width:100%!important;justify-content:center!important;flex-wrap:wrap!important;gap:5px!important;}
     .btn {padding:6px 8px!important;font-size:12px!important;min-height:32px!important;flex:1!important;min-width:60px!important;}
-    .btn-macau, .btn-hongkong {
+    .btn-macau, .btn-hongkong, .btn-yuegang {
         padding: 4px 10px !important;
         font-size: 12px !important;
         min-height: 28px !important;
@@ -182,6 +182,19 @@ input[type="number"] {
     background: #2e86c1 !important;
     box-shadow: 0 0 12px rgba(46,134,193,0.7);
     border-color: #7fb3d8 !important;
+}
+.btn-yuegang {
+    background: #27ae60 !important;
+    border-color: #2ecc71 !important;
+    color: #fff !important;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    box-shadow: 0 2px 8px rgba(39,174,96,0.4);
+}
+.btn-yuegang.region-active {
+    background: #2ecc71 !important;
+    box-shadow: 0 0 12px rgba(46,204,113,0.7);
+    border-color: #58d68d !important;
 }
 .btn-recognize {
     background: #27ae60 !important;
@@ -550,6 +563,20 @@ tr.selected-row {background-color: #dceeff !important; font-weight: bold; box-sh
 }
 .recent-draw-text .num { font-weight: bold; }
 .recent-draw-text .slash { color: #000; }
+
+/* 回收站数量徽标 */
+.recycle-count-badge {
+  display: inline-block;
+  background: #e74c3c;
+  color: #fff;
+  border-radius: 10px;
+  padding: 0px 6px;
+  font-size: 11px;
+  font-weight: bold;
+  margin-left: 4px;
+  min-width: 18px;
+  text-align: center;
+}
 </style>
 </head>
 <body>
@@ -558,6 +585,7 @@ tr.selected-row {background-color: #dceeff !important; font-weight: bold; box-sh
     <div class="navbar-title">港澳识别系统</div>
     <button class="btn btn-macau region-active" id="btnMacau" onclick="switchRegion('macau')">澳门</button>
     <button class="btn btn-hongkong" id="btnHongkong" onclick="switchRegion('hongkong')">香港</button>
+    <button class="btn btn-yuegang" id="btnYuegang" onclick="switchRegion('yuegang')">粤港</button>
   </div>
   <div class="navbar-actions" id="navbarActions">
     <button class="btn btn-recognize" onclick="showRecognizeModal()">识别</button>
@@ -570,7 +598,7 @@ tr.selected-row {background-color: #dceeff !important; font-weight: bold; box-sh
     <button class="btn btn-primary" onclick="showCategoryAliases()">分类缩写</button>
     <button class="btn btn-export" onclick="exportData()">导出</button>
     <button class="btn btn-import" onclick="importData()">导入</button>
-    <button class="btn btn-primary" onclick="showRecycleBin()">🗑️ 回收站</button>
+    <button class="btn btn-primary" onclick="showRecycleBin()">🗑️ 回收站<span id="recycleCount" class="recycle-count-badge" style="display:none;">0</span></button>
     <button class="btn btn-primary" onclick="showDrawRecord()">📅 开奖记录</button>
     <button class="btn btn-primary" id="cardMgrBtn" style="display:none;" onclick="showCardManager()">卡密管理</button>
     <button class="btn btn-clear" onclick="logout()">退出登录</button>
@@ -960,6 +988,7 @@ function setCurrentRegion(region) {
   localStorage.setItem('currentRegion', region);
   document.getElementById('btnMacau').classList.toggle('region-active', region === 'macau');
   document.getElementById('btnHongkong').classList.toggle('region-active', region === 'hongkong');
+  document.getElementById('btnYuegang').classList.toggle('region-active', region === 'yuegang');
 }
 
 async function switchRegion(region) {
@@ -985,7 +1014,9 @@ async function switchRegion(region) {
   clearMemoryData();
   await updateTableFromRecords();
   updateSelects();
-  showToast(`已切换至${region === 'macau' ? '澳门' : '香港'}`);
+  updateRecycleCount(); // 更新回收站数字
+  updateRecentDrawTexts(); // 刷新近期开奖文本
+  showToast(`已切换至${region === 'macau' ? '澳门' : region === 'hongkong' ? '香港' : '粤港'}`);
 }
 
 function clearMemoryData() {
@@ -1055,7 +1086,7 @@ function hideDatabase() { const modal = document.getElementById('databaseModal')
 // ===== 识别弹窗（标题显示当前地区） =====
 function showRecognizeModal() {
   if (document.getElementById('recognizeWin')) return;
-  const regionLabel = currentRegion === 'macau' ? '澳门' : '香港';
+  const regionLabel = currentRegion === 'macau' ? '澳门' : currentRegion === 'hongkong' ? '香港' : '粤港';
   const win = document.createElement('div'); win.className = 'floating-window'; win.id = 'recognizeWin';
   win.style.width = '850px'; win.style.height = '650px'; win.style.left = '50%'; win.style.top = '50%'; win.style.transform = 'translate(-50%, -50%)';
   win.setAttribute('data-orig-width', '850px');
@@ -2239,6 +2270,7 @@ async function deleteOrderRecord(id) {
       await updateTableFromRecords();
       calculateStorageUsage();
       showOrderRecord();
+      updateRecycleCount();
     } else {
       showToast('删除失败，记录可能已不存在');
     }
@@ -2284,6 +2316,7 @@ async function deleteReportOrderRecord(id) {
       await updateTableFromRecords();
       calculateStorageUsage();
       showReportOrderRecord();
+      updateRecycleCount();
     } else {
       showToast('删除失败，记录可能已不存在');
     }
@@ -2309,6 +2342,7 @@ async function deleteChecked(){
     calculateStorageUsage();
     const userFilter = document.getElementById('recordUserFilter')?.value || 'all';
     await showOrderRecord(userFilter);
+    updateRecycleCount();
   } catch(e) {
     console.error('批量删除异常', e);
     showToast('批量删除异常');
@@ -2326,6 +2360,7 @@ async function deleteCheckedReport(){
     calculateStorageUsage();
     const userFilter = document.getElementById('reportRecordUserFilter')?.value || 'all';
     await showReportOrderRecord(userFilter);
+    updateRecycleCount();
   } catch(e) {
     console.error('批量删除异常', e);
     showToast('批量删除异常');
@@ -2384,7 +2419,7 @@ if (resetBtn) {
 }
 
 async function resetTable(){
-  const regionName = currentRegion === 'macau' ? '澳门' : '香港';
+  const regionName = currentRegion === 'macau' ? '澳门' : currentRegion === 'hongkong' ? '香港' : '粤港';
   const confirmed = await confirm(`确定清空当前地区（${regionName}）的所有订单和上报数据吗？此操作不可恢复。`);
   if (!confirmed) return;
   const pwd = await prompt("输入清空密码：","");
@@ -2869,13 +2904,14 @@ applyReportCap = function() {
   }
 };
 
-// ===== 修正后的回收站窗口 =====
+// ===== 修正后的回收站窗口（按地区隔离显示） =====
 async function showRecycleBin() {
-  // 先移除旧窗口，确保重新渲染最新数据
   const existingWin = document.getElementById('recycleWin');
   if (existingWin) existingWin.remove();
 
-  const records = await getRecycleBinRecords();
+  const allRecords = await getRecycleBinRecords();
+  // 只显示当前地区的回收站记录
+  const records = allRecords.filter(r => r.region === currentRegion);
   const win = document.createElement('div'); win.className = 'floating-window'; win.id = 'recycleWin';
   win.style.width = '750px'; win.style.height = '550px'; win.style.left = '50%'; win.style.top = '50%'; win.style.transform = 'translate(-50%, -50%)';
   let html = `<div class="modal-header"><h3>🗑️ 回收站</h3><div class="window-controls"><button onclick="maximizeWindow('recycleWin')">🗖</button><button onclick="document.getElementById('recycleWin').remove()">×</button></div></div>`;
@@ -2904,7 +2940,6 @@ async function showRecycleBin() {
           <span class="order-meta">
             <span style="color:${typeColor};">类型：${typeLabel}</span>
             <span style="color:#e74c3c;">删除：${ts}</span>
-            <span>地区：${rec.region || '未知'}</span>
             <span>用户：${rec.user || '未知'}</span>
           </span>
         </div>
@@ -2922,17 +2957,37 @@ async function showRecycleBin() {
   document.body.appendChild(win);
   updateRecycleStorageInfo();
   makeWindowDraggable('recycleWin'); highestZ += 1; win.style.zIndex = highestZ;
+  updateRecycleCount();
 }
 
 function updateRecycleStorageInfo() {
   const span = document.getElementById('recycleStorageInfo');
   if (!span) return;
-  getRecycleBinRecords().then(records => {
+  getRecycleBinRecords().then(allRecords => {
+    const records = allRecords.filter(r => r.region === currentRegion);
     let bytes = 0;
     records.forEach(r => bytes += JSON.stringify(r).length * 2);
     const usedMB = (bytes / (1024*1024)).toFixed(2);
     span.textContent = `回收站占用：${usedMB} MB（共${records.length}条记录）`;
   });
+}
+
+// ===== 回收站数量更新 =====
+async function updateRecycleCount() {
+  const span = document.getElementById('recycleCount');
+  if (!span) return;
+  try {
+    const allRecords = await getRecycleBinRecords();
+    const count = allRecords.filter(r => r.region === currentRegion).length;
+    if (count > 0) {
+      span.textContent = count;
+      span.style.display = 'inline-block';
+    } else {
+      span.style.display = 'none';
+    }
+  } catch(e) {
+    span.style.display = 'none';
+  }
 }
 
 function checkAllRecycle() { document.querySelectorAll('.recycle-check').forEach(cb => cb.checked = true); }
@@ -2954,6 +3009,7 @@ async function restoreRecycleRecord(id) {
     await updateTableFromRecords();
     calculateStorageUsage();
     showRecycleBin();
+    updateRecycleCount();
   } catch(e) { showToast('恢复失败'); }
 }
 
@@ -2963,6 +3019,7 @@ async function permanentlyDeleteRecycleRecord(id) {
   showToast('已彻底删除');
   updateRecycleStorageInfo();
   showRecycleBin();
+  updateRecycleCount();
 }
 
 async function restoreCheckedRecycle() {
@@ -2986,6 +3043,7 @@ async function restoreCheckedRecycle() {
   await updateTableFromRecords();
   calculateStorageUsage();
   showRecycleBin();
+  updateRecycleCount();
 }
 
 async function deleteCheckedRecycle() {
@@ -2996,15 +3054,17 @@ async function deleteCheckedRecycle() {
   showToast(`已彻底删除 ${ids.length} 条`);
   updateRecycleStorageInfo();
   showRecycleBin();
+  updateRecycleCount();
 }
 
 async function emptyRecycleBin() {
   if (!(await confirm('确定清空整个回收站吗？此操作不可恢复！'))) return;
   const pwd = await prompt("输入清空密码：","");
   if (pwd !== PASSWORD) { await alert("密码错误"); return; }
-  await clearRecycleBin();
+  await clearRecycleBin(currentRegion);
   showToast('回收站已清空');
   showRecycleBin();
+  updateRecycleCount();
 }
 
 // 自动清理过期回收站记录
@@ -3019,6 +3079,7 @@ async function autoCleanRecycleBin() {
         await deleteFromRecycleBin(record.id);
       }
     }
+    updateRecycleCount();
   } catch(e) { }
 }
 // ===== 格式化日期 M/D（仅用于期号计算，表格不再显示日期列） =====
@@ -3119,7 +3180,7 @@ async function showDrawRecord() {
   // 读取已保存的期数（区分地区）
   const savedCount = localStorage.getItem(`recentDrawCount_${currentRegion}`) || '';
 
-  const regionLabel = currentRegion === 'macau' ? '澳门' : '香港';
+  const regionLabel = currentRegion === 'macau' ? '澳门' : currentRegion === 'hongkong' ? '香港' : '粤港';
 
   win.innerHTML = `
     <div class="modal-header">
@@ -3305,7 +3366,7 @@ function updateRecentDrawNumbers() {
   } catch (e) {}
 
   const entries = [];
-  // 修改：取前N期，不包含当天
+  // 取前N期，不包含当天
   for (let i = currentIssue - count; i < currentIssue; i++) {
     if (i < 1) continue;
     const issueId = i.toString().padStart(2, '0');
@@ -3370,7 +3431,7 @@ function updateRecentZodiacStats() {
   } catch (e) {}
 
   const zodiacList = [];
-  // 修改：取前N期，不包含当天
+  // 取前N期，不包含当天
   for (let i = currentIssue - count; i < currentIssue; i++) {
     if (i < 1) continue;
     const issueId = i.toString().padStart(2, '0');
@@ -3477,6 +3538,9 @@ window.onload = async () => {
 
   await autoCleanRecycleBin();
   setInterval(autoCleanRecycleBin, 24 * 60 * 60 * 1000);
+
+  // 初始化时更新回收站数量
+  updateRecycleCount();
 
   window._systemReady = async () => {
     await updateTableFromRecords();
