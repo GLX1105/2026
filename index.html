@@ -1014,8 +1014,8 @@ async function switchRegion(region) {
   clearMemoryData();
   await updateTableFromRecords();
   updateSelects();
-  updateRecycleCount(); // 更新回收站数字
-  updateRecentDrawTexts(); // 刷新近期开奖文本
+  updateRecycleCount();
+  updateRecentDrawTexts();
   showToast(`已切换至${region === 'macau' ? '澳门' : region === 'hongkong' ? '香港' : '粤港'}`);
 }
 
@@ -1536,7 +1536,20 @@ async function addReplacePreset(){ const o=document.getElementById('presetOld')?
 async function deleteReplacePreset(i){ if(!(await confirm('确定删除？')))return; const p=getReplacePresets(); p.splice(i,1); localStorage.setItem('replacePresets',JSON.stringify(p)); renderPresetList(); }
 
 function applyCategoryAliases(text) { const a=getCategoryAliases(); if(!a.length)return text; const s=[...a].sort((x,y)=>y.alias.length-x.alias.length); let r=text; s.forEach(x=>{ if(x.alias&&x.target)r=r.split(x.alias).join(x.target); }); return r; }
-function applyReplacePresets(text) { const p=getReplacePresets(); let r=text; p.forEach(x=>{ if(x.old&&x.new)r=r.split(x.old).join(x.new); }); return r; }
+
+// ===== 修正后的替换预设（全词匹配，不破坏组合分类名） =====
+function applyReplacePresets(text) {
+  const p = getReplacePresets();
+  let r = text;
+  p.forEach(x => {
+    if (x.old && x.new) {
+      const escapedOld = x.old.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const regex = new RegExp(`(?<![\\u4e00-\\u9fa5])${escapedOld}(?![\\u4e00-\\u9fa5])`, 'g');
+      r = r.replace(regex, x.new);
+    }
+  });
+  return r;
+}
 
 async function semanticReplace() { const ta=document.querySelector('.source-order-input'); if(!ta)return; const s=ta.selectionStart,e=ta.selectionEnd; if(s===e){showToast('请先选择文本');return;} const sel=ta.value.substring(s,e); const cfg=getAllConfigData(); const vc=getAllValidCategories(cfg); const tokens=sel.split(/[\s,，.。、+\-*＊\/\\|]+/).filter(t=>t.trim()); const matched=tokens.filter(t=>vc.has(t)); if(!matched.length){showToast('未识别有效分类');return;} let sets=matched.map(cat=>{ let nums=[]; if(cfg.shengxiaoAttr[cat]){ cfg.shengxiaoAttr[cat].forEach(z=>{ if(cfg.zodiac[z])nums.push(...cfg.zodiac[z].map(n=>n.toString().padStart(2,'0'))); }); } const dir=cfg.wuxing[cat]||cfg.bose[cat]||cfg.banbo[cat]||cfg.danshuang[cat]||cfg.weishu[cat]||cfg.daxiaodanshuang[cat]||cfg.daxiao[cat]||cfg.heshu[cat]||cfg.toushu[cat]||cfg.menshu[cat]||cfg.duanwei[cat]||cfg.hedahexiao[cat]||cfg.weidaweixiao[cat]||cfg.hewei[cat]||cfg.heshudanshuang[cat]||cfg.toushuDanshuang[cat]; if(dir)nums.push(...dir.map(n=>n.toString().padStart(2,'0'))); if(cfg.zodiac[cat])nums.push(...cfg.zodiac[cat].map(n=>n.toString().padStart(2,'0'))); return new Set(nums); }); let inter=sets[0]; for(let i=1;i<sets.length;i++)inter=new Set([...inter].filter(x=>sets[i].has(x))); const res=[...inter].sort((a,b)=>parseInt(a)-parseInt(b)); if(!res.length){showToast('无共同号码');return;} const str=res.join('-'); const cf=await confirm(`转换结果：${str}\n是否替换选中文本？`); if(cf){ta.value=ta.value.substring(0,s)+str+ta.value.substring(e);convertOrderText();} }
 
@@ -1594,7 +1607,8 @@ function convertOrderText() {
   const resultLines = [];
   const originalContents = [];
 
-  const HARD_AMP_LIST = ['各','各号','号','个','=','各数','每数','每号','个号','每个号','各码','各号码'];
+  // 修正后的金额指示词列表（长词优先）
+  const HARD_AMP_LIST = ['每个号','各号码','各数','每数','每号','个号','各号','各码','号','个','=','各'];
   const cusAmp = getCustomAmountPrefixes();
   const allAmpList = [...HARD_AMP_LIST, ...cusAmp];
   allAmpList.sort((a, b) => b.length - a.length);
