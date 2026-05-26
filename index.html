@@ -3057,7 +3057,7 @@ async function showDrawRecord() {
     savedData = JSON.parse(localStorage.getItem(storageKey) || '{}');
   } catch (e) {}
 
-  // 生成表格HTML（去掉日期列，只保留期号、号码、生肖）
+  // 生成表格HTML（仅保留期号、号码、生肖）
   let tableHtml = '<div class="draw-table-wrap"><table class="draw-table"><thead><tr>';
   for (let g = 0; g < groups; g++) {
     tableHtml += '<th>期号</th><th>号码</th><th>生肖</th>';
@@ -3121,7 +3121,7 @@ async function showDrawRecord() {
       <div class="card" style="flex:1; display:flex; flex-direction:column;">
         <div class="card-title" style="display:flex; align-items:center; gap:8px;">
           <span>开奖号码记录</span>
-          <input type="number" id="recentDrawCountInput" placeholder="期数" value="${savedCount}" style="width:60px;padding:2px 4px;border:1px solid #ccc;border-radius:4px;font-size:13px;" min="1">
+          <input type="number" id="recentDrawCountInput" placeholder="留空不显示" value="${savedCount}" style="width:60px;padding:2px 4px;border:1px solid #ccc;border-radius:4px;font-size:13px;">
           <button class="btn btn-primary" onclick="saveRecentDrawCount()" style="padding:4px 12px;font-size:12px;min-height:28px;">保存</button>
         </div>
         <div style="overflow:auto; flex:1;">
@@ -3223,12 +3223,19 @@ async function saveDrawRecord(year) {
 function saveRecentDrawCount() {
   const input = document.getElementById('recentDrawCountInput');
   if (!input) return;
-  const val = parseInt(input.value);
-  if (isNaN(val) || val < 1) {
-    showToast('请输入有效的期数（≥1）');
+  const rawVal = input.value.trim();
+  if (rawVal === '') {
+    // 允许清空
+    localStorage.removeItem(`recentDrawCount_${currentRegion}`);
+    updateRecentDrawTexts();
+    showToast('已清空期数设置，不再显示近期文本');
     return;
   }
-  // 区分地区存储
+  const val = parseInt(rawVal);
+  if (isNaN(val) || val < 1) {
+    showToast('请输入有效的期数（≥1），或留空清空设置');
+    return;
+  }
   localStorage.setItem(`recentDrawCount_${currentRegion}`, val.toString());
   updateRecentDrawTexts();
   showToast(`已设置显示最近${val}期`);
@@ -3255,7 +3262,6 @@ function updateRecentDrawNumbers() {
   const container = document.getElementById('recentDrawNumbers');
   if (!container) return;
 
-  // 区分地区读取期数设置
   const countStr = localStorage.getItem(`recentDrawCount_${currentRegion}`);
   if (!countStr) {
     container.style.display = 'none';
@@ -3278,7 +3284,6 @@ function updateRecentDrawNumbers() {
     return;
   }
 
-  // 区分地区读取开奖数据
   const storageKey = `drawRecord_${currentRegion}_${year}`;
   let savedData = {};
   try {
@@ -3319,7 +3324,6 @@ function updateRecentZodiacStats() {
   const container = document.getElementById('recentZodiacStats');
   if (!container) return;
 
-  // 区分地区读取期数设置
   const countStr = localStorage.getItem(`recentDrawCount_${currentRegion}`);
   if (!countStr) {
     container.style.display = 'none';
@@ -3342,7 +3346,6 @@ function updateRecentZodiacStats() {
     return;
   }
 
-  // 区分地区读取开奖数据
   const storageKey = `drawRecord_${currentRegion}_${year}`;
   let savedData = {};
   try {
@@ -3414,7 +3417,6 @@ function updateFilterDateDrawInfo() {
   }
 
   const issueId = issueNumber.toString().padStart(2, '0');
-  // 区分地区读取开奖数据
   const storageKey = `drawRecord_${currentRegion}_${year}`;
   let savedData = {};
   try {
