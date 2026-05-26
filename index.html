@@ -2957,72 +2957,6 @@ async function autoCleanRecycleBin() {
   } catch(e) { }
 }
 
-// ===== 默认配置合并注入 =====
-function mergeDefaultPresets() {
-  const DEFAULT_REPLACE_PRESETS = [
-    {old:'单笔', new:'单笔'}, {old:'双笔', new:'双笔'},
-    {old:'红色', new:'红波'}, {old:'蓝色', new:'蓝波'}, {old:'绿色', new:'绿波'},
-    {old:'兰波', new:'蓝波'}, {old:'兰', new:'蓝'}, {old:'录波', new:'绿波'},
-    {old:'录', new:'绿'}, {old:'碌', new:'绿'}, {old:'禄', new:'绿'},
-    {old:'拦', new:'蓝'}, {old:'篮', new:'蓝'},
-    {old:'老鼠', new:'鼠'}, {old:'兔子', new:'兔'}, {old:'老虎', new:'虎'},
-    {old:'免', new:'兔'}, {old:'候', new:'猴'}, {old:'㺅', new:'猴'}, {old:'尤', new:'龙'},
-    {old:'家肖', new:'家禽'}, {old:'野肖', new:'野兽'},
-    {old:'单号', new:'单数'}, {old:'双号', new:'双数'}, {old:'单尾', new:'单数'}, {old:'双尾', new:'双数'},
-    {old:'大号', new:'大'}, {old:'小号', new:'小'}, {old:'大数', new:'大'}, {old:'小数', new:'小'},
-    {old:'红波单', new:'红单'}, {old:'红波双', new:'红双'}, {old:'蓝波单', new:'蓝单'}, {old:'蓝波双', new:'蓝双'},
-    {old:'绿波单', new:'绿单'}, {old:'绿波双', new:'绿双'},
-    {old:'合单', new:'合数单'}, {old:'合双', new:'合数双'},
-    {old:'金行', new:'金'}, {old:'木行', new:'木'}, {old:'水行', new:'水'}, {old:'火行', new:'火'}, {old:'土行', new:'土'},
-    {old:'单', new:'单数'}, {old:'双', new:'双数'}
-  ];
-  const DEFAULT_ALIASES = [
-    {alias:'红蓝波', target:'红波-蓝波'}, {alias:'红绿波', target:'红波-绿波'}, {alias:'蓝绿波', target:'蓝波-绿波'},
-    {alias:'红蓝绿', target:'红波-蓝波-绿波'}, {alias:'大单小双', target:'大单-小双'}, {alias:'大双小单', target:'大双-小单'},
-    {alias:'金木水', target:'金-木-水'}, {alias:'火土', target:'火-土'},
-    {alias:'红蓝', target:'红波-蓝波'}, {alias:'红绿', target:'红波-绿波'}, {alias:'蓝绿', target:'蓝波-绿波'},
-    {alias:'合单双', target:'合数单-合数双'}
-  ];
-
-  // 合并替换预设
-  let currentPresets = [];
-  try {
-    const stored = localStorage.getItem('replacePresets');
-    if (stored) { currentPresets = JSON.parse(stored); }
-  } catch(e) { currentPresets = []; }
-  const existingOlds = new Set(currentPresets.map(p => p.old));
-  let added = 0;
-  DEFAULT_REPLACE_PRESETS.forEach(dp => {
-    if (!existingOlds.has(dp.old)) {
-      currentPresets.push(dp);
-      existingOlds.add(dp.old);
-      added++;
-    }
-  });
-  if (added > 0) {
-    localStorage.setItem('replacePresets', JSON.stringify(currentPresets));
-  }
-
-  // 合并分类缩写
-  let currentAliases = [];
-  try {
-    const stored = localStorage.getItem('categoryAliases');
-    if (stored) { currentAliases = JSON.parse(stored); }
-  } catch(e) { currentAliases = []; }
-  const existingAliases = new Set(currentAliases.map(a => a.alias));
-  let aliasAdded = 0;
-  DEFAULT_ALIASES.forEach(da => {
-    if (!existingAliases.has(da.alias)) {
-      currentAliases.push(da);
-      existingAliases.add(da.alias);
-      aliasAdded++;
-    }
-  });
-  if (aliasAdded > 0) {
-    localStorage.setItem('categoryAliases', JSON.stringify(currentAliases));
-  }
-}
-
 window.onload = async () => {
   setCurrentRegion(currentRegion);
   await initIndexedDB();
@@ -3041,9 +2975,6 @@ window.onload = async () => {
 
   await autoCleanRecycleBin();
   setInterval(autoCleanRecycleBin, 24 * 60 * 60 * 1000);
-
-  // 合并默认配置（替换预设 + 分类缩写）
-  mergeDefaultPresets();
 
   window._systemReady = async () => {
     await updateTableFromRecords();
