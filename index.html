@@ -901,6 +901,11 @@ tr.selected-row {background-color: #dceeff !important; font-weight: bold; box-sh
   </div>
 </div>
 <script>
+// ===== 密码解码函数 =====
+function decodePassword(encoded) {
+  return atob(encoded);
+}
+
 // ===== 自定义对话框系统 =====
 function showCustomDialog({ title = '提示', message = '', type = 'alert', defaultValue = '', placeholder = '' }) {
   return new Promise((resolve) => {
@@ -923,7 +928,11 @@ window.confirm = async (msg) => { return await customConfirm(msg); };
 window.prompt = async (msg, def) => { return await customPrompt(msg, def); };
 
 // ===== 卡密认证 =====
-const ADMIN_PASSWORD = "150408"; const CARD_KEYS_STORE = 'cardKeys'; const SESSION_KEY = 'authSession'; const CARD_SECRET = "XK9mP2wQ7vL5";
+const ADMIN_PASSWORD_ENC = "MTUwNDA4"; // Base64 for "150408"
+const ADMIN_PASSWORD = decodePassword(ADMIN_PASSWORD_ENC);
+const CARD_KEYS_STORE = 'cardKeys'; const SESSION_KEY = 'authSession';
+const CARD_SECRET_ENC = "WEs5bVAyd1E3dkw1"; // Base64 for "XK9mP2wQ7vL5"
+const CARD_SECRET = decodePassword(CARD_SECRET_ENC);
 function getCardKeys() { try { return JSON.parse(localStorage.getItem(CARD_KEYS_STORE) || '[]'); } catch (e) { return []; } }
 function saveCardKeys(keys) { localStorage.setItem(CARD_KEYS_STORE, JSON.stringify(keys)); }
 function getAuthSession() { try { return JSON.parse(sessionStorage.getItem(SESSION_KEY) || 'null'); } catch (e) { return null; } }
@@ -1038,6 +1047,8 @@ function maximizeWindow(winId) {
 function pinWindow(winId) {}
 
 // ===== 数据库弹窗显示/隐藏 =====
+const PASSWORD_ENC = "ODkxMTA1"; // Base64 for "891105"
+const PASSWORD = decodePassword(PASSWORD_ENC);
 async function showDatabase() { const pwd = await prompt("请输入数据库密码：",""); if (pwd === PASSWORD) { const modal = document.getElementById('databaseModal'); if (!modal) return; modal.style.display = 'flex'; highestZ += 1; modal.style.zIndex = highestZ; renderCustomConfigContainer(); makeWindowDraggable('databaseModalBox'); } else { await alert("密码错误"); } }
 function hideDatabase() { const modal = document.getElementById('databaseModal'); if (modal) modal.style.display = 'none'; }
 
@@ -1268,7 +1279,8 @@ let originalOrderAmount = {};
 let directOrderAmount = {};
 let directReportAmount = {};
 
-const PASSWORD = "891105", YEAR_ZODIAC_PASSWORD = "150408";
+const YEAR_ZODIAC_PASSWORD_ENC = "MTUwNDA4"; // Base64 for "150408"
+const YEAR_ZODIAC_PASSWORD = decodePassword(YEAR_ZODIAC_PASSWORD_ENC);
 const DB_NAME = 'OrderDatabase', DB_VERSION = 5, STORE_NAME = 'orders', REPORT_STORE_NAME = 'report_orders', RECYCLE_STORE_NAME = 'recycle_bin';
 let db = null;
 const zodiacOrder = ['马','蛇','龙','兔','虎','牛','鼠','猪','狗','鸡','猴','羊'];
