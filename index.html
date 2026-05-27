@@ -1029,7 +1029,7 @@ function clearMemoryData() {
   directOrderAmount = {};
   directReportAmount = {};
 }
-
+ 
 // ===== 浮动窗口控制 =====
 let highestZ = 2000;
 function makeWindowDraggable(winId) { const win = document.getElementById(winId); if (!win) return; const header = win.querySelector('.modal-header') || win.querySelector('.database-modal-header'); if (!header) return; let isDragging = false, startX, startY, startLeft, startTop; header.addEventListener('mousedown', (e) => { if (e.target.closest('.window-controls')) return; isDragging = true; const rect = win.getBoundingClientRect(); startX = e.clientX; startY = e.clientY; startLeft = rect.left; startTop = rect.top; win.style.cursor = 'grabbing'; e.preventDefault(); }); document.addEventListener('mousemove', (e) => { if (!isDragging) return; const dx = e.clientX - startX; const dy = e.clientY - startY; win.style.left = (startLeft + dx) + 'px'; win.style.top = (startTop + dy) + 'px'; win.style.transform = 'none'; }); document.addEventListener('mouseup', () => { if (isDragging) { isDragging = false; win.style.cursor = ''; } }); win.addEventListener('mousedown', () => { highestZ += 1; win.style.zIndex = highestZ; }); }
@@ -1706,86 +1706,26 @@ function convertOrderText() {
     return false;
   }
 
-  // 拆分"分类A的BC"为多行
-  function splitWithDe(text) {
-    const deMatch = text.match(new RegExp(`^(.+?)的(.+)$`));
-    if (!deMatch) return null;
-    const prefix = deMatch[1].trim();
-    const suffix = deMatch[2].trim();
-    if (!allCatNames.has(prefix)) return null;
-
-    // 尝试将suffix拆分为多个已知分类名
-    const parts = [];
-    let remaining = suffix;
-    const sortedNames = [...allCatNames].sort((a, b) => b.length - a.length);
-    while (remaining.length > 0) {
-      let found = false;
-      for (const name of sortedNames) {
-        if (remaining.startsWith(name)) {
-          parts.push(name);
-          remaining = remaining.substring(name.length);
-          found = true;
-          break;
-        }
-      }
-      if (!found) return null; // 无法拆分
-    }
-    if (parts.length < 2) return null; // 至少拆成2个
-    return parts.map(p => `${prefix}-${p}`);
-  }
-
   lines.forEach(line => {
     line = line.trim();
     if (!line) return;
 
-    // ===== 第9项：BC拆分 "分类A的BC" =====
-    const amtMatch = line.match(new RegExp(`^(.+?)\\s+${AMP_ORIGINAL}\\s*(\\d+)\\s*${AMTS}$`));
-    if (amtMatch) {
-      const contentPart = amtMatch[1].trim();
-      const amt = amtMatch[2];
-      const splitResult = splitWithDe(contentPart);
-      if (splitResult) {
-        splitResult.forEach(seg => {
-          resultLines.push(`${seg} 各数 ${amt}`);
-          originalContents.push(seg);
-        });
-        skipInvalidCheck.add(resultLines.length - splitResult.length);
-        for (let k = resultLines.length - splitResult.length + 1; k < resultLines.length; k++) {
-          skipInvalidCheck.add(k);
-        }
-        return;
-      }
-    } else {
-      const lineSplit = splitWithDe(line.replace(new RegExp(`\\s+${AMP_ORIGINAL}\\s*\\d+\\s*${AMTS}$`), '').trim());
-      if (lineSplit && line.match(new RegExp(`${AMP_ORIGINAL}\\s*(\\d+)`))) {
-        const am = line.match(new RegExp(`${AMP_ORIGINAL}\\s*(\\d+)`));
-        const amt = am[1];
-        lineSplit.forEach(seg => {
-          resultLines.push(`${seg} 各数 ${amt}`);
-          originalContents.push(seg);
-        });
-        skipInvalidCheck.add(resultLines.length - lineSplit.length);
-        for (let k = resultLines.length - lineSplit.length + 1; k < resultLines.length; k++) {
-          skipInvalidCheck.add(k);
-        }
-        return;
-      }
-    }
-
-    // ===== 第7项：区间识别 "数字到数字" =====
-    const rangeMatch = line.match(new RegExp(`^(\\d{1,2})到(\\d{1,2})\\s+${AMP_ORIGINAL}\\s*(\\d+)\\s*${AMTS}$`));
-    if (rangeMatch) {
-      const startNum = parseInt(rangeMatch[1]);
-      const endNum = parseInt(rangeMatch[2]);
-      const amt = rangeMatch[3];
+    // ===== 第7项：区间识别 "数字到数字"（支持无空格） =====
+    const rangeFullMatch = line.match(new RegExp(`^([\\u4e00-\\u9fa5\\-]*?)(\\d{1,2})到(\\d{1,2})\\s*${AMP_ORIGINAL}\\s*(\\d+)\\s*${AMTS}$`));
+    if (rangeFullMatch) {
+      const prefix = rangeFullMatch[1].replace(/-$/, '').trim();
+      const startNum = parseInt(rangeFullMatch[2]);
+      const endNum = parseInt(rangeFullMatch[3]);
+      const amt = rangeFullMatch[4];
       if (startNum >= 1 && startNum <= 49 && endNum >= 1 && endNum <= 49 && startNum <= endNum) {
         const numList = [];
         for (let i = startNum; i <= endNum; i++) {
           numList.push(i.toString().padStart(2, '0'));
         }
         const expanded = numList.join('-');
-        resultLines.push(`${expanded} 各数 ${amt}`);
-        originalContents.push(expanded);
+        const finalLine = prefix ? `${prefix}-${expanded}` : expanded;
+        resultLines.push(`${finalLine} 各数 ${amt}`);
+        originalContents.push(finalLine);
         skipInvalidCheck.add(resultLines.length - 1);
         return;
       }
@@ -2006,7 +1946,29 @@ function getAllValidCategories(cfg) {
 
 async function saveOrder(){ const user=document.getElementById('orderUserSelect')?.value; if(!user){showToast('请选择用户');return;} const resultEl=document.getElementById('orderResult'); const rawText=resultEl?resultEl.innerText:''; const inputText=document.querySelector('.source-order-input')?.value.trim(); const textToUse=rawText||inputText; if(!textToUse)return; const vl=textToUse.split('\n').filter(l=>{const m=l.match(/各数\s+(\d+)/);return m&&parseInt(m[1])>0;}); if(!vl.length){showToast('订单无效');return;} const content=vl.join('\n'); const date=document.getElementById('filterDate')?.value||getTodayCST(); const total=computeCurrentOrderTotal(); await saveOrderRecordToIDB(content,user,date,total); processCurrentOrder(content,user,true,date); const si=document.querySelector('.source-order-input'); if(si)si.value=''; if(resultEl)resultEl.innerHTML=''; updateOrderTotalDisplay(); document.querySelectorAll('.category-btn').forEach(b=>b.classList.remove('active')); calculateStorageUsage(); }
 async function saveReportOrder(){ const user=document.getElementById('orderUserSelect')?.value; if(!user){showToast('请选择用户');return;} const resultEl=document.getElementById('orderResult'); const rawText=resultEl?resultEl.innerText:''; const inputText=document.querySelector('.source-order-input')?.value.trim(); const textToUse=rawText||inputText; if(!textToUse)return; const vl=textToUse.split('\n').filter(l=>{const m=l.match(/各数\s+(\d+)/);return m&&parseInt(m[1])>0;}); if(!vl.length){showToast('订单无效');return;} const content=vl.join('\n'); const date=document.getElementById('filterDate')?.value||getTodayCST(); const total=computeCurrentOrderTotal(); await saveReportOrderRecordToIDB(content,user,date,total); processCurrentOrder(content,user,false,date); const si=document.querySelector('.source-order-input'); if(si)si.value=''; if(resultEl)resultEl.innerHTML=''; updateOrderTotalDisplay(); document.querySelectorAll('.category-btn').forEach(b=>b.classList.remove('active')); calculateStorageUsage(); }
-function countItemsInLine(line,cfg,keys){ const m=line.match(/([\u4e00-\u9fa5\d\-]+)\s+各数\s+(\d+)/); if(!m)return{numbers:[],zodiacs:[],amount:0}; let cont=m[1]; const amt=parseInt(m[2])||0; const items=cont.split('-').map(i=>i.trim()).filter(i=>i); const nums=[],zods=[]; items.forEach(item=>{ if(/^\d+$/.test(item))nums.push(item.padStart(2,'0')); else if(cfg.shengxiaoAttr[item]){ const zs=cfg.shengxiaoAttr[item]||[]; zs.forEach(z=>zods.push(z)); } else if(cfg.zodiac[item])zods.push(item); else if(cfg.toushuDanshuang&&cfg.toushuDanshuang[item]){ (cfg.toushuDanshuang[item]||[]).forEach(n=>nums.push(n.padStart(2,'0'))); } else { const nl=cfg.wuxing[item]||cfg.bose[item]||cfg.banbo[item]||cfg.danshuang[item]||cfg.weishu[item]||cfg.daxiaodanshuang[item]||cfg.daxiao[item]||cfg.heshu[item]||cfg.toushu[item]||cfg.menshu[item]||cfg.duanwei[item]||cfg.hedahexiao[item]||cfg.weidaweixiao[item]||cfg.hewei[item]||cfg.heshudanshuang[item]||cfg.toushuDanshuang[item]; if(nl)nl.forEach(n=>nums.push(n.padStart(2,'0'))); } }); return{numbers:nums,zodiacs:zods,amount:amt}; }
+function countItemsInLine(line,cfg,keys){
+  const m=line.match(/([\u4e00-\u9fa5\d\-]+)\s+各数\s+(\d+)/);
+  if(!m)return{numbers:[],zodiacs:[],amount:0};
+  let cont=m[1];
+  const amt=parseInt(m[2])||0;
+  const items=cont.split('-').map(i=>i.trim()).filter(i=>i);
+  const nums=[],zods=[];
+  items.forEach(item=>{
+    if(/^\d+$/.test(item))nums.push(item.padStart(2,'0'));
+    else if(cfg.shengxiaoAttr[item]){
+      const zs=cfg.shengxiaoAttr[item]||[];
+      zs.forEach(z=>zods.push(z));
+    } else if(cfg.zodiac[item])zods.push(item);
+    else if(cfg.toushuDanshuang&&cfg.toushuDanshuang[item]){
+      (cfg.toushuDanshuang[item]||[]).forEach(n=>nums.push(n.padStart(2,'0')));
+    } else {
+      // 兜底：通过 getNumberListForCategory 获取号码（支持蓝大等新分类）
+      const nl=getNumberListForCategory(item,cfg);
+      if(nl&&nl.length>0)nl.forEach(n=>nums.push(n.padStart(2,'0')));
+    }
+  });
+  return{numbers:nums,zodiacs:zods,amount:amt};
+}
 function processCurrentOrder(input,user,isNormal,date=null){ const cfg=getAllConfigData(); const keys=getAllValidCategories(cfg); const lines=input.split('\n').filter(l=>l.trim()); if(!userBetData[user])userBetData[user]={}; const curZod=localStorage.getItem('selectedStartZodiac')||'马'; lines.forEach(line=>{ const{numbers,zodiacs,amount}=countItemsInLine(line,cfg,keys); const nMin=parseInt(document.getElementById('numAmountMin')?.value)||1,nMax=parseInt(document.getElementById('numAmountMax')?.value)||50000; const zMin=parseInt(document.getElementById('zodiacAmountMin')?.value)||1,zMax=parseInt(document.getElementById('zodiacAmountMax')?.value)||50000; if(isNormal){ if(zodiacs.length>0){ zodiacs.forEach(z=>{ const w=z===curZod?5:4; zodiacWeightedTotal+=amount*w; }); }else if(numbers.length>0){ numberOrderTotal+=numbers.length*amount; } } numbers.forEach(num=>{ if(isNormal){ userBetData[user][num]=(userBetData[user][num]||0)+amount; tableBetData[num]=(tableBetData[num]||0)+amount; reportBetData[num]=(reportBetData[num]||0)+amount; numberCount[num]=(numberCount[num]||0)+1; if(amount>=nMin&&amount<=nMax)numberAmountCount[num]=(numberAmountCount[num]||0)+1; originalOrderAmount[num]=(originalOrderAmount[num]||0)+amount; if(zodiacs.length === 0) directOrderAmount[num] = (directOrderAmount[num]||0) + amount; } else { userBetData[user][num]=(userBetData[user][num]||0)-amount; reportBetData[num]=(reportBetData[num]||0)-amount; reportAmountData[num]=(reportAmountData[num]||0)+amount; if(zodiacs.length === 0) directReportAmount[num] = (directReportAmount[num]||0) + amount; } }); if(isNormal){ zodiacs.forEach(z=>{ zodiacCount[z]=(zodiacCount[z]||0)+1; zodiacDirectAmount[z]=(zodiacDirectAmount[z]||0)+amount*(cfg.zodiac[z]?.length||0); if(amount>=zMin&&amount<=zMax){zodiacAmountCount[z]=(zodiacAmountCount[z]||0)+1; zodiacFilteredAmount[z]=(zodiacFilteredAmount[z]||0)+amount*(cfg.zodiac[z]?.length||0);} (cfg.zodiac[z]||[]).forEach(n=>{ const num=n.padStart(2,'0'); userBetData[user][num]=(userBetData[user][num]||0)+amount; tableBetData[num]=(tableBetData[num]||0)+amount; reportBetData[num]=(reportBetData[num]||0)+amount; originalOrderAmount[num]=(originalOrderAmount[num]||0)+amount; }); }); } else { zodiacs.forEach(z=>{ zodiacReportAmount[z]=(zodiacReportAmount[z]||0)+amount*(cfg.zodiac[z]?.length||0); if(amount>=zMin&&amount<=zMax){ zodiacFilteredReportAmount[z]=(zodiacFilteredReportAmount[z]||0)+amount*(cfg.zodiac[z]?.length||0);} (cfg.zodiac[z]||[]).forEach(n=>{ const num=n.padStart(2,'0'); userBetData[user][num]=(userBetData[user][num]||0)-amount; reportBetData[num]=(reportBetData[num]||0)-amount; reportAmountData[num]=(reportAmountData[num]||0)+amount; }); }); } }); generateRiskTable(); generateReportTable(); renderFrequencyCards(); renderAmountFrequencyCards(); renderReportAmountTable(); renderOriginalAmountTable(); updateReportAmountTotal(); updateAmountDisplays(); }
     
 async function updateTableFromRecords(){
