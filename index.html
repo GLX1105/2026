@@ -10,7 +10,6 @@
 * {margin:0;padding:0;box-sizing:border-box;font-family:"Microsoft YaHei",sans-serif;}
 body {background:#f5f7fa;font-size:14px;line-height:1.4;overflow-x:hidden;position:relative;}
 
-/* ================= 手机端适配 START ================= */
 @media screen and (max-width: 768px) {
     .container {flex-direction:column!important;padding:10px!important;gap:10px!important;}
     .recognize-wrap {width:100%!important;order:1;}
@@ -40,192 +39,67 @@ body {background:#f5f7fa;font-size:14px;line-height:1.4;overflow-x:hidden;positi
     .extra-input-group {flex-direction:column!important;gap:6px!important;}
     .extra-long-input,.extra-short-input {width:100%!important;}
     .navbar {padding:8px 10px!important;flex-wrap:wrap!important;}
-    .navbar > div:first-child {
-        width: 100% !important;
-        justify-content: center !important;
-        margin-bottom: 5px !important;
-    }
+    .navbar > div:first-child {width:100%!important;justify-content:center!important;margin-bottom:5px!important;}
     .navbar-title {font-size:16px!important;margin-bottom:0!important;width:auto!important;text-align:center!important;}
     .navbar-actions {width:100%!important;justify-content:center!important;flex-wrap:wrap!important;gap:5px!important;}
     .btn {padding:6px 8px!important;font-size:12px!important;min-height:32px!important;flex:1!important;min-width:60px!important;}
-    .btn-macau, .btn-hongkong, .btn-yuegang {
-        padding: 4px 10px !important;
-        font-size: 12px !important;
-        min-height: 28px !important;
-        flex: none !important;
-        min-width: auto !important;
-    }
+    .btn-macau, .btn-hongkong, .btn-yuegang {padding:4px 10px!important;font-size:12px!important;min-height:28px!important;flex:none!important;min-width:auto!important;}
     .floating-window {width:95%!important;min-width:300px!important;}
     .modal-header {padding:8px 10px!important;}
     .modal-body {padding:8px!important;}
     .order-item {padding:4px 6px!important;flex-wrap:wrap!important;}
     .order-content {font-size:11px!important;line-height:1.2!important;max-height:none!important;overflow:visible!important;}
-    .storage-info {bottom:10px!important;right:10px!important;font-size:10px!important;padding:6px 8px!important;max-width:160px!important;background: none!important;}
+    .storage-info {bottom:10px!important;right:10px!important;font-size:10px!important;padding:6px 8px!important;max-width:160px!important;background:none!important;}
     .database-modal {padding:10px!important;}
     .database-modal-box {width:100%!important;max-height:90vh!important;background:rgba(255,255,255,0.85)!important;backdrop-filter:blur(15px)!important;}
     .database-modal-body {padding:10px!important;max-height:70vh!important;}
     .freq-container {flex-direction:column!important;gap:10px!important;}
     .freq-card {width:100%!important;}
-    #originalAmountTable {
-        min-width: 100% !important;
-        font-size: 11px !important;
-    }
-    #originalAmountTable th,
-    #originalAmountTable td {
-        padding: 4px 2px !important;
-        font-size: 11px !important;
-        white-space: nowrap !important;
-    }
-    #originalAmountTable th:nth-child(1),
-    #originalAmountTable td:nth-child(1) { width: 40px !important; }
-    #originalAmountTable th:nth-child(2),
-    #originalAmountTable td:nth-child(2) { width: 38px !important; }
-    #originalAmountTable th:nth-child(3),
-    #originalAmountTable td:nth-child(3) { width: 44px !important; }
-    #originalAmountTable th:nth-child(4),
-    #originalAmountTable td:nth-child(4) { width: 44px !important; }
-    .number-stats-scroll {
-        overflow-x: auto !important;
-        -webkit-overflow-scrolling: touch !important;
-    }
+    #originalAmountTable {min-width:100%!important;font-size:11px!important;}
+    #originalAmountTable th,#originalAmountTable td {padding:4px 2px!important;font-size:11px!important;white-space:nowrap!important;}
+    #originalAmountTable th:nth-child(1),#originalAmountTable td:nth-child(1) {width:40px!important;}
+    #originalAmountTable th:nth-child(2),#originalAmountTable td:nth-child(2) {width:38px!important;}
+    #originalAmountTable th:nth-child(3),#originalAmountTable td:nth-child(3) {width:44px!important;}
+    #originalAmountTable th:nth-child(4),#originalAmountTable td:nth-child(4) {width:44px!important;}
+    .number-stats-scroll {overflow-x:auto!important;-webkit-overflow-scrolling:touch!important;}
 }
-/* ================= 手机端适配 END ================= */
 
 select {
-    padding: 4px 24px 4px 8px!important;
-    border: 1px solid #ccc!important;
-    border-radius: 4px!important;
-    font-size: 13px!important;
-    background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23333' d='M6 8L1 3h10z'/%3E%3C/svg%3E") no-repeat right 8px center!important;
-    -webkit-appearance: none!important;
-    -moz-appearance: none!important;
-    appearance: none!important;
-    cursor: pointer;
-    margin: 0;
-    vertical-align: middle;
+    padding:4px 24px 4px 8px!important;border:1px solid #ccc!important;border-radius:4px!important;
+    font-size:13px!important;background:#fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23333' d='M6 8L1 3h10z'/%3E%3C/svg%3E") no-repeat right 8px center!important;
+    -webkit-appearance:none!important;appearance:none!important;cursor:pointer;margin:0;vertical-align:middle;
 }
+input[type="number"]::-webkit-inner-spin-button,input[type="number"]::-webkit-outer-spin-button {-webkit-appearance:none;margin:0;}
+input[type="number"] {-moz-appearance:textfield;}
 
-input[type="number"]::-webkit-inner-spin-button,
-input[type="number"]::-webkit-outer-spin-button {
-  -webkit-appearance: none;
-  margin: 0;
-}
-input[type="number"] {
-  -moz-appearance: textfield;
-}
-
-.navbar {
-    background: linear-gradient(135deg, #2c3e50 0%, #1a252f 100%);
-    padding: 10px 20px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.15);
-    flex-wrap: wrap;
-    border-bottom: 1px solid rgba(255,255,255,0.1);
-    border-radius: 0 0 20px 20px;
-}
-.navbar-title {
-    color: #ecf0f1;
-    font-size: 22px;
-    font-weight: bold;
-    letter-spacing: 1px;
-    text-shadow: 0 2px 4px rgba(0,0,0,0.2);
-}
+.navbar {background:linear-gradient(135deg,#2c3e50 0%,#1a252f 100%);padding:10px 20px;display:flex;justify-content:space-between;align-items:center;box-shadow:0 4px 15px rgba(0,0,0,0.15);flex-wrap:wrap;border-bottom:1px solid rgba(255,255,255,0.1);border-radius:0 0 20px 20px;}
+.navbar-title {color:#ecf0f1;font-size:22px;font-weight:bold;letter-spacing:1px;text-shadow:0 2px 4px rgba(0,0,0,0.2);}
 .navbar-actions {display:flex;gap:10px;flex-wrap:wrap;}
-.navbar-actions .btn {
-    background: rgba(255,255,255,0.1);
-    backdrop-filter: blur(5px);
-    -webkit-backdrop-filter: blur(5px);
-    color: #ecf0f1;
-    border: 1px solid rgba(255,255,255,0.2);
-    border-radius: 25px;
-    padding: 8px 18px;
-    font-weight: 600;
-    letter-spacing: 0.5px;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-    transition: all 0.2s ease;
-}
-.navbar-actions .btn:hover {
-    background: rgba(255,255,255,0.2);
-    transform: translateY(-2px);
-    box-shadow: 0 8px 20px rgba(0,0,0,0.2);
-    color: #fff;
-}
-.navbar-actions .btn:active {
-    transform: translateY(1px);
-    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-}
-
-.btn-macau {
-    background: #c0392b !important;
-    border-color: #e74c3c !important;
-    color: #fff !important;
-    font-weight: 600;
-    letter-spacing: 0.5px;
-    box-shadow: 0 2px 8px rgba(192,57,43,0.4);
-}
-.btn-macau.region-active {
-    background: #e74c3c !important;
-    box-shadow: 0 0 12px rgba(231,76,60,0.7);
-    border-color: #f1948a !important;
-}
-.btn-hongkong {
-    background: #2471a3 !important;
-    border-color: #2e86c1 !important;
-    color: #fff !important;
-    font-weight: 600;
-    letter-spacing: 0.5px;
-    box-shadow: 0 2px 8px rgba(36,113,163,0.4);
-}
-.btn-hongkong.region-active {
-    background: #2e86c1 !important;
-    box-shadow: 0 0 12px rgba(46,134,193,0.7);
-    border-color: #7fb3d8 !important;
-}
-.btn-yuegang {
-    background: #27ae60 !important;
-    border-color: #2ecc71 !important;
-    color: #fff !important;
-    font-weight: 600;
-    letter-spacing: 0.5px;
-    box-shadow: 0 2px 8px rgba(39,174,96,0.4);
-}
-.btn-yuegang.region-active {
-    background: #2ecc71 !important;
-    box-shadow: 0 0 12px rgba(46,204,113,0.7);
-    border-color: #58d68d !important;
-}
-.btn-recognize {
-    background: #27ae60 !important;
-    border-color: #2ecc71 !important;
-    color: #fff !important;
-}
-.btn-recognize:hover {
-    background: #2ecc71 !important;
-}
+.navbar-actions .btn {background:rgba(255,255,255,0.1);backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px);color:#ecf0f1;border:1px solid rgba(255,255,255,0.2);border-radius:25px;padding:8px 18px;font-weight:600;letter-spacing:0.5px;box-shadow:0 4px 10px rgba(0,0,0,0.1);transition:all 0.2s ease;}
+.navbar-actions .btn:hover {background:rgba(255,255,255,0.2);transform:translateY(-2px);box-shadow:0 8px 20px rgba(0,0,0,0.2);color:#fff;}
+.navbar-actions .btn:active {transform:translateY(1px);box-shadow:0 2px 5px rgba(0,0,0,0.1);}
+.btn-macau {background:#c0392b!important;border-color:#e74c3c!important;color:#fff!important;font-weight:600;letter-spacing:0.5px;box-shadow:0 2px 8px rgba(192,57,43,0.4);}
+.btn-macau.region-active {background:#e74c3c!important;box-shadow:0 0 12px rgba(231,76,60,0.7);border-color:#f1948a!important;}
+.btn-hongkong {background:#2471a3!important;border-color:#2e86c1!important;color:#fff!important;font-weight:600;letter-spacing:0.5px;box-shadow:0 2px 8px rgba(36,113,163,0.4);}
+.btn-hongkong.region-active {background:#2e86c1!important;box-shadow:0 0 12px rgba(46,134,193,0.7);border-color:#7fb3d8!important;}
+.btn-yuegang {background:#27ae60!important;border-color:#2ecc71!important;color:#fff!important;font-weight:600;letter-spacing:0.5px;box-shadow:0 2px 8px rgba(39,174,96,0.4);}
+.btn-yuegang.region-active {background:#2ecc71!important;box-shadow:0 0 12px rgba(46,204,113,0.7);border-color:#58d68d!important;}
+.btn-recognize {background:#27ae60!important;border-color:#2ecc71!important;color:#fff!important;}
+.btn-recognize:hover {background:#2ecc71!important;}
 
 .container {width:100%;max-width:1400px;margin:0 auto;padding:10px;display:flex;flex-direction:row;gap:15px;align-items:flex-start;}
 .recognize-wrap {flex:1;min-width:0;display:flex;flex-direction:column;gap:15px;}
 .risk-report-area {flex:0 0 420px;position:sticky;top:10px;}
-
 .card {background:#fff;border:1px solid #eee;border-radius:14px;padding:15px;box-shadow:0 4px 12px rgba(0,0,0,0.08);transition:all 0.25s ease;}
 .card:hover {transform:translateY(-2px);box-shadow:0 8px 20px rgba(0,0,0,0.12);}
-.card-title {
-  font-size:16px; font-weight:bold; color:#333; margin-bottom:12px; padding:10px 12px 8px;
-  border-bottom:2px solid #e0e0e0; display:flex; align-items:center; flex-wrap:wrap; gap:6px;
-  background-color: #e3f2fd; border-radius: 10px 10px 0 0;
-  overflow: visible;
-}
+.card-title {font-size:16px;font-weight:bold;color:#333;margin-bottom:12px;padding:10px 12px 8px;border-bottom:2px solid #e0e0e0;display:flex;align-items:center;flex-wrap:wrap;gap:6px;background-color:#e3f2fd;border-radius:10px 10px 0 0;overflow:visible;}
 .year-zodiac-area {display:flex;align-items:center;gap:6px;font-size:13px;font-weight:normal;}
-.year-zodiac-area select {padding:3px 6px;border-radius:4px;border:1px solid #ccc;font-size:13px;background:#fff;}
 .summary-row {display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;font-size:14px;font-weight:bold;color:#222;gap:6px;flex-wrap:wrap;}
 .summary-item {padding:5px 8px;background:#f8f9fa;border-radius:4px;border:1px solid #eee;display:flex;align-items:center;gap:5px;}
 input[type="number"].small-input {width:50px;padding:3px 5px;border:1px solid #ddd;border-radius:3px;text-align:center;font-size:12px;}
 .btn {padding:8px 12px;border:none;border-radius:25px;cursor:pointer;font-size:14px;font-weight:bold;min-height:36px;transition:all 0.25s ease;text-align:center;box-shadow:0 2px 4px rgba(0,0,0,0.1);}
 .btn:hover {transform:translateY(-2px);box-shadow:0 4px 8px rgba(0,0,0,0.15);}
 .btn:active {transform:translateY(1px);box-shadow:0 1px 2px rgba(0,0,0,0.1);}
-
 .btn-paste {background:#2ecc71;color:white;}
 .btn-save-order {background:#f39c12;color:white;}
 .btn-report {background:#e67e22;color:white;}
@@ -241,7 +115,6 @@ input[type="number"].small-input {width:50px;padding:3px 5px;border:1px solid #d
 .recognize-card .btn-group .btn {flex:1;}
 .btn-group {margin-top:12px;display:flex;flex-direction:column;gap:8px;}
 @media (min-width:500px) {.btn-group {flex-direction:row;flex-wrap:wrap;gap:6px;}}
-
 .category-card .btn-group {margin-top:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(70px,1fr));gap:6px;}
 .category-btn {padding:6px 4px;border:none;border-radius:4px;cursor:pointer;font-size:12px;min-height:34px;transition:all 0.25s ease;text-align:center;background:#e9ecef;color:#333;box-shadow:0 1px 3px rgba(0,0,0,0.08);}
 .category-btn:hover {background:#dee2e6;transform:translateY(-2px);box-shadow:0 3px 6px rgba(0,0,0,0.12);}
@@ -263,147 +136,60 @@ input[type="number"].small-input {width:50px;padding:3px 5px;border:1px solid #d
 
 .table-container {width:100%;overflow-x:auto;}
 table {width:100%;border-collapse:collapse;margin-top:8px;font-size:12px;}
-th {background: #f0f0f0; font-weight: bold; color: #1a1a2e; padding: 5px 6px; border: 1px solid #ddd; white-space: nowrap;}
+th {background:#f0f0f0;font-weight:bold;color:#1a1a2e;padding:5px 6px;border:1px solid #ddd;white-space:nowrap;}
 td {border:1px solid #ddd;padding:5px 6px;text-align:center;white-space:nowrap;}
 .red-text {color:#ff0000!important;font-weight:bold;}
 .blue-text {color:#0000ff!important;font-weight:bold;}
 .green-text {color:#008000!important;font-weight:bold;}
-
 #riskTable th:nth-child(5),#riskTable td:nth-child(5),#reportTable th:nth-child(5),#reportTable td:nth-child(5) {width:50px;text-align:center;}
-tr.selected-row {background-color: #dceeff !important; font-weight: bold; box-shadow: inset 0 0 5px rgba(52,152,219,0.5);}
+tr.selected-row {background-color:#dceeff!important;font-weight:bold;box-shadow:inset 0 0 5px rgba(52,152,219,0.5);}
 
-.floating-window {
-  position: fixed;
-  background: rgba(255,255,255,0.9);
-  backdrop-filter: blur(10px);
-  border-radius: 16px;
-  box-shadow: 0 20px 40px rgba(0,0,0,0.3);
-  border: 1px solid rgba(255,255,255,0.5);
-  display: flex;
-  flex-direction: column;
-  resize: both;
-  overflow: auto;
-  min-width: 320px;
-  min-height: 250px;
-  z-index: 2000;
-  transition: none;
-}
-.floating-window .modal-header {
-  padding: 10px 15px;
-  background: rgba(26,26,46,0.9);
-  color: #fff;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  cursor: move;
-  user-select: none;
-  border-radius: 16px 16px 0 0;
-}
-.floating-window .modal-body {
-  padding: 15px;
-  overflow-y: auto;
-  flex: 1;
-}
-.floating-window .modal-footer {
-  padding: 10px 15px;
-  background: rgba(245,247,250,0.8);
-  display: flex;
-  gap: 8px;
-  justify-content: flex-end;
-  border-radius: 0 0 16px 16px;
-}
-.window-controls { display:flex; gap:5px; margin-left:auto; }
-.window-controls button { background:rgba(255,255,255,0.2); border:none; color:#fff; width:28px; height:28px; border-radius:4px; cursor:pointer; font-size:14px; display:flex; align-items:center; justify-content:center; }
-.window-controls button:hover { background:rgba(255,255,255,0.4); }
+.floating-window {position:fixed;background:rgba(255,255,255,0.9);backdrop-filter:blur(10px);border-radius:16px;box-shadow:0 20px 40px rgba(0,0,0,0.3);border:1px solid rgba(255,255,255,0.5);display:flex;flex-direction:column;resize:both;overflow:auto;min-width:320px;min-height:250px;z-index:2000;transition:none;}
+.floating-window .modal-header {padding:10px 15px;background:rgba(26,26,46,0.9);color:#fff;display:flex;justify-content:space-between;align-items:center;cursor:move;user-select:none;border-radius:16px 16px 0 0;}
+.floating-window .modal-body {padding:15px;overflow-y:auto;flex:1;}
+.floating-window .modal-footer {padding:10px 15px;background:rgba(245,247,250,0.8);display:flex;gap:8px;justify-content:flex-end;border-radius:0 0 16px 16px;}
+.window-controls {display:flex;gap:5px;margin-left:auto;}
+.window-controls button {background:rgba(255,255,255,0.2);border:none;color:#fff;width:28px;height:28px;border-radius:4px;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;}
+.window-controls button:hover {background:rgba(255,255,255,0.4);}
 
-.custom-dialog-overlay {
-  position: fixed; top:0; left:0; width:100%; height:100%;
-  background: rgba(0,0,0,0.5); backdrop-filter: blur(8px);
-  display: flex; align-items: center; justify-content: center;
-  z-index: 9999; animation: fadeIn 0.2s ease;
-}
-.custom-dialog-box {
-  background: rgba(255,255,255,0.75); backdrop-filter: blur(20px);
-  border-radius: 20px; padding: 25px 20px 20px;
-  width: 90%; max-width: 400px; box-shadow: 0 25px 50px rgba(0,0,0,0.3);
-  border: 1px solid rgba(255,255,255,0.4);
-  text-align: center; animation: slideDown 0.25s ease;
-}
-.custom-dialog-title {font-size: 18px; font-weight: bold; margin-bottom: 15px; color:#1a1a2e;}
-.custom-dialog-message {font-size: 15px; color:#333; margin-bottom: 20px; line-height: 1.5;}
-.custom-dialog-input {width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 8px; font-size: 16px; margin-bottom: 20px; outline: none; background: rgba(255,255,255,0.9);}
-.custom-dialog-buttons {display: flex; gap: 10px; justify-content: center;}
-.custom-dialog-btn {padding: 10px 25px; border: none; border-radius: 25px; font-size: 16px; font-weight: bold; cursor: pointer; transition: 0.2s; min-width: 80px;}
-.custom-dialog-btn.confirm { background: #3498db; color: #fff; }
-.custom-dialog-btn.confirm:hover { background: #2980b9; }
-.custom-dialog-btn.cancel { background: #bdc3c7; color: #fff; }
-.custom-dialog-btn.cancel:hover { background: #95a5a6; }
+.custom-dialog-overlay {position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;z-index:9999;animation:fadeIn 0.2s ease;}
+.custom-dialog-box {background:rgba(255,255,255,0.75);backdrop-filter:blur(20px);border-radius:20px;padding:25px 20px 20px;width:90%;max-width:400px;box-shadow:0 25px 50px rgba(0,0,0,0.3);border:1px solid rgba(255,255,255,0.4);text-align:center;animation:slideDown 0.25s ease;}
+.custom-dialog-title {font-size:18px;font-weight:bold;margin-bottom:15px;color:#1a1a2e;}
+.custom-dialog-message {font-size:15px;color:#333;margin-bottom:20px;line-height:1.5;}
+.custom-dialog-input {width:100%;padding:10px;border:1px solid #ccc;border-radius:8px;font-size:16px;margin-bottom:20px;outline:none;background:rgba(255,255,255,0.9);}
+.custom-dialog-buttons {display:flex;gap:10px;justify-content:center;}
+.custom-dialog-btn {padding:10px 25px;border:none;border-radius:25px;font-size:16px;font-weight:bold;cursor:pointer;transition:0.2s;min-width:80px;}
+.custom-dialog-btn.confirm {background:#3498db;color:#fff;}
+.custom-dialog-btn.confirm:hover {background:#2980b9;}
+.custom-dialog-btn.cancel {background:#bdc3c7;color:#fff;}
+.custom-dialog-btn.cancel:hover {background:#95a5a6;}
 
-.amount-stat-box {display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; background: #fff3cd; border: 1px solid #ffc107; border-radius: 4px; font-size: 12px; font-weight: bold; color: #333; margin-left: 6px; white-space: nowrap;}
-.amount-stat-box span:first-child { color: #e67e22; }
-.amount-stat-box span:last-child { color: #d35400; }
+.amount-stat-box {display:inline-flex;align-items:center;gap:4px;padding:2px 8px;background:#fff3cd;border:1px solid #ffc107;border-radius:4px;font-size:12px;font-weight:bold;color:#333;margin-left:6px;white-space:nowrap;}
+.amount-stat-box span:first-child {color:#e67e22;}
+.amount-stat-box span:last-child {color:#d35400;}
 
-.replace-preset-item {display: flex; align-items: center; gap: 6px; padding: 4px 0; border-bottom: 1px solid #eee;}
-.replace-preset-item span { flex:1; font-size:13px; }
+.replace-preset-item {display:flex;align-items:center;gap:6px;padding:4px 0;border-bottom:1px solid #eee;}
+.replace-preset-item span {flex:1;font-size:13px;}
+.highlight-number {color:red;font-weight:bold;}
 
-.highlight-number { color: red; font-weight: bold; }
+.toast-message {position:fixed;top:20px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.75);color:#fff;padding:10px 24px;border-radius:25px;font-size:14px;z-index:99999;opacity:0;transition:opacity 0.3s;pointer-events:none;}
+.toast-message.show {opacity:1;}
 
-.toast-message {
-  position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
-  background: rgba(0,0,0,0.75); color: #fff; padding: 10px 24px;
-  border-radius: 25px; font-size: 14px; z-index: 99999;
-  opacity: 0; transition: opacity 0.3s;
-  pointer-events: none;
-}
-.toast-message.show { opacity: 1; }
+.login-overlay {position:fixed;top:0;left:0;width:100%;height:100%;backdrop-filter:blur(15px);background:rgba(0,0,0,0.6);z-index:99999;display:flex;align-items:center;justify-content:center;}
+.login-box {background:rgba(255,255,255,0.85);backdrop-filter:blur(20px);border-radius:20px;padding:30px 20px;width:90%;max-width:380px;text-align:center;box-shadow:0 25px 50px rgba(0,0,0,0.3);}
+.login-box h3 {margin-bottom:20px;color:#1a1a2e;}
+.login-box input {width:100%;padding:10px;border:1px solid #ccc;border-radius:8px;font-size:16px;margin-bottom:12px;}
+.login-box .btn {width:100%;margin-bottom:8px;}
+.login-box .link {font-size:13px;color:#3498db;cursor:pointer;margin-top:5px;}
 
-.login-overlay {
-  position: fixed; top:0; left:0; width:100%; height:100%;
-  backdrop-filter: blur(15px); background: rgba(0,0,0,0.6); z-index: 99999;
-  display: flex; align-items: center; justify-content: center;
-}
-.login-box {
-  background: rgba(255,255,255,0.85); backdrop-filter: blur(20px);
-  border-radius: 20px; padding: 30px 20px; width: 90%; max-width: 380px;
-  text-align: center; box-shadow: 0 25px 50px rgba(0,0,0,0.3);
-}
-.login-box h3 { margin-bottom: 20px; color:#1a1a2e; }
-.login-box input { width:100%; padding:10px; border:1px solid #ccc; border-radius:8px; font-size:16px; margin-bottom:12px; }
-.login-box .btn { width:100%; margin-bottom:8px; }
-.login-box .link { font-size:13px; color:#3498db; cursor:pointer; margin-top:5px; }
-
-.order-input-container {
-  display:flex;
-  width:100%;
-  min-height:280px;
-  height:auto;
-  border:1px solid #ddd;
-}
+.order-input-container {display:flex;width:100%;min-height:280px;height:auto;border:1px solid #ddd;}
 .input-column,.result-column {flex:1;display:flex;flex-direction:column;}
 .box-label {font-size:12px;color:#666;padding:3px 8px;background:#fafafa;border-bottom:1px solid #eee;}
-.source-order-input {flex:1; border:none; border-right:1px solid #ddd; padding:8px; resize:none; font-size:13px; outline:none;}
+.source-order-input {flex:1;border:none;border-right:1px solid #ddd;padding:8px;resize:none;font-size:13px;outline:none;}
 .result-area-new {flex:1;}
-.result-content {
-  width:100%;
-  height:100%;
-  border:none;
-  padding:8px;
-  resize:none;
-  font-size:13px;
-  outline:none;
-  overflow-y:auto;
-}
+.result-content {width:100%;height:100%;border:none;padding:8px;resize:none;font-size:13px;outline:none;overflow-y:auto;}
 
-.storage-info {
-  position:fixed; bottom:20px; right:20px;
-  background: none;
-  color: #000;
-  padding:10px 12px;
-  border-radius:12px;
-  font-size:12px;
-  z-index:1000;
-  max-width:180px;
-}
+.storage-info {position:fixed;bottom:20px;right:20px;background:none;color:#000;padding:10px 12px;border-radius:12px;font-size:12px;z-index:1000;max-width:180px;}
 .storage-info p {margin:4px 0;display:flex;justify-content:space-between;}
 .storage-info .label {color:#000;}
 .storage-info .value {font-weight:bold;color:red;}
@@ -412,176 +198,57 @@ tr.selected-row {background-color: #dceeff !important; font-weight: bold; box-sh
 .freq-card {flex:1;min-width:220px;background:#fafafa;border:1px solid #eee;border-radius:6px;padding:10px;}
 .freq-title {font-size:13px;font-weight:bold;color:#1a1a2e;margin-bottom:8px;text-align:center;padding-bottom:4px;border-bottom:1px solid #eee;}
 .freq-table {width:100%;border-collapse:collapse;font-size:12px;}
-.freq-table th {background:#f0f0f0; font-weight:bold; color:#333; padding:3px 4px;}
+.freq-table th {background:#f0f0f0;font-weight:bold;color:#333;padding:3px 4px;}
 .freq-table td {padding:2px 4px;border:1px solid #eee;text-align:center;}
 .black-text {color:#000000!important;font-weight:normal;}
 .range-input {width:70px;padding:2px 4px;font-size:11px;border:1px solid #ccc;border-radius:3px;}
-.amount-red-text { color:#ff0000!important; font-weight:bold; }
-.report-red-text { color:#ff0000!important; }
+.amount-red-text {color:#ff0000!important;font-weight:bold;}
+.report-red-text {color:#ff0000!important;}
 
-.order-item {
-  padding: 8px;
-  border: 1px solid #eee;
-  border-radius: 4px;
-  margin-bottom: 6px;
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
-  transition: background 0.2s;
-  flex-wrap: nowrap;
-}
-.order-item:hover { background: #f9f9f9; }
-.order-item input { width: 16px; height: 16px; margin-top: 3px; flex-shrink: 0; }
-.order-content {
-  flex: 1 1 auto;
-  min-width: 120px;
-  font-size: 11px;
-  line-height: 1.4;
-  white-space: pre-wrap;
-  word-break: break-all;
-  text-align: left;
-}
-.order-info {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 2px;
-  margin: 0 8px;
-  flex: 0 0 auto;
-  white-space: nowrap;
-}
-.order-info .order-total {
-  font-weight: bold;
-  color: #000;
-  font-size: 12px;
-}
-.order-info .order-meta {
-  font-size: 10px;
-  color: #555;
-  display: flex;
-  gap: 8px;
-  white-space: nowrap;
-}
-.order-del {
-  padding: 4px 10px;
-  background: #e74c3c;
-  color: #fff;
-  border: none;
-  border-radius: 3px;
-  cursor: pointer;
-  font-size: 11px;
-  white-space: nowrap;
-  flex: 0 0 auto;
-  margin-left: auto;
-}
+.order-item {padding:8px;border:1px solid #eee;border-radius:4px;margin-bottom:6px;display:flex;align-items:flex-start;gap:10px;transition:background 0.2s;flex-wrap:nowrap;}
+.order-item:hover {background:#f9f9f9;}
+.order-item input {width:16px;height:16px;margin-top:3px;flex-shrink:0;}
+.order-content {flex:1 1 auto;min-width:120px;font-size:11px;line-height:1.4;white-space:pre-wrap;word-break:break-all;text-align:left;}
+.order-info {display:flex;flex-direction:column;align-items:center;gap:2px;margin:0 8px;flex:0 0 auto;white-space:nowrap;}
+.order-info .order-total {font-weight:bold;color:#000;font-size:12px;}
+.order-info .order-meta {font-size:10px;color:#555;display:flex;gap:8px;white-space:nowrap;}
+.order-del {padding:4px 10px;background:#e74c3c;color:#fff;border:none;border-radius:3px;cursor:pointer;font-size:11px;white-space:nowrap;flex:0 0 auto;margin-left:auto;}
 
-.database-modal {
-  position:fixed;top:0;left:0;width:100%;height:100%;
-  background:rgba(0,0,0,0.4); z-index:1001;
-  display:none;
-  align-items:center; justify-content:center;
-}
-.database-modal-box {
-  background:rgba(255,255,255,0.85); backdrop-filter:blur(15px);
-  width:100%;max-width:900px;border-radius:16px;
-  overflow:hidden;max-height:85vh;
-  display:flex;flex-direction:column;
-  box-shadow:0 20px 40px rgba(0,0,0,0.2);
-  border:1px solid rgba(255,255,255,0.5);
-  position:absolute;
-  left:50%; top:50%;
-  transform:translate(-50%,-50%);
-  resize:both; min-width:400px; min-height:300px;
-}
-.database-modal-header {
-  padding:15px 20px;background:rgba(26,26,46,0.9);color:#fff;
-  display:flex;justify-content:space-between;align-items:center;
-  cursor:move; user-select:none; border-radius:16px 16px 0 0;
-}
-.database-modal-body {padding:20px;overflow-y:auto;max-height:70vh; flex:1;}
+.database-modal {position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.4);z-index:1001;display:none;align-items:center;justify-content:center;}
+.database-modal-box {background:rgba(255,255,255,0.85);backdrop-filter:blur(15px);width:100%;max-width:900px;border-radius:16px;overflow:hidden;max-height:85vh;display:flex;flex-direction:column;box-shadow:0 20px 40px rgba(0,0,0,0.2);border:1px solid rgba(255,255,255,0.5);position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);resize:both;min-width:400px;min-height:300px;}
+.database-modal-header {padding:15px 20px;background:rgba(26,26,46,0.9);color:#fff;display:flex;justify-content:space-between;align-items:center;cursor:move;user-select:none;border-radius:16px 16px 0 0;}
+.database-modal-body {padding:20px;overflow-y:auto;max-height:70vh;flex:1;}
 .close-database-btn {background:none;border:none;color:#fff;font-size:18px;cursor:pointer;padding:0;width:30px;height:30px;display:flex;align-items:center;justify-content:center;border-radius:50%;transition:background 0.2s;}
 .close-database-btn:hover {background:rgba(255,255,255,0.1);}
 
-.parse-inline {
-  font-size:12px; color:blue; line-height:1.6; white-space:pre-wrap; word-break:break-word;
-}
+.parse-inline {font-size:12px;color:blue;line-height:1.6;white-space:pre-wrap;word-break:break-word;}
+.stats-block {display:inline-flex;flex-direction:column;gap:1px;vertical-align:middle;}
+.stats-row {display:flex;gap:4px;white-space:nowrap;align-items:center;}
+.stat-col {display:inline-flex;align-items:center;min-width:68px;font-size:12px;}
+.stat-col .slabel {color:#000;}
+.stat-val-amount {color:#3498db;}
+.stat-val-special {color:#e74c3c;}
+.stat-val-profit {color:#27ae60;}
+.stat-val-loss {color:#e74c3c;}
+.stat-val-count {color:#000;}
 
-.stats-block { display:inline-flex; flex-direction:column; gap:1px; vertical-align:middle; }
-.stats-row { display:flex; gap:4px; white-space:nowrap; align-items:center; }
-.stat-col { display:inline-flex; align-items:center; min-width:68px; font-size:12px; }
-.stat-col .slabel { color:#000; }
-.stat-val-amount { color:#3498db; }
-.stat-val-special { color:#e74c3c; }
-.stat-val-profit { color:#27ae60; }
-.stat-val-loss { color:#e74c3c; }
-.stat-val-count { color:#000; }
+.draw-table-wrap {max-height:60vh;overflow:auto;border:1px solid #ddd;border-radius:8px;}
+.draw-table {border-collapse:collapse;font-size:12px;}
+.draw-table th,.draw-table td {border:none;padding:1px 2px;text-align:center;white-space:nowrap;}
+.draw-table th {background:#f0f0f0;font-weight:bold;}
+.draw-number-input {width:36px;padding:0;text-align:center;font-size:12px;border:1px solid #ccc;border-radius:2px;}
+.draw-number-input:disabled {background:#f8f8f8;color:#333;}
 
-/* ========== 开奖记录表格专用样式 ========== */
-.draw-table-wrap {
-  max-height: 60vh;
-  overflow: auto;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-}
-.draw-table {
-  border-collapse: collapse;
-  font-size: 12px;
-}
-.draw-table th, .draw-table td {
-  border: none;
-  padding: 1px 2px;
-  text-align: center;
-  white-space: nowrap;
-}
-.draw-table th {
-  background: #f0f0f0;
-  font-weight: bold;
-}
-.draw-number-input {
-  width: 36px;
-  padding: 0;
-  text-align: center;
-  font-size: 12px;
-  border: 1px solid #ccc;
-  border-radius: 2px;
-}
-.draw-number-input:disabled {
-  background: #f8f8f8;
-  color: #333;
-}
+.recent-draw-text {font-size:13px;line-height:1.6;margin-top:6px;padding:6px;background:#fff;border:1px solid #eee;border-radius:6px;white-space:pre-wrap;}
+.recent-draw-text .num {font-weight:bold;}
+.recent-draw-text .slash {color:#000;}
 
-/* 近期开奖展示文本样式 */
-.recent-draw-text {
-  font-size: 13px;
-  line-height: 1.6;
-  margin-top: 6px;
-  padding: 6px;
-  background: #fff;
-  border: 1px solid #eee;
-  border-radius: 6px;
-  white-space: pre-wrap;
-}
-.recent-draw-text .num { font-weight: bold; }
-.recent-draw-text .slash { color: #000; }
-
-/* 回收站数量徽标 */
-.recycle-count-badge {
-  display: inline-block;
-  background: #e74c3c;
-  color: #fff;
-  border-radius: 10px;
-  padding: 0px 6px;
-  font-size: 11px;
-  font-weight: bold;
-  margin-left: 4px;
-  min-width: 18px;
-  text-align: center;
-}
+.recycle-count-badge {display:inline-block;background:#e74c3c;color:#fff;border-radius:10px;padding:0px 6px;font-size:11px;font-weight:bold;margin-left:4px;min-width:18px;text-align:center;}
 </style>
 </head>
 <body>
 <div class="navbar" id="mainNavbar">
-  <div style="display:flex; align-items:center; gap:12px;">
+  <div style="display:flex;align-items:center;gap:12px;">
     <div class="navbar-title">港澳识别系统</div>
     <button class="btn btn-macau region-active" id="btnMacau" onclick="switchRegion('macau')">澳门</button>
     <button class="btn btn-hongkong" id="btnHongkong" onclick="switchRegion('hongkong')">香港</button>
@@ -611,325 +278,70 @@ tr.selected-row {background-color: #dceeff !important; font-weight: bold; box-sh
         <div class="card-title">下注统计<span id="filterDateDrawInfo" style="margin-left:12px;font-size:14px;font-weight:normal;display:none;"></span></div>
         <div class="freq-container">
           <div class="freq-card">
-            <div class="freq-title">号码次数<div class="amount-stat-box" id="numberTotalBox" style="display:none; margin-left:8px;"><span id="numberTotalAmount">0</span></div></div>
+            <div class="freq-title">号码次数<div class="amount-stat-box" id="numberTotalBox" style="display:none;margin-left:8px;"><span id="numberTotalAmount">0</span></div></div>
             <table class="freq-table" id="numberFreqTable"></table>
           </div>
           <div class="freq-card">
-            <div class="freq-title">生肖次数<div class="amount-stat-box" id="zodiacTotalBox" style="display:none; margin-left:8px;"><span id="zodiacTotalAmount">0</span></div></div>
+            <div class="freq-title">生肖次数<div class="amount-stat-box" id="zodiacTotalBox" style="display:none;margin-left:8px;"><span id="zodiacTotalAmount">0</span></div></div>
             <table class="freq-table" id="zodiacFreqTable"></table>
             <div id="recentDrawNumbers" class="recent-draw-text" style="display:none;"></div>
           </div>
         </div>
       </div>
-
       <div class="card" style="margin-top:0;">
         <div class="card-title">金额次数统计</div>
         <div class="freq-container">
           <div class="freq-card">
-            <div class="freq-title">号码金额次数 <span style="font-size:11px;font-weight:normal;margin-left:8px;">范围：<input type="number" id="numAmountMin" class="range-input" value="1" min="1"> - <input type="number" id="numAmountMax" class="range-input" value="50000" min="1"></span></div>
+            <div class="freq-title">号码金额次数 <span style="font-size:11px;">范围：<input type="number" id="numAmountMin" class="range-input" value="1" min="1"> - <input type="number" id="numAmountMax" class="range-input" value="50000" min="1"></span></div>
             <table class="freq-table" id="numberAmountFreqTable"></table>
           </div>
           <div class="freq-card">
-            <div class="freq-title">生肖金额次数 <span style="font-size:11px;font-weight:normal;margin-left:8px;">范围：<input type="number" id="zodiacAmountMin" class="range-input" value="1" min="1"> - <input type="number" id="zodiacAmountMax" class="range-input" value="50000" min="1"></span></div>
+            <div class="freq-title">生肖金额次数 <span style="font-size:11px;">范围：<input type="number" id="zodiacAmountMin" class="range-input" value="1" min="1"> - <input type="number" id="zodiacAmountMax" class="range-input" value="50000" min="1"></span></div>
             <table class="freq-table" id="zodiacAmountFreqTable"></table>
             <div id="recentZodiacStats" class="recent-draw-text" style="display:none;"></div>
           </div>
         </div>
       </div>
-
       <div class="card" style="margin-top:0;">
         <div class="card-title">号码统计</div>
-        <div class="freq-container">
-          <div class="freq-card">
-            <div class="freq-title">
-              号码金额
-              <div class="amount-stat-box" id="directOrderTotalBox" style="display:none; margin-left:8px;"><span>号码合计：</span><span id="directOrderTotalAmount">0</span></div>
-              <div class="amount-stat-box" id="directReportTotalBox" style="display:none; margin-left:8px;"><span>上报合计：</span><span id="directReportTotalAmount">0</span></div>
-            </div>
-            <div class="number-stats-scroll">
-              <table class="freq-table" id="originalAmountTable"></table>
-            </div>
-          </div>
-        </div>
+        <div class="freq-container"><div class="freq-card"><div class="freq-title">号码金额<div class="amount-stat-box" id="directOrderTotalBox" style="display:none;margin-left:8px;"><span>号码合计：</span><span id="directOrderTotalAmount">0</span></div><div class="amount-stat-box" id="directReportTotalBox" style="display:none;margin-left:8px;"><span>上报合计：</span><span id="directReportTotalAmount">0</span></div></div><div class="number-stats-scroll"><table class="freq-table" id="originalAmountTable"></table></div></div></div>
       </div>
-
       <div class="card" style="margin-top:0;">
         <div class="card-title">上报控制</div>
         <div class="freq-container">
-          <div class="freq-card">
-            <div class="freq-title">
-              截断阈值：<input type="number" id="reportCapInput" class="range-input" value="" placeholder="" oninput="applyReportCap()">
-              <button class="btn-copy" style="padding:2px 8px; font-size:12px; min-height:auto; border-radius:20px; background:#8e44ad; color:#fff; border:none; cursor:pointer;" onclick="copyReportCapText()">复制</button>
-              <button class="btn-parse" style="padding:2px 8px; font-size:12px; min-height:auto; border-radius:20px; background:#f39c12; color:#fff; border:none; cursor:pointer;" onclick="switchParseMethod()">解析</button>
-              <button class="btn-copy-order" style="padding:2px 8px; font-size:12px; min-height:auto; border-radius:20px; background:#3498db; color:#fff; border:none; cursor:pointer;" onclick="copyOrderGroup()">复制订单</button>
-            </div>
-            <div style="display:flex; align-items:flex-start; gap:8px; flex-wrap:nowrap;">
-              <div id="reportCapInfo" style="font-size:12px;color:#333;line-height:1.6; white-space:pre-wrap; word-break:break-word; flex-shrink:0;"></div>
-              <span id="parseResultArea" class="parse-inline" style="flex:1; min-width:0;"></span>
-            </div>
-          </div>
-          <div class="freq-card">
-            <div class="freq-title">上报号码金额<div class="amount-stat-box" id="reportAmountTotalBox" style="display:none; margin-left:8px;"><span id="reportAmountTotalValue">0</span></div></div>
-            <table class="freq-table" id="reportAmountTable"></table>
-          </div>
+          <div class="freq-card"><div class="freq-title">截断阈值：<input type="number" id="reportCapInput" class="range-input" value="" placeholder="" oninput="applyReportCap()"><button style="padding:2px 8px;font-size:12px;min-height:auto;border-radius:20px;background:#8e44ad;color:#fff;border:none;cursor:pointer;" onclick="copyReportCapText()">复制</button><button style="padding:2px 8px;font-size:12px;min-height:auto;border-radius:20px;background:#f39c12;color:#fff;border:none;cursor:pointer;" onclick="switchParseMethod()">解析</button><button style="padding:2px 8px;font-size:12px;min-height:auto;border-radius:20px;background:#3498db;color:#fff;border:none;cursor:pointer;" onclick="copyOrderGroup()">复制订单</button></div><div style="display:flex;align-items:flex-start;gap:8px;flex-wrap:nowrap;"><div id="reportCapInfo" style="font-size:12px;color:#333;line-height:1.6;white-space:pre-wrap;word-break:break-word;flex-shrink:0;"></div><span id="parseResultArea" class="parse-inline" style="flex:1;min-width:0;"></span></div></div>
+          <div class="freq-card"><div class="freq-title">上报号码金额<div class="amount-stat-box" id="reportAmountTotalBox" style="display:none;margin-left:8px;"><span id="reportAmountTotalValue">0</span></div></div><table class="freq-table" id="reportAmountTable"></table></div>
         </div>
       </div>
     </div>
-
     <div class="risk-report-area">
         <div class="card">
-          <div class="card-title">
-            <div class="title-left">
-              <input type="date" id="filterDate" style="padding:4px;border-radius:4px;border:1px solid #ccc;" onchange="updateTableFromRecords()">
-              <button onclick="updateTableFromRecords()" style="margin-left:5px;background:none;border:none;cursor:pointer;font-size:16px;" title="强制刷新">🔄</button>
-              <select id="riskReportSwitcher" style="padding:4px 8px;border-radius:4px;border:1px solid #ccc;font-size:14px;" onchange="switchRiskReport()">
-                <option value="total" selected>总风险</option>
-                <option value="user">用户</option>
-                <option value="report">上报</option>
-              </select>
-              <select id="viewUserSelect" style="padding:4px 8px;border-radius:4px;border:1px solid #ccc;font-size:14px;display:none;" onchange="generateRiskTable()"></select>
-            </div>
-            <div class="year-zodiac-area">
-              <span>本年生肖：</span>
-              <select id="startZodiacSelect">
-                <option value="马">马</option><option value="蛇">蛇</option><option value="龙">龙</option><option value="兔">兔</option><option value="虎">虎</option><option value="牛">牛</option><option value="鼠">鼠</option><option value="猪">猪</option><option value="狗">狗</option><option value="鸡">鸡</option><option value="猴">猴</option><option value="羊">羊</option>
-              </select>
-            </div>
-          </div>
-          <div id="riskSection">
-            <div class="summary-row">
-              <div class="summary-item">总下注：<span id="totalBet">0</span></div>
-              <div class="summary-item">返水%：<input type="number" id="rebateRate" class="small-input" value="4" min="0" max="100" step="0.1"></div>
-              <div class="summary-item">返水：<span id="totalRebate">0</span></div>
-              <div class="summary-item">倍数：<input type="number" id="multipleVal" class="small-input" value="47" min="0.1" step="0.1">
-                <button class="btn-screenshot" style="padding:2px 8px; font-size:12px; min-height:auto; border-radius:20px; background:#27ae60; color:#fff; border:none; cursor:pointer;" onclick="screenshotTable('riskTable')">截图</button>
-                <button class="btn-copy-nums" style="padding:2px 8px; font-size:12px; min-height:auto; border-radius:20px; background:#8e44ad; color:#fff; border:none; cursor:pointer;" onclick="copySelectedNumbers('riskTable')">复制</button>
-              </div>
-            </div>
-            <div class="table-container">
-              <table id="riskTable"><thead><tr><th>号码</th><th>下注</th><th>风险</th><th>ID</th><th>排名</th></tr></thead><tbody id="tableBody" onclick="handleTableRowClick(event)"></tbody></table>
-            </div>
-          </div>
-          <div id="reportSection" style="display:none;">
-            <div class="summary-row">
-              <div class="summary-item">总下注：<span id="reportTotalBet">0</span></div>
-              <div class="summary-item">返水%：<input type="number" id="reportRebateRate" class="small-input" value="4" min="0" max="100" step="0.1"></div>
-              <div class="summary-item">返水：<span id="reportTotalRebate">0</span></div>
-              <div class="summary-item">倍数：<input type="number" id="reportMultipleVal" class="small-input" value="47" min="0.1" step="0.1">
-                <button class="btn-screenshot" style="padding:2px 8px; font-size:12px; min-height:auto; border-radius:20px; background:#27ae60; color:#fff; border:none; cursor:pointer;" onclick="screenshotTable('reportTable')">截图</button>
-                <button class="btn-copy-nums" style="padding:2px 8px; font-size:12px; min-height:auto; border-radius:20px; background:#8e44ad; color:#fff; border:none; cursor:pointer;" onclick="copySelectedNumbers('reportTable')">复制</button>
-              </div>
-            </div>
-            <div class="table-container">
-              <table id="reportTable"><thead><tr><th>号码</th><th>下注</th><th>风险</th><th>ID</th><th>排名</th></tr></thead><tbody id="reportTableBody" onclick="handleTableRowClick(event)"></tbody></table>
-            </div>
-          </div>
+          <div class="card-title"><div class="title-left"><input type="date" id="filterDate" style="padding:4px;border-radius:4px;border:1px solid #ccc;" onchange="updateTableFromRecords()"><button onclick="updateTableFromRecords()" style="margin-left:5px;background:none;border:none;cursor:pointer;font-size:16px;">🔄</button><select id="riskReportSwitcher" style="padding:4px 8px;border-radius:4px;border:1px solid #ccc;font-size:14px;" onchange="switchRiskReport()"><option value="total" selected>总风险</option><option value="user">用户</option><option value="report">上报</option></select><select id="viewUserSelect" style="padding:4px 8px;border-radius:4px;border:1px solid #ccc;font-size:14px;display:none;" onchange="generateRiskTable()"></select></div><div class="year-zodiac-area"><span>本年生肖：</span><select id="startZodiacSelect"><option value="马">马</option><option value="蛇">蛇</option><option value="龙">龙</option><option value="兔">兔</option><option value="虎">虎</option><option value="牛">牛</option><option value="鼠">鼠</option><option value="猪">猪</option><option value="狗">狗</option><option value="鸡">鸡</option><option value="猴">猴</option><option value="羊">羊</option></select></div></div>
+          <div id="riskSection"><div class="summary-row"><div class="summary-item">总下注：<span id="totalBet">0</span></div><div class="summary-item">返水%：<input type="number" id="rebateRate" class="small-input" value="4" min="0" max="100" step="0.1"></div><div class="summary-item">返水：<span id="totalRebate">0</span></div><div class="summary-item">倍数：<input type="number" id="multipleVal" class="small-input" value="47" min="0.1" step="0.1"><button style="padding:2px 8px;font-size:12px;min-height:auto;border-radius:20px;background:#27ae60;color:#fff;border:none;cursor:pointer;" onclick="screenshotTable('riskTable')">截图</button><button style="padding:2px 8px;font-size:12px;min-height:auto;border-radius:20px;background:#8e44ad;color:#fff;border:none;cursor:pointer;" onclick="copySelectedNumbers('riskTable')">复制</button></div></div><div class="table-container"><table id="riskTable"><thead><tr><th>号码</th><th>下注</th><th>风险</th><th>ID</th><th>排名</th></tr></thead><tbody id="tableBody" onclick="handleTableRowClick(event)"></tbody></table></div></div>
+          <div id="reportSection" style="display:none;"><div class="summary-row"><div class="summary-item">总下注：<span id="reportTotalBet">0</span></div><div class="summary-item">返水%：<input type="number" id="reportRebateRate" class="small-input" value="4" min="0" max="100" step="0.1"></div><div class="summary-item">返水：<span id="reportTotalRebate">0</span></div><div class="summary-item">倍数：<input type="number" id="reportMultipleVal" class="small-input" value="47" min="0.1" step="0.1"><button style="padding:2px 8px;font-size:12px;min-height:auto;border-radius:20px;background:#27ae60;color:#fff;border:none;cursor:pointer;" onclick="screenshotTable('reportTable')">截图</button><button style="padding:2px 8px;font-size:12px;min-height:auto;border-radius:20px;background:#8e44ad;color:#fff;border:none;cursor:pointer;" onclick="copySelectedNumbers('reportTable')">复制</button></div></div><div class="table-container"><table id="reportTable"><thead><tr><th>号码</th><th>下注</th><th>风险</th><th>ID</th><th>排名</th></tr></thead><tbody id="reportTableBody" onclick="handleTableRowClick(event)"></tbody></table></div></div>
         </div>
     </div>
   </div>
 </div>
-
-<div class="storage-info" id="storageInfo">
-  <p><span class="label">今日数量：</span><span class="value" id="todayOrderCount">0</span></p>
-  <p><span class="label">订单数量：</span><span class="value" id="orderCount">0</span></p>
-  <p><span class="label">已用空间：</span><span class="value" id="usedSpace">0 MB</span></p>
-  <p><span class="label">剩余空间：</span><span class="value" id="freeSpace">50 MB</span></p>
-</div>
-
-<div class="database-modal" id="databaseModal" style="display:none;">
-  <div class="database-modal-box" id="databaseModalBox">
-    <div class="database-modal-header" id="databaseModalHeader"><h3>📊 数据库配置</h3><div class="window-controls"><button onclick="maximizeWindow('databaseModalBox')" title="最大化">🗖</button><button class="close-database-btn" onclick="hideDatabase()">×</button></div></div>
-    <div class="database-modal-body">
-      <div class="card data-config-card">
-        <div class="card-title">分类数据配置<span style="font-size:12px;font-weight:normal;color:#666;">（可自定义）</span></div>
-
-        <div class="config-section"><div class="config-section-title">十二生肖</div>
-          <div class="config-item"><div class="config-label">鼠</div><div class="config-colon">：</div><input type="text" class="config-input" id="config_shu" value="07 19 31 43"></div>
-          <div class="config-item"><div class="config-label">牛</div><div class="config-colon">：</div><input type="text" class="config-input" id="config_niu" value="06 18 30 42"></div>
-          <div class="config-item"><div class="config-label">虎</div><div class="config-colon">：</div><input type="text" class="config-input" id="config_hu" value="05 17 29 41"></div>
-          <div class="config-item"><div class="config-label">兔</div><div class="config-colon">：</div><input type="text" class="config-input" id="config_tu2" value="04 16 28 40"></div>
-          <div class="config-item"><div class="config-label">龙</div><div class="config-colon">：</div><input type="text" class="config-input" id="config_long" value="03 15 27 39"></div>
-          <div class="config-item"><div class="config-label">蛇</div><div class="config-colon">：</div><input type="text" class="config-input" id="config_she" value="02 14 26 38"></div>
-          <div class="config-item"><div class="config-label">马</div><div class="config-colon">：</div><input type="text" class="config-input" id="config_ma" value="01 13 25 37 49"></div>
-          <div class="config-item"><div class="config-label">羊</div><div class="config-colon">：</div><input type="text" class="config-input" id="config_yang" value="12 24 36 48"></div>
-          <div class="config-item"><div class="config-label">猴</div><div class="config-colon">：</div><input type="text" class="config-input" id="config_hou" value="11 23 35 47"></div>
-          <div class="config-item"><div class="config-label">鸡</div><div class="config-colon">：</div><input type="text" class="config-input" id="config_ji" value="10 22 34 46"></div>
-          <div class="config-item"><div class="config-label">狗</div><div class="config-colon">：</div><input type="text" class="config-input" id="config_gou" value="09 21 33 45"></div>
-          <div class="config-item"><div class="config-label">猪</div><div class="config-colon">：</div><input type="text" class="config-input" id="config_zhu" value="08 20 32 44"></div>
-        </div>
-
-        <div class="config-section"><div class="config-section-title">生肖属性</div>
-          <div class="config-item"><div class="config-label">家禽</div><div class="config-colon">：</div><input type="text" class="config-input" id="config_sx_jiaqin" value="牛 马 羊 鸡 狗 猪"></div>
-          <div class="config-item"><div class="config-label">野兽</div><div class="config-colon">：</div><input type="text" class="config-input" id="config_sx_yeshou" value="鼠 虎 兔 龙 蛇 猴"></div>
-          <div class="config-item"><div class="config-label">吉美</div><div class="config-colon">：</div><input type="text" class="config-input" id="config_sx_jimei" value="兔 龙 蛇 马 羊 鸡"></div>
-          <div class="config-item"><div class="config-label">凶丑</div><div class="config-colon">：</div><input type="text" class="config-input" id="config_sx_xiongchou" value="鼠 牛 虎 猴 狗 猪"></div>
-          <div class="config-item"><div class="config-label">阴性</div><div class="config-colon">：</div><input type="text" class="config-input" id="config_sx_yinxing" value="鼠 龙 蛇 马 狗 猪"></div>
-          <div class="config-item"><div class="config-label">阳性</div><div class="config-colon">：</div><input type="text" class="config-input" id="config_sx_yangxing" value="牛 虎 兔 羊 猴 鸡"></div>
-          <div class="config-item"><div class="config-label">天肖</div><div class="config-colon">：</div><input type="text" class="config-input" id="config_sx_tianxiao" value="兔 马 猴 猪 牛 龙"></div>
-          <div class="config-item"><div class="config-label">地肖</div><div class="config-colon">：</div><input type="text" class="config-input" id="config_sx_dixiao" value="蛇 羊 鸡 狗 鼠 虎"></div>
-          <div class="config-item"><div class="config-label">单笔</div><div class="config-colon">：</div><input type="text" class="config-input" id="config_sx_danbi" value="鼠 龙 马 蛇 鸡 猪"></div>
-          <div class="config-item"><div class="config-label">双笔</div><div class="config-colon">：</div><input type="text" class="config-input" id="config_sx_shuangbi" value="虎 猴 狗 兔 羊 牛"></div>
-          <div class="config-item"><div class="config-label">白边</div><div class="config-colon">：</div><input type="text" class="config-input" id="config_sx_baibian" value="鼠 牛 虎 鸡 狗 猪"></div>
-        </div>
-
-        <div class="config-section"><div class="config-section-title">五行配置</div>
-          <div class="config-item"><div class="config-label">金</div><div class="config-colon">：</div><input type="text" class="config-input" id="config_jin" value="04 05 12 13 26 27 34 35 42 43"></div>
-          <div class="config-item"><div class="config-label">木</div><div class="config-colon">：</div><input type="text" class="config-input" id="config_mu" value="08 09 16 17 24 25 38 39 46 47"></div>
-          <div class="config-item"><div class="config-label">水</div><div class="config-colon">：</div><input type="text" class="config-input" id="config_shui" value="01 14 15 22 23 30 31 44 45"></div>
-          <div class="config-item"><div class="config-label">火</div><div class="config-colon">：</div><input type="text" class="config-input" id="config_huo" value="02 03 10 11 18 19 32 33 40 41 48 49"></div>
-          <div class="config-item"><div class="config-label">土</div><div class="config-colon">：</div><input type="text" class="config-input" id="config_tu" value="06 07 20 21 28 29 36 37"></div>
-        </div>
-
-        <div class="config-section"><div class="config-section-title">波色配置</div>
-          <div class="config-item"><div class="config-label">红波</div><div class="config-colon">：</div><input type="text" class="config-input" id="config_hongbo" value="01 02 07 08 12 13 18 19 23 24 29 30 34 35 40 45 46"></div>
-          <div class="config-item"><div class="config-label">蓝波</div><div class="config-colon">：</div><input type="text" class="config-input" id="config_lanbo" value="03 04 09 10 14 15 20 25 26 31 36 37 41 42 47 48"></div>
-          <div class="config-item"><div class="config-label">绿波</div><div class="config-colon">：</div><input type="text" class="config-input" id="config_lvbo" value="05 06 11 16 17 21 22 27 28 32 33 38 39 43 44 49"></div>
-        </div>
-
-        <div class="config-section"><div class="config-section-title">半波配置</div>
-          <div class="config-item"><div class="config-label">红双</div><div class="config-colon">：</div><input type="text" class="config-input" id="config_hongshuang" value="02 08 12 18 24 30 34 40 46"></div>
-          <div class="config-item"><div class="config-label">红单</div><div class="config-colon">：</div><input type="text" class="config-input" id="config_hongdan" value="01 07 13 19 23 29 35 45"></div>
-          <div class="config-item"><div class="config-label">蓝双</div><div class="config-colon">：</div><input type="text" class="config-input" id="config_lanshuang" value="04 10 14 20 26 36 42 48"></div>
-          <div class="config-item"><div class="config-label">蓝单</div><div class="config-colon">：</div><input type="text" class="config-input" id="config_landan" value="03 09 15 25 31 37 41 47"></div>
-          <div class="config-item"><div class="config-label">绿双</div><div class="config-colon">：</div><input type="text" class="config-input" id="config_lvshuang" value="06 16 22 28 32 38 44"></div>
-          <div class="config-item"><div class="config-label">绿单</div><div class="config-colon">：</div><input type="text" class="config-input" id="config_lvdan" value="05 11 17 21 27 33 39 43 49"></div>
-        </div>
-
-        <div class="config-section"><div class="config-section-title">单双属性</div>
-          <div class="config-item"><div class="config-label">单数</div><div class="config-colon">：</div><input type="text" class="config-input" id="config_danshu" value="01 03 05 07 09 11 13 15 17 19 21 23 25 27 29 31 33 35 37 39 41 43 45 47 49"></div>
-          <div class="config-item"><div class="config-label">双数</div><div class="config-colon">：</div><input type="text" class="config-input" id="config_shuangshu" value="02 04 06 08 10 12 14 16 18 20 22 24 26 28 30 32 34 36 38 40 42 44 46 48"></div>
-        </div>
-
-        <div class="config-section"><div class="config-section-title">尾数属性</div>
-          <div class="config-item"><div class="config-label long-label">0尾</div><div class="config-colon">：</div><input type="text" class="config-input" id="config_ws_0" value="10 20 30 40"></div>
-          <div class="config-item"><div class="config-label long-label">1尾</div><div class="config-colon">：</div><input type="text" class="config-input" id="config_ws_1" value="01 11 21 31 41"></div>
-          <div class="config-item"><div class="config-label long-label">2尾</div><div class="config-colon">：</div><input type="text" class="config-input" id="config_ws_2" value="02 12 22 32 42"></div>
-          <div class="config-item"><div class="config-label long-label">3尾</div><div class="config-colon">：</div><input type="text" class="config-input" id="config_ws_3" value="03 13 23 33 43"></div>
-          <div class="config-item"><div class="config-label long-label">4尾</div><div class="config-colon">：</div><input type="text" class="config-input" id="config_ws_4" value="04 14 24 34 44"></div>
-          <div class="config-item"><div class="config-label long-label">5尾</div><div class="config-colon">：</div><input type="text" class="config-input" id="config_ws_5" value="05 15 25 35 45"></div>
-          <div class="config-item"><div class="config-label long-label">6尾</div><div class="config-colon">：</div><input type="text" class="config-input" id="config_ws_6" value="06 16 26 36 46"></div>
-          <div class="config-item"><div class="config-label long-label">7尾</div><div class="config-colon">：</div><input type="text" class="config-input" id="config_ws_7" value="07 17 27 37 47"></div>
-          <div class="config-item"><div class="config-label long-label">8尾</div><div class="config-colon">：</div><input type="text" class="config-input" id="config_ws_8" value="08 18 28 38 48"></div>
-          <div class="config-item"><div class="config-label long-label">9尾</div><div class="config-colon">：</div><input type="text" class="config-input" id="config_ws_9" value="09 19 29 39 49"></div>
-        </div>
-
-        <div class="config-section"><div class="config-section-title">大小单双</div>
-          <div class="config-item"><div class="config-label">大单</div><div class="config-colon">：</div><input type="text" class="config-input" id="config_dadan" value="25 27 29 31 33 35 37 39 41 43 45 47 49"></div>
-          <div class="config-item"><div class="config-label">大双</div><div class="config-colon">：</div><input type="text" class="config-input" id="config_dashuang" value="26 28 30 32 34 36 38 40 42 44 46 48"></div>
-          <div class="config-item"><div class="config-label">小单</div><div class="config-colon">：</div><input type="text" class="config-input" id="config_xiaodan" value="01 03 05 07 09 11 13 15 17 19 21 23"></div>
-          <div class="config-item"><div class="config-label">小双</div><div class="config-colon">：</div><input type="text" class="config-input" id="config_xiaoshuang" value="02 04 06 08 10 12 14 16 18 20 22 24"></div>
-        </div>
-
-        <div class="config-section"><div class="config-section-title">大小配置</div>
-          <div class="config-item"><div class="config-label">小</div><div class="config-colon">：</div><input type="text" class="config-input" id="config_dx_xiao" value="01 02 03 04 05 06 07 08 09 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24"></div>
-          <div class="config-item"><div class="config-label">大</div><div class="config-colon">：</div><input type="text" class="config-input" id="config_dx_da" value="25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49"></div>
-        </div>
-
-        <div class="config-section"><div class="config-section-title">合数配置</div>
-          <div class="config-item"><div class="config-label long-label">01合</div><div class="config-colon">：</div><input type="text" class="config-input" id="config_hs_01" value="01 10"></div>
-          <div class="config-item"><div class="config-label long-label">02合</div><div class="config-colon">：</div><input type="text" class="config-input" id="config_hs_02" value="02 11 20"></div>
-          <div class="config-item"><div class="config-label long-label">03合</div><div class="config-colon">：</div><input type="text" class="config-input" id="config_hs_03" value="03 12 21 30"></div>
-          <div class="config-item"><div class="config-label long-label">04合</div><div class="config-colon">：</div><input type="text" class="config-input" id="config_hs_04" value="04 13 22 31 40"></div>
-          <div class="config-item"><div class="config-label long-label">05合</div><div class="config-colon">：</div><input type="text" class="config-input" id="config_hs_05" value="05 14 23 32 41"></div>
-          <div class="config-item"><div class="config-label long-label">06合</div><div class="config-colon">：</div><input type="text" class="config-input" id="config_hs_06" value="06 15 24 33 42"></div>
-          <div class="config-item"><div class="config-label long-label">07合</div><div class="config-colon">：</div><input type="text" class="config-input" id="config_hs_07" value="07 16 25 34 43"></div>
-          <div class="config-item"><div class="config-label long-label">08合</div><div class="config-colon">：</div><input type="text" class="config-input" id="config_hs_08" value="08 17 26 35 44"></div>
-          <div class="config-item"><div class="config-label long-label">09合</div><div class="config-colon">：</div><input type="text" class="config-input" id="config_hs_09" value="09 18 27 36 45"></div>
-          <div class="config-item"><div class="config-label long-label">10合</div><div class="config-colon">：</div><input type="text" class="config-input" id="config_hs_10" value="19 28 37 46"></div>
-          <div class="config-item"><div class="config-label long-label">11合</div><div class="config-colon">：</div><input type="text" class="config-input" id="config_hs_11" value="29 38 47"></div>
-          <div class="config-item"><div class="config-label long-label">12合</div><div class="config-colon">：</div><input type="text" class="config-input" id="config_hs_12" value="39 48"></div>
-          <div class="config-item"><div class="config-label long-label">13合</div><div class="config-colon">：</div><input type="text" class="config-input" id="config_hs_13" value="49"></div>
-        </div>
-
-        <div class="config-section"><div class="config-section-title">头数配置</div>
-          <div class="config-item"><div class="config-label long-label">0头</div><div class="config-colon">：</div><input type="text" class="config-input" id="config_ts_0" value="01 02 03 04 05 06 07 08 09"></div>
-          <div class="config-item"><div class="config-label long-label">1头</div><div class="config-colon">：</div><input type="text" class="config-input" id="config_ts_1" value="10 11 12 13 14 15 16 17 18 19"></div>
-          <div class="config-item"><div class="config-label long-label">2头</div><div class="config-colon">：</div><input type="text" class="config-input" id="config_ts_2" value="20 21 22 23 24 25 26 27 28 29"></div>
-          <div class="config-item"><div class="config-label long-label">3头</div><div class="config-colon">：</div><input type="text" class="config-input" id="config_ts_3" value="30 31 32 33 34 35 36 37 38 39"></div>
-          <div class="config-item"><div class="config-label long-label">4头</div><div class="config-colon">：</div><input type="text" class="config-input" id="config_ts_4" value="40 41 42 43 44 45 46 47 48 49"></div>
-        </div>
-
-        <div class="config-section"><div class="config-section-title">门数配置</div>
-          <div class="config-item"><div class="config-label long-label">1门</div><div class="config-colon">：</div><input type="text" class="config-input" id="config_ms_1" value="01 02 03 04 05 06 07 08 09"></div>
-          <div class="config-item"><div class="config-label long-label">2门</div><div class="config-colon">：</div><input type="text" class="config-input" id="config_ms_2" value="10 11 12 13 14 15 16 17 18"></div>
-          <div class="config-item"><div class="config-label long-label">3门</div><div class="config-colon">：</div><input type="text" class="config-input" id="config_ms_3" value="19 20 21 22 23 24 25 26 27"></div>
-          <div class="config-item"><div class="config-label long-label">4门</div><div class="config-colon">：</div><input type="text" class="config-input" id="config_ms_4" value="28 29 30 31 32 33 34 35 36 37"></div>
-          <div class="config-item"><div class="config-label long-label">5门</div><div class="config-colon">：</div><input type="text" class="config-input" id="config_ms_5" value="38 39 40 41 42 43 44 45 46 47 48 49"></div>
-        </div>
-
-        <div class="config-section"><div class="config-section-title">段位配置</div>
-          <div class="config-item"><div class="config-label long-label">1段</div><div class="config-colon">：</div><input type="text" class="config-input" id="config_dw_1" value="01 02 03 04 05 06 07"></div>
-          <div class="config-item"><div class="config-label long-label">2段</div><div class="config-colon">：</div><input type="text" class="config-input" id="config_dw_2" value="08 09 10 11 12 13 14"></div>
-          <div class="config-item"><div class="config-label long-label">3段</div><div class="config-colon">：</div><input type="text" class="config-input" id="config_dw_3" value="15 16 17 18 19 20 21"></div>
-          <div class="config-item"><div class="config-label long-label">4段</div><div class="config-colon">：</div><input type="text" class="config-input" id="config_dw_4" value="22 23 24 25 26 27 28"></div>
-          <div class="config-item"><div class="config-label long-label">5段</div><div class="config-colon">：</div><input type="text" class="config-input" id="config_dw_5" value="29 30 31 32 33 34 35"></div>
-          <div class="config-item"><div class="config-label long-label">6段</div><div class="config-colon">：</div><input type="text" class="config-input" id="config_dw_6" value="36 37 38 39 40 41 42"></div>
-          <div class="config-item"><div class="config-label long-label">7段</div><div class="config-colon">：</div><input type="text" class="config-input" id="config_dw_7" value="43 44 45 46 47 48 49"></div>
-        </div>
-
-        <div class="config-section"><div class="config-section-title">合大&合小</div>
-          <div class="config-item"><div class="config-label">合小</div><div class="config-colon">：</div><input type="text" class="config-input" id="config_hdx_hexiao" value="01 02 03 04 05 06 10 11 12 13 14 15 20 21 22 23 24 30 31 32 33 40 41 42"></div>
-          <div class="config-item"><div class="config-label">合大</div><div class="config-colon">：</div><input type="text" class="config-input" id="config_hdx_heda" value="07 08 09 16 17 18 19 25 26 27 28 29 34 35 36 37 38 39 43 44 45 46 47 48 49"></div>
-        </div>
-
-        <div class="config-section"><div class="config-section-title">尾大&尾小</div>
-          <div class="config-item"><div class="config-label">尾小</div><div class="config-colon">：</div><input type="text" class="config-input" id="config_wdx_weixiao" value="01 02 03 04 10 11 12 13 14 20 21 22 23 24 30 31 32 33 34 40 41 42 43 44"></div>
-          <div class="config-item"><div class="config-label">尾大</div><div class="config-colon">：</div><input type="text" class="config-input" id="config_wdx_weida" value="05 06 07 08 09 15 16 17 18 19 25 26 27 28 29 35 36 37 38 39 45 46 47 48 49"></div>
-        </div>
-
-        <div class="config-section"><div class="config-section-title">半单双</div>
-          <div class="config-item"><div class="config-label">小单</div><div class="config-colon">：</div><input type="text" class="config-input" id="config_bds_xiaodan" value="01 03 05 07 09 11 13 15 17 19 21 23"></div>
-          <div class="config-item"><div class="config-label">小双</div><div class="config-colon">：</div><input type="text" class="config-input" id="config_bds_xiaoshuang" value="02 04 06 08 10 12 14 16 18 20 22 24"></div>
-          <div class="config-item"><div class="config-label">大单</div><div class="config-colon">：</div><input type="text" class="config-input" id="config_bds_dadan" value="25 27 29 31 33 35 37 39 41 43 45 47 49"></div>
-          <div class="config-item"><div class="config-label">大双</div><div class="config-colon">：</div><input type="text" class="config-input" id="config_bds_dashuang" value="26 28 30 32 34 36 38 40 42 44 46 48"></div>
-        </div>
-
-        <div class="config-section"><div class="config-section-title">合尾配置</div>
-          <div class="config-item"><div class="config-label long-label">0合尾</div><div class="config-colon">：</div><input type="text" class="config-input" id="config_hw_0" value="19 28 37 46"></div>
-          <div class="config-item"><div class="config-label long-label">1合尾</div><div class="config-colon">：</div><input type="text" class="config-input" id="config_hw_1" value="01 10 29 38 47"></div>
-          <div class="config-item"><div class="config-label long-label">2合尾</div><div class="config-colon">：</div><input type="text" class="config-input" id="config_hw_2" value="02 11 20 39 48"></div>
-          <div class="config-item"><div class="config-label long-label">3合尾</div><div class="config-colon">：</div><input type="text" class="config-input" id="config_hw_3" value="03 12 21 30 49"></div>
-          <div class="config-item"><div class="config-label long-label">4合尾</div><div class="config-colon">：</div><input type="text" class="config-input" id="config_hw_4" value="04 13 22 31 40"></div>
-          <div class="config-item"><div class="config-label long-label">5合尾</div><div class="config-colon">：</div><input type="text" class="config-input" id="config_hw_5" value="05 14 23 32 41"></div>
-          <div class="config-item"><div class="config-label long-label">6合尾</div><div class="config-colon">：</div><input type="text" class="config-input" id="config_hw_6" value="06 15 24 33 42"></div>
-          <div class="config-item"><div class="config-label long-label">7合尾</div><div class="config-colon">：</div><input type="text" class="config-input" id="config_hw_7" value="07 16 25 34 43"></div>
-          <div class="config-item"><div class="config-label long-label">8合尾</div><div class="config-colon">：</div><input type="text" class="config-input" id="config_hw_8" value="08 17 26 35 44"></div>
-          <div class="config-item"><div class="config-label long-label">9合尾</div><div class="config-colon">：</div><input type="text" class="config-input" id="config_hw_9" value="09 18 27 36 45"></div>
-        </div>
-
-        <div class="config-section"><div class="config-section-title">合数单&双</div>
-          <div class="config-item"><div class="config-label long-label">合数单</div><div class="config-colon">：</div><input type="text" class="config-input" id="config_hsd_hsd" value="01 03 05 07 09 10 12 14 16 18 21 23 25 27 29 30 32 34 36 38 41 43 45 47 49"></div>
-          <div class="config-item"><div class="config-label long-label">合数双</div><div class="config-colon">：</div><input type="text" class="config-input" id="config_hsd_hss" value="02 04 06 08 11 13 15 17 19 20 22 24 26 28 31 33 35 37 39 40 42 44 46 48"></div>
-        </div>
-
-        <div class="config-section"><div class="config-section-title">头数单与双配置</div>
-          <div class="config-item"><div class="config-label long-label">0头单</div><div class="config-colon">：</div><input type="text" class="config-input" id="config_tds_0dan" value="01 03 05 07 09"></div>
-          <div class="config-item"><div class="config-label long-label">0头双</div><div class="config-colon">：</div><input type="text" class="config-input" id="config_tds_0shuang" value="02 04 06 08"></div>
-          <div class="config-item"><div class="config-label long-label">1头单</div><div class="config-colon">：</div><input type="text" class="config-input" id="config_tds_1dan" value="11 13 15 17 19"></div>
-          <div class="config-item"><div class="config-label long-label">1头双</div><div class="config-colon">：</div><input type="text" class="config-input" id="config_tds_1shuang" value="10 12 14 16 18"></div>
-          <div class="config-item"><div class="config-label long-label">2头单</div><div class="config-colon">：</div><input type="text" class="config-input" id="config_tds_2dan" value="21 23 25 27 29"></div>
-          <div class="config-item"><div class="config-label long-label">2头双</div><div class="config-colon">：</div><input type="text" class="config-input" id="config_tds_2shuang" value="20 22 24 26 28"></div>
-          <div class="config-item"><div class="config-label long-label">3头单</div><div class="config-colon">：</div><input type="text" class="config-input" id="config_tds_3dan" value="31 33 35 37 39"></div>
-          <div class="config-item"><div class="config-label long-label">3头双</div><div class="config-colon">：</div><input type="text" class="config-input" id="config_tds_3shuang" value="30 32 34 36 38"></div>
-          <div class="config-item"><div class="config-label long-label">4头单</div><div class="config-colon">：</div><input type="text" class="config-input" id="config_tds_4dan" value="41 43 45 47 49"></div>
-          <div class="config-item"><div class="config-label long-label">4头双</div><div class="config-colon">：</div><input type="text" class="config-input" id="config_tds_4shuang" value="40 42 44 46 48"></div>
-        </div>
-
-        <div id="customConfigContainer"></div>
-
-        <div class="data-config-actions">
-          <button class="config-btn" style="background:#007bff;color:white" onclick="enableEditConfig()">修改</button>
-          <button class="config-btn" style="background:#6c757d;color:white" onclick="resetDataConfig()">默认</button>
-          <button class="config-btn" style="background:#28a745;color:white" onclick="saveDataConfig()">保存</button>
-          <button class="config-btn" style="background:#17a2b8;color:white" onclick="addCustomCategory()">添加分类</button>
-          <button class="config-btn" style="background:#dc3545;color:white" onclick="deleteCustomCategory()">删除分类</button>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
+<div class="storage-info" id="storageInfo"><p><span class="label">今日数量：</span><span class="value" id="todayOrderCount">0</span></p><p><span class="label">订单数量：</span><span class="value" id="orderCount">0</span></p><p><span class="label">已用空间：</span><span class="value" id="usedSpace">0 MB</span></p><p><span class="label">剩余空间：</span><span class="value" id="freeSpace">50 MB</span></p></div>
+<div class="database-modal" id="databaseModal" style="display:none;"><div class="database-modal-box" id="databaseModalBox"><div class="database-modal-header" id="databaseModalHeader"><h3>📊 数据库配置</h3><div class="window-controls"><button onclick="maximizeWindow('databaseModalBox')">🗖</button><button class="close-database-btn" onclick="hideDatabase()">×</button></div></div><div class="database-modal-body"><div class="card data-config-card"><div class="card-title">分类数据配置<span style="font-size:12px;font-weight:normal;color:#666;">（可自定义）</span></div>
+<div class="config-section"><div class="config-section-title">十二生肖</div>
+<div class="config-item"><div class="config-label">鼠</div><div class="config-colon">：</div><input type="text" class="config-input" id="config_shu" value="07 19 31 43"></div>
+<div class="config-item"><div class="config-label">牛</div><div class="config-colon">：</div><input type="text" class="config-input" id="config_niu" value="06 18 30 42"></div>
+<div class="config-item"><div class="config-label">虎</div><div class="config-colon">：</div><input type="text" class="config-input" id="config_hu" value="05 17 29 41"></div>
+<div class="config-item"><div class="config-label">兔</div><div class="config-colon">：</div><input type="text" class="config-input" id="config_tu2" value="04 16 28 40"></div>
+<div class="config-item"><div class="config-label">龙</div><div class="config-colon">：</div><input type="text" class="config-input" id="config_long" value="03 15 27 39"></div>
+<div class="config-item"><div class="config-label">蛇</div><div class="config-colon">：</div><input type="text" class="config-input" id="config_she" value="02 14 26 38"></div>
+<div class="config-item"><div class="config-label">马</div><div class="config-colon">：</div><input type="text" class="config-input" id="config_ma" value="01 13 25 37 49"></div>
+<div class="config-item"><div class="config-label">羊</div><div class="config-colon">：</div><input type="text" class="config-input" id="config_yang" value="12 24 36 48"></div>
+<div class="config-item"><div class="config-label">猴</div><div class="config-colon">：</div><input type="text" class="config-input" id="config_hou" value="11 23 35 47"></div>
+<div class="config-item"><div class="config-label">鸡</div><div class="config-colon">：</div><input type="text" class="config-input" id="config_ji" value="10 22 34 46"></div>
+<div class="config-item"><div class="config-label">狗</div><div class="config-colon">：</div><input type="text" class="config-input" id="config_gou" value="09 21 33 45"></div>
+<div class="config-item"><div class="config-label">猪</div><div class="config-colon">：</div><input type="text" class="config-input" id="config_zhu" value="08 20 32 44"></div></div>
+<div id="customConfigContainer"></div>
+<div class="data-config-actions"><button class="config-btn" style="background:#007bff;color:white" onclick="enableEditConfig()">修改</button><button class="config-btn" style="background:#6c757d;color:white" onclick="resetDataConfig()">默认</button><button class="config-btn" style="background:#28a745;color:white" onclick="saveDataConfig()">保存</button><button class="config-btn" style="background:#17a2b8;color:white" onclick="addCustomCategory()">添加分类</button><button class="config-btn" style="background:#dc3545;color:white" onclick="deleteCustomCategory()">删除分类</button></div></div></div></div></div>
 <script>
-// ===== 密码解码函数 =====
+    // ===== 密码解码函数 =====
 function decodePassword(encoded) {
   return atob(encoded);
 }
@@ -1091,19 +503,24 @@ function showRecognizeModal() {
   win.style.width = '850px'; win.style.height = '650px'; win.style.left = '50%'; win.style.top = '50%'; win.style.transform = 'translate(-50%, -50%)';
   win.setAttribute('data-orig-width', '850px');
   win.setAttribute('data-orig-height', '650px');
+
+  // 读取保留的输入内容（区分地区）
+  const savedInput = localStorage.getItem(`recognizeInput_${currentRegion}`) || '';
+
   win.innerHTML = `
-    <div class="modal-header">${regionLabel}订单输入<div class="window-controls"><button onclick="maximizeWindow('recognizeWin')">🗖</button><button onclick="document.getElementById('recognizeWin').remove()">×</button></div></div>
+    <div class="modal-header">${regionLabel}订单输入<div class="window-controls"><button onclick="maximizeWindow('recognizeWin')">🗖</button><button onclick="saveRecognizeInputAndClose()">×</button></div></div>
     <div class="modal-body" style="display:flex; flex-direction:column; gap:10px;">
       <div class="card recognize-card" style="flex:1; display:flex; flex-direction:column;">
         <div class="card-title" style="display:flex; align-items:center; gap:5px;">
           <select id="orderUserSelect" style="padding:4px 8px;border-radius:4px;border:1px solid #ccc;font-size:13px;"></select>
           <input type="date" id="orderDate" style="padding:4px;border-radius:4px;border:1px solid #ccc;margin-left:8px;">
           <div class="amount-stat-box" id="orderTotalAmountBox" style="display:none;"><span>合计：</span><span id="orderTotalAmount">0</span></div>
+          <div class="amount-stat-box" id="orderLineCountBox" style="display:none; margin-left:4px;"><span id="orderLineCount">0</span>行</div>
           <button class="btn btn-prefix" onclick="showPrefixManager()" style="margin-left:auto;">前缀</button>
           <button class="btn btn-amount-prefix" onclick="showAmountPrefixManager()">金额前缀</button>
           <button class="btn btn-amount-prefix2" onclick="showAmountSuffixManager()">金额后缀</button>
         </div>
-        <div class="order-input-container" style="flex:1;"><div class="input-column"><div class="box-label">订单输入框</div><textarea class="source-order-input" oninput="convertOrderText()"></textarea></div><div class="result-column"><div class="box-label">识别结果</div><div class="result-area-new"><div class="result-content" id="orderResult" contenteditable="false"></div></div></div></div>
+        <div class="order-input-container" style="flex:1;"><div class="input-column"><div class="box-label">订单输入框</div><textarea class="source-order-input" oninput="convertOrderText()">${savedInput}</textarea></div><div class="result-column"><div class="box-label">识别结果</div><div class="result-area-new"><div class="result-content" id="orderResult" contenteditable="false"></div></div></div></div>
         <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;">
           <button class="btn btn-paste" onclick="pasteOrder()">粘贴订单</button><button class="btn btn-save-order" onclick="saveOrder()">保存下单</button><button class="btn btn-report" onclick="saveReportOrder()">上报</button><button class="btn btn-clear" onclick="clearAllInput()">清空</button><button class="btn btn-replace-sep" onclick="replaceSeparators()">换分隔</button><button class="btn btn-remove-sep" onclick="removeSeparators()">去分隔</button><button class="btn btn-mark" onclick="markSelection()">标记</button><button class="btn btn-cancel" onclick="semanticReplace()">语义转换</button>
           <span id="invalidTokensDisplay" style="color:red; font-size:12px; display:none; white-space:pre-line; margin-left:auto;"></span>
@@ -1130,6 +547,20 @@ function showRecognizeModal() {
     });
   }
   makeWindowDraggable('recognizeWin'); highestZ += 1; win.style.zIndex = highestZ;
+  // 如果有保留内容，自动触发转换
+  if (savedInput) convertOrderText();
+}
+
+// 关闭识别弹窗时保存输入内容
+function saveRecognizeInputAndClose() {
+  const ta = document.querySelector('.source-order-input');
+  if (ta && ta.value.trim()) {
+    localStorage.setItem(`recognizeInput_${currentRegion}`, ta.value);
+  } else {
+    localStorage.removeItem(`recognizeInput_${currentRegion}`);
+  }
+  const win = document.getElementById('recognizeWin');
+  if (win) win.remove();
 }
 
 function markSelection() {
@@ -1497,8 +928,8 @@ function rebuildTotal() { tableBetData = {}; for (const u in userBetData) for (c
 function refreshAll() { updateSelects(); updateTableFromRecords(); }
 function updateSelects() { const users = getUsers(); const orderSel = document.getElementById('orderUserSelect'); if (orderSel) { orderSel.innerHTML = ''; users.forEach(u => { const o = document.createElement('option'); o.value = u; o.textContent = u; orderSel.appendChild(o); }); } const viewSel = document.getElementById('viewUserSelect'); if (viewSel) { viewSel.innerHTML = ''; users.forEach(u => { const o = document.createElement('option'); o.value = u; o.textContent = u; viewSel.appendChild(o); }); } }
 
-// ===== 快捷添加与分词 =====
-function quickAddWithAmount(text, button) { const input = document.querySelector('.source-order-input'); if (!input) return; const lines = input.value.trim().split('\n').filter(l=>l.trim()); const idx = lines.findIndex(l=> l.includes(text) && (l.includes('各数')||l.includes('各号'))); if (idx !== -1) { lines.splice(idx,1); button.classList.remove('active'); } else { lines.push(`${text} 各数`); button.classList.add('active'); } input.value = lines.join('\n'); convertOrderText(); }
+// ===== 快捷添加与分词（含光标定位） =====
+function quickAddWithAmount(text, button) { const input = document.querySelector('.source-order-input'); if (!input) return; const lines = input.value.trim().split('\n').filter(l=>l.trim()); const idx = lines.findIndex(l=> l.includes(text) && (l.includes('各数')||l.includes('各号'))); if (idx !== -1) { lines.splice(idx,1); button.classList.remove('active'); } else { lines.push(`${text} 各数`); button.classList.add('active'); } input.value = lines.join('\n'); convertOrderText(); // 光标定位到最后一个 各数 后面 const lastIndex = input.value.lastIndexOf('各数'); if (lastIndex !== -1) { const pos = lastIndex + 2; input.focus(); input.setSelectionRange(pos, pos); } }
 function getReplacePresets() { try { return JSON.parse(localStorage.getItem('replacePresets') || '[]'); } catch (e) { return []; } }
 function getCategoryAliases() { try { return JSON.parse(localStorage.getItem('categoryAliases') || '[]'); } catch (e) { return []; } }
 function getCustomPrefixes() { try { return JSON.parse(localStorage.getItem('customPrefixes') || '[]'); } catch (e) { return []; } }
@@ -1727,7 +1158,7 @@ function convertOrderText() {
       }
     }
 
-    const op = new RegExp(`(${AMP_ORIGINAL}\\d+${AMTS})`, 'g');
+    const op = new RegExp(`(${AMP_ORIGINAL}\\s*\\d+${AMTS})`, 'g');
     const om = cl.match(op);
     if (om && om.length > 0) {
       let rl = cl;
@@ -1757,7 +1188,7 @@ function convertOrderText() {
         }
       }
     } else {
-      const pat = new RegExp(`^(.+?)${AMP_ORIGINAL}(\\d+)$`);
+      const pat = new RegExp(`^(.+?)${AMP_ORIGINAL}\\s*(\\d+)$`);
       const m = cl.match(pat);
       if (m) {
         const jo = tokenizeAndJoin(m[1].trim());
@@ -1767,7 +1198,7 @@ function convertOrderText() {
         }
       }
       else {
-        const sp = new RegExp(`(\\d+)(?:号|${AMP_ORIGINAL})(\\d+)$`);
+        const sp = new RegExp(`(\\d+)(?:号|${AMP_ORIGINAL})\\s*(\\d+)$`);
         const sm = cl.match(sp);
         if (sm) {
           let num = sm[1].trim();
@@ -1854,8 +1285,42 @@ function convertOrderText() {
 
 function getAllValidCategories(cfg) { const s=new Set(); Object.keys(cfg.zodiac).forEach(k=>s.add(k)); Object.keys(cfg.shengxiaoAttr).forEach(k=>s.add(k)); Object.keys(cfg.wuxing).forEach(k=>s.add(k)); Object.keys(cfg.bose).forEach(k=>s.add(k)); Object.keys(cfg.banbo).forEach(k=>s.add(k)); Object.keys(cfg.danshuang).forEach(k=>s.add(k)); Object.keys(cfg.weishu).forEach(k=>s.add(k)); Object.keys(cfg.daxiaodanshuang).forEach(k=>s.add(k)); Object.keys(cfg.daxiao).forEach(k=>s.add(k)); Object.keys(cfg.heshu).forEach(k=>s.add(k)); Object.keys(cfg.toushu).forEach(k=>s.add(k)); Object.keys(cfg.menshu).forEach(k=>s.add(k)); Object.keys(cfg.duanwei).forEach(k=>s.add(k)); Object.keys(cfg.hedahexiao).forEach(k=>s.add(k)); Object.keys(cfg.weidaweixiao).forEach(k=>s.add(k)); Object.keys(cfg.hewei).forEach(k=>s.add(k)); Object.keys(cfg.heshudanshuang).forEach(k=>s.add(k)); Object.keys(cfg.toushuDanshuang).forEach(k=>s.add(k)); return s; }
 
-async function saveOrder(){ const user=document.getElementById('orderUserSelect')?.value; if(!user){showToast('请选择用户');return;} const resultEl=document.getElementById('orderResult'); const rawText=resultEl?resultEl.innerText:''; const inputText=document.querySelector('.source-order-input')?.value.trim(); const textToUse=rawText||inputText; if(!textToUse)return; const vl=textToUse.split('\n').filter(l=>{const m=l.match(/各数\s+(\d+)/);return m&&parseInt(m[1])>0;}); if(!vl.length){showToast('订单无效');return;} const content=vl.join('\n'); const date=document.getElementById('filterDate')?.value||getTodayCST(); const total=computeCurrentOrderTotal(); await saveOrderRecordToIDB(content,user,date,total); processCurrentOrder(content,user,true,date); const si=document.querySelector('.source-order-input'); if(si)si.value=''; if(resultEl)resultEl.innerHTML=''; updateOrderTotalDisplay(); document.querySelectorAll('.category-btn').forEach(b=>b.classList.remove('active')); calculateStorageUsage(); }
-async function saveReportOrder(){ const user=document.getElementById('orderUserSelect')?.value; if(!user){showToast('请选择用户');return;} const resultEl=document.getElementById('orderResult'); const rawText=resultEl?resultEl.innerText:''; const inputText=document.querySelector('.source-order-input')?.value.trim(); const textToUse=rawText||inputText; if(!textToUse)return; const vl=textToUse.split('\n').filter(l=>{const m=l.match(/各数\s+(\d+)/);return m&&parseInt(m[1])>0;}); if(!vl.length){showToast('订单无效');return;} const content=vl.join('\n'); const date=document.getElementById('filterDate')?.value||getTodayCST(); const total=computeCurrentOrderTotal(); await saveReportOrderRecordToIDB(content,user,date,total); processCurrentOrder(content,user,false,date); const si=document.querySelector('.source-order-input'); if(si)si.value=''; if(resultEl)resultEl.innerHTML=''; updateOrderTotalDisplay(); document.querySelectorAll('.category-btn').forEach(b=>b.classList.remove('active')); calculateStorageUsage(); }
+async function saveOrder(){
+  const user=document.getElementById('orderUserSelect')?.value; if(!user){showToast('请选择用户');return;}
+  const resultEl=document.getElementById('orderResult'); const rawText=resultEl?resultEl.innerText:'';
+  const inputText=document.querySelector('.source-order-input')?.value.trim(); const textToUse=rawText||inputText;
+  if(!textToUse)return;
+  const vl=textToUse.split('\n').filter(l=>{const m=l.match(/各数\s+(\d+)/);return m&&parseInt(m[1])>0;});
+  if(!vl.length){showToast('订单无效');return;}
+  const content=vl.join('\n'); const date=document.getElementById('filterDate')?.value||getTodayCST();
+  const total=computeCurrentOrderTotal();
+  await saveOrderRecordToIDB(content,user,date,total); processCurrentOrder(content,user,true,date);
+  const si=document.querySelector('.source-order-input'); if(si)si.value='';
+  if(resultEl)resultEl.innerHTML=''; updateOrderTotalDisplay();
+  document.querySelectorAll('.category-btn').forEach(b=>b.classList.remove('active'));
+  // 清除保留的输入内容
+  localStorage.removeItem(`recognizeInput_${currentRegion}`);
+  calculateStorageUsage();
+}
+
+async function saveReportOrder(){
+  const user=document.getElementById('orderUserSelect')?.value; if(!user){showToast('请选择用户');return;}
+  const resultEl=document.getElementById('orderResult'); const rawText=resultEl?resultEl.innerText:'';
+  const inputText=document.querySelector('.source-order-input')?.value.trim(); const textToUse=rawText||inputText;
+  if(!textToUse)return;
+  const vl=textToUse.split('\n').filter(l=>{const m=l.match(/各数\s+(\d+)/);return m&&parseInt(m[1])>0;});
+  if(!vl.length){showToast('订单无效');return;}
+  const content=vl.join('\n'); const date=document.getElementById('filterDate')?.value||getTodayCST();
+  const total=computeCurrentOrderTotal();
+  await saveReportOrderRecordToIDB(content,user,date,total); processCurrentOrder(content,user,false,date);
+  const si=document.querySelector('.source-order-input'); if(si)si.value='';
+  if(resultEl)resultEl.innerHTML=''; updateOrderTotalDisplay();
+  document.querySelectorAll('.category-btn').forEach(b=>b.classList.remove('active'));
+  // 清除保留的输入内容
+  localStorage.removeItem(`recognizeInput_${currentRegion}`);
+  calculateStorageUsage();
+}
+
 function countItemsInLine(line,cfg,keys){ const m=line.match(/([\u4e00-\u9fa5\d\-]+)\s+各数\s+(\d+)/); if(!m)return{numbers:[],zodiacs:[],amount:0}; let cont=m[1]; const amt=parseInt(m[2])||0; const items=cont.split('-').map(i=>i.trim()).filter(i=>i); const nums=[],zods=[]; items.forEach(item=>{ if(/^\d+$/.test(item))nums.push(item.padStart(2,'0')); else if(cfg.shengxiaoAttr[item]){ const zs=cfg.shengxiaoAttr[item]||[]; zs.forEach(z=>zods.push(z)); } else if(cfg.zodiac[item])zods.push(item); else if(cfg.toushuDanshuang&&cfg.toushuDanshuang[item]){ (cfg.toushuDanshuang[item]||[]).forEach(n=>nums.push(n.padStart(2,'0'))); } else { const nl=cfg.wuxing[item]||cfg.bose[item]||cfg.banbo[item]||cfg.danshuang[item]||cfg.weishu[item]||cfg.daxiaodanshuang[item]||cfg.daxiao[item]||cfg.heshu[item]||cfg.toushu[item]||cfg.menshu[item]||cfg.duanwei[item]||cfg.hedahexiao[item]||cfg.weidaweixiao[item]||cfg.hewei[item]||cfg.heshudanshuang[item]||cfg.toushuDanshuang[item]; if(nl)nl.forEach(n=>nums.push(n.padStart(2,'0'))); } }); return{numbers:nums,zodiacs:zods,amount:amt}; }
 function processCurrentOrder(input,user,isNormal,date=null){ const cfg=getAllConfigData(); const keys=getAllValidCategories(cfg); const lines=input.split('\n').filter(l=>l.trim()); if(!userBetData[user])userBetData[user]={}; const curZod=localStorage.getItem('selectedStartZodiac')||'马'; lines.forEach(line=>{ const{numbers,zodiacs,amount}=countItemsInLine(line,cfg,keys); const nMin=parseInt(document.getElementById('numAmountMin')?.value)||1,nMax=parseInt(document.getElementById('numAmountMax')?.value)||50000; const zMin=parseInt(document.getElementById('zodiacAmountMin')?.value)||1,zMax=parseInt(document.getElementById('zodiacAmountMax')?.value)||50000; if(isNormal){ if(zodiacs.length>0){ zodiacs.forEach(z=>{ const w=z===curZod?5:4; zodiacWeightedTotal+=amount*w; }); }else if(numbers.length>0){ numberOrderTotal+=numbers.length*amount; } } numbers.forEach(num=>{ if(isNormal){ userBetData[user][num]=(userBetData[user][num]||0)+amount; tableBetData[num]=(tableBetData[num]||0)+amount; reportBetData[num]=(reportBetData[num]||0)+amount; numberCount[num]=(numberCount[num]||0)+1; if(amount>=nMin&&amount<=nMax)numberAmountCount[num]=(numberAmountCount[num]||0)+1; originalOrderAmount[num]=(originalOrderAmount[num]||0)+amount; if(zodiacs.length === 0) directOrderAmount[num] = (directOrderAmount[num]||0) + amount; } else { userBetData[user][num]=(userBetData[user][num]||0)-amount; reportBetData[num]=(reportBetData[num]||0)-amount; reportAmountData[num]=(reportAmountData[num]||0)+amount; if(zodiacs.length === 0) directReportAmount[num] = (directReportAmount[num]||0) + amount; } }); if(isNormal){ zodiacs.forEach(z=>{ zodiacCount[z]=(zodiacCount[z]||0)+1; zodiacDirectAmount[z]=(zodiacDirectAmount[z]||0)+amount*(cfg.zodiac[z]?.length||0); if(amount>=zMin&&amount<=zMax){zodiacAmountCount[z]=(zodiacAmountCount[z]||0)+1; zodiacFilteredAmount[z]=(zodiacFilteredAmount[z]||0)+amount*(cfg.zodiac[z]?.length||0);} (cfg.zodiac[z]||[]).forEach(n=>{ const num=n.padStart(2,'0'); userBetData[user][num]=(userBetData[user][num]||0)+amount; tableBetData[num]=(tableBetData[num]||0)+amount; reportBetData[num]=(reportBetData[num]||0)+amount; originalOrderAmount[num]=(originalOrderAmount[num]||0)+amount; }); }); } else { zodiacs.forEach(z=>{ zodiacReportAmount[z]=(zodiacReportAmount[z]||0)+amount*(cfg.zodiac[z]?.length||0); if(amount>=zMin&&amount<=zMax){ zodiacFilteredReportAmount[z]=(zodiacFilteredReportAmount[z]||0)+amount*(cfg.zodiac[z]?.length||0);} (cfg.zodiac[z]||[]).forEach(n=>{ const num=n.padStart(2,'0'); userBetData[user][num]=(userBetData[user][num]||0)-amount; reportBetData[num]=(reportBetData[num]||0)-amount; reportAmountData[num]=(reportAmountData[num]||0)+amount; }); }); } }); generateRiskTable(); generateReportTable(); renderFrequencyCards(); renderAmountFrequencyCards(); renderReportAmountTable(); renderOriginalAmountTable(); updateReportAmountTotal(); updateAmountDisplays(); }
 
@@ -2005,7 +1470,51 @@ function renderOriginalAmountTable() {
   updateDirectAmountTotals();
 }
 
-function updateOrderTotalDisplay(){ const re=document.getElementById('orderResult'); const box=document.getElementById('orderTotalAmountBox'); const span=document.getElementById('orderTotalAmount'); if(!re||!box||!span)return; const txt=re.innerText.trim(); if(!txt){box.style.display='none';return;} const lines=txt.split('\n'); const cfg=getAllConfigData(); const keys=getAllValidCategories(cfg); let total=0; lines.forEach(line=>{ const{numbers,zodiacs,amount}=countItemsInLine(line,cfg,keys); let cnt=numbers.length; zodiacs.forEach(z=>{cnt+=(cfg.zodiac[z]||[]).length;}); if(cnt>0)total+=cnt*amount; }); span.textContent=total; box.style.display='inline-flex'; }
+function updateOrderTotalDisplay(){
+  const re=document.getElementById('orderResult');
+  const box=document.getElementById('orderTotalAmountBox');
+  const span=document.getElementById('orderTotalAmount');
+  const lineBox=document.getElementById('orderLineCountBox');
+  const lineSpan=document.getElementById('orderLineCount');
+
+  if(!re||!box||!span)return;
+
+  const txt=re.innerText.trim();
+  if(!txt){
+    box.style.display='none';
+    if(lineBox)lineBox.style.display='none';
+    return;
+  }
+
+  const lines=txt.split('\n');
+  const cfg=getAllConfigData();
+  const keys=getAllValidCategories(cfg);
+  let total=0;
+  let lineCount=0;
+
+  lines.forEach(line=>{
+    const{numbers,zodiacs,amount}=countItemsInLine(line,cfg,keys);
+    let cnt=numbers.length;
+    zodiacs.forEach(z=>{cnt+=(cfg.zodiac[z]||[]).length;});
+    if(cnt>0&&amount>0){
+      total+=cnt*amount;
+      lineCount++;
+    }
+  });
+
+  span.textContent=total;
+  box.style.display='inline-flex';
+
+  if(lineBox&&lineSpan){
+    if(lineCount>0){
+      lineSpan.textContent=lineCount;
+      lineBox.style.display='inline-flex';
+    }else{
+      lineBox.style.display='none';
+    }
+  }
+}
+
 function computeCurrentOrderTotal(){ const re=document.getElementById('orderResult'); if(!re)return 0; const txt=re.innerText.trim(); if(!txt)return 0; const lines=txt.split('\n'); const cfg=getAllConfigData(); const keys=getAllValidCategories(cfg); let total=0; lines.forEach(line=>{ const{numbers,zodiacs,amount}=countItemsInLine(line,cfg,keys); let cnt=numbers.length; zodiacs.forEach(z=>{cnt+=(cfg.zodiac[z]||[]).length;}); if(cnt>0)total+=cnt*amount; }); return total; }
 function updateAmountDisplays(){ const nb=document.getElementById('numberTotalBox'); const zb=document.getElementById('zodiacTotalBox'); if(numberOrderTotal>0){document.getElementById('numberTotalAmount').textContent=numberOrderTotal;nb.style.display='inline-flex';}else{nb.style.display='none';} if(zodiacWeightedTotal>0){document.getElementById('zodiacTotalAmount').textContent=zodiacWeightedTotal;zb.style.display='inline-flex';}else{zb.style.display='none';} }
 function updateReportAmountTotal(){ const box=document.getElementById('reportAmountTotalBox'); const span=document.getElementById('reportAmountTotalValue'); let total=0; for(let n in reportAmountData)total+=reportAmountData[n]||0; if(total>0){span.textContent=total;box.style.display='inline-flex';}else{box.style.display='none';} }
@@ -2450,15 +1959,23 @@ async function resetTable(){
 function clearAllInput(){ const si=document.querySelector('.source-order-input'); if(si)si.value=''; const re=document.getElementById('orderResult'); if(re)re.innerHTML=''; updateOrderTotalDisplay(); }
 async function pasteOrder(){ try{ const text=await navigator.clipboard.readText(); if(text){const si=document.querySelector('.source-order-input');if(si){si.value=text;convertOrderText();}} }catch(err){showToast('无法访问剪贴板');} }
 
-// ===== 导出导入（导出全部数据，导入按地区区分） =====
+// ===== 导出导入（导出包含开奖记录、替换预设、分类缩写等） =====
 async function exportData(){
   try{
     const orders=await getAllOrdersUnfiltered(); const reports=await getAllReportsUnfiltered();
+    // 收集所有开奖记录
+    const drawRecords = {};
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key && key.startsWith('drawRecord_')) {
+        drawRecords[key] = localStorage.getItem(key);
+      }
+    }
     const config=localStorage.getItem('customDataConfigObj'); const presets=localStorage.getItem('replacePresets');
     const aliases=localStorage.getItem('categoryAliases'); const prefixes=localStorage.getItem('customPrefixes');
     const suffixes=localStorage.getItem('customSuffixes'); const amountSuffixes=localStorage.getItem('customAmountSuffixes');
     const amountPrefixes=localStorage.getItem('customAmountPrefixes');
-    const data={orders,reports,config,presets,aliases,prefixes,suffixes,amountSuffixes,amountPrefixes,exportTime:new Date().toISOString()};
+    const data={orders,reports,drawRecords,config,presets,aliases,prefixes,suffixes,amountSuffixes,amountPrefixes,exportTime:new Date().toISOString()};
     const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
     const url=URL.createObjectURL(blob); const a=document.createElement('a');
     a.href=url; a.download=`港澳识别数据_全部_${getTodayCST()}.json`; a.click();
@@ -2503,6 +2020,12 @@ async function importData(){
           catch(e){ console.error('导入上报失败', e); }
         }
         const tn=no+nr;
+        // 恢复开奖记录
+        if(data.drawRecords){
+          Object.entries(data.drawRecords).forEach(([key, value]) => {
+            localStorage.setItem(key, value);
+          });
+        }
         if(data.config)localStorage.setItem('customDataConfigObj',data.config);
         if(data.presets)localStorage.setItem('replacePresets',data.presets);
         if(data.aliases)localStorage.setItem('categoryAliases',data.aliases);
@@ -3096,7 +2619,7 @@ async function autoCleanRecycleBin() {
     updateRecycleCount();
   } catch(e) { }
 }
-// ===== 格式化日期 M/D（仅用于期号计算，表格不再显示日期列） =====
+ // ===== 格式化日期 M/D（仅用于期号计算，表格不再显示日期列） =====
 function formatDateMD(dateStr) {
   const d = new Date(dateStr + 'T00:00:00');
   return `${d.getMonth()+1}/${d.getDate()}`;
@@ -3218,6 +2741,7 @@ async function showDrawRecord() {
       <div style="display:flex; gap:10px; justify-content:center; padding:10px;">
         <button class="btn btn-primary" onclick="editDrawRecord()">修改</button>
         <button class="btn btn-save-order" onclick="saveDrawRecord(${year})">保存</button>
+        <button class="btn btn-clear" onclick="clearDrawRecord(${year})">清空全部</button>
       </div>
     </div>
   `;
@@ -3305,6 +2829,19 @@ async function saveDrawRecord(year) {
   updateRecentDrawTexts();
 
   showToast('保存成功');
+}
+
+// ===== 清空全部开奖记录 =====
+async function clearDrawRecord(year) {
+  const confirmed = await confirm(`确定清空${year}年当前地区的全部开奖记录吗？此操作不可恢复！`);
+  if (!confirmed) return;
+  const pwd = await prompt("输入清空密码：","");
+  if (pwd !== PASSWORD) { await alert("密码错误"); return; }
+  const storageKey = `drawRecord_${currentRegion}_${year}`;
+  localStorage.removeItem(storageKey);
+  showToast('已清空全部开奖记录');
+  showDrawRecord(); // 刷新弹窗
+  updateRecentDrawTexts(); // 刷新主界面文本
 }
 
 function saveRecentDrawCount() {
@@ -3571,4 +3108,4 @@ window.onload = async () => {
 };
 </script>
 </body>
-</html>    
+</html>                                          
