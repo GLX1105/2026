@@ -1275,7 +1275,7 @@ function formatDateMD(dateStr) { const d = new Date(dateStr + 'T00:00:00'); retu
     }
   };
 })();
-    // ===== 开奖记录窗口（盈亏列颜色渲染 + 月度汇总按月统计 + 保存/回显） =====
+ // ===== 开奖记录窗口（盈亏列颜色渲染 + 月度汇总按月统计 + 保存后实时更新汇总） =====
 function getZodiacColorClass(zodiac) { if (!zodiac) return ''; const redSet = new Set(['鼠','兔','马','鸡']); const blueSet = new Set(['虎','蛇','猴','猪']); const greenSet = new Set(['牛','龙','羊','狗']); if (redSet.has(zodiac)) return 'red-text'; if (blueSet.has(zodiac)) return 'blue-text'; if (greenSet.has(zodiac)) return 'green-text'; return ''; }
 function getNumberColorClass(num) { if (redNumbers.includes(num)) return 'red-text'; if (blueNumbers.includes(num)) return 'blue-text'; if (greenNumbers.includes(num)) return 'green-text'; return ''; }
 
@@ -1311,18 +1311,18 @@ async function showDrawRecord() {
   let totalPLSum = 0;
   for (let m = 0; m < 12; m++) totalPLSum += monthlyPL[m];
 
-  // 月度汇总HTML
+  // 月度汇总HTML（颜色直接写在style里，确保绝对生效）
   let monthlyInnerHtml = '<table class="monthly-summary-table" style="width:100%;margin:0;border:none;"><tbody>';
   for (let m = 0; m < 12; m++) {
     const val = monthlyPL[m];
     let valText = '';
-    if (val > 0) valText = `<span class="pt-sum-pl-green">+${val}</span>`;
-    else if (val < 0) valText = `<span class="pt-sum-pl-red">${val}</span>`;
+    if (val > 0) valText = `<span style="color:#27ae60;font-weight:bold;">+${val}</span>`;
+    else if (val < 0) valText = `<span style="color:#e74c3c;font-weight:bold;">${val}</span>`;
     monthlyInnerHtml += `<tr><td style="text-align:left;padding:1px 4px;border:none;font-size:11px;">${m+1}月</td><td style="text-align:right;padding:1px 4px;border:none;font-size:11px;">${valText}</td></tr>`;
   }
   let totalText = '';
-  if (totalPLSum > 0) totalText = `<span class="pt-sum-pl-green">+${totalPLSum}</span>`;
-  else if (totalPLSum < 0) totalText = `<span class="pt-sum-pl-red">${totalPLSum}</span>`;
+  if (totalPLSum > 0) totalText = `<span style="color:#27ae60;font-weight:bold;">+${totalPLSum}</span>`;
+  else if (totalPLSum < 0) totalText = `<span style="color:#e74c3c;font-weight:bold;">${totalPLSum}</span>`;
   monthlyInnerHtml += `<tr style="border-top:2px solid #333;"><td style="text-align:left;padding:1px 4px;border:none;font-size:11px;">总盈亏</td><td style="text-align:right;padding:1px 4px;border:none;font-size:11px;">${totalText}</td></tr>`;
   monthlyInnerHtml += '</tbody></table>';
 
@@ -1388,12 +1388,10 @@ async function showDrawRecord() {
   updateRecentDrawTexts();
 }
 
-// 盈亏输入框颜色实时更新（修复版：保留期号类名）
+// 盈亏输入框颜色实时更新（保留期号类名）
 function updatePlColor(input) {
-  // 从当前类名中提取 draw-pl-期号
   const match = input.className.match(/draw-pl-(\d+)/);
   const issueClass = match ? match[0] : '';
-  
   const val = input.value.trim();
   let colorClass = '';
   if (val !== '' && val !== '-') {
@@ -1403,7 +1401,6 @@ function updatePlColor(input) {
       else if (num < 0) colorClass = ' red-text';
     }
   }
-  // 保留 draw-pl-input 和 draw-pl-期号，只替换颜色类
   input.className = 'draw-pl-input' + (issueClass ? ' ' + issueClass : '') + colorClass;
 }
 
@@ -1438,6 +1435,42 @@ async function saveDrawRecord(year) {
   localStorage.setItem(storageKey, JSON.stringify(data));
   document.querySelectorAll('.draw-number-input').forEach(el => el.disabled = true);
   document.querySelectorAll('.draw-pl-input').forEach(el => el.disabled = true);
+
+  // 第三步：实时更新月度汇总表
+  const monthlyPL = new Array(12).fill(0);
+  for (const iid in data) {
+    const entry = data[iid];
+    if (entry && entry.number && entry.number.trim() && entry.pl !== undefined && entry.pl !== '') {
+      const num = entry.number.trim().padStart(2, '0');
+      if (/^\d{2}$/.test(num) && parseInt(num) >= 1 && parseInt(num) <= 49) {
+        const issueNum = parseInt(iid);
+        const issueDate = new Date(year, 0, issueNum);
+        const month = issueDate.getMonth();
+        const plVal = parseFloat(entry.pl);
+        if (!isNaN(plVal)) monthlyPL[month] += plVal;
+      }
+    }
+  }
+  const summaryTable = document.querySelector('.monthly-summary-table');
+  if (summaryTable) {
+    let html = '<tbody>';
+    let totalPLSum = 0;
+    for (let m = 0; m < 12; m++) {
+      const val = monthlyPL[m];
+      totalPLSum += val;
+      let valText = '';
+      if (val > 0) valText = `<span style="color:#27ae60;font-weight:bold;">+${val}</span>`;
+      else if (val < 0) valText = `<span style="color:#e74c3c;font-weight:bold;">${val}</span>`;
+      html += `<tr><td style="text-align:left;padding:1px 4px;border:none;font-size:11px;">${m+1}月</td><td style="text-align:right;padding:1px 4px;border:none;font-size:11px;">${valText}</td></tr>`;
+    }
+    let totalText = '';
+    if (totalPLSum > 0) totalText = `<span style="color:#27ae60;font-weight:bold;">+${totalPLSum}</span>`;
+    else if (totalPLSum < 0) totalText = `<span style="color:#e74c3c;font-weight:bold;">${totalPLSum}</span>`;
+    html += `<tr style="border-top:2px solid #333;"><td style="text-align:left;padding:1px 4px;border:none;font-size:11px;">总盈亏</td><td style="text-align:right;padding:1px 4px;border:none;font-size:11px;">${totalText}</td></tr>`;
+    html += '</tbody>';
+    summaryTable.innerHTML = html;
+  }
+
   updateRecentDrawTexts();
   showToast('保存成功');
 }
@@ -1453,7 +1486,7 @@ function updateRecentDrawNumbers() { const container = document.getElementById('
 function updateRecentZodiacStats() { const container = document.getElementById('recentZodiacStats'); if (!container) return; const countStr = localStorage.getItem(`recentDrawCount_${currentRegion}`); if (!countStr) { container.style.display = 'none'; return; } const count = parseInt(countStr); if (isNaN(count) || count < 1) { container.style.display = 'none'; return; } const fd = document.getElementById('filterDate')?.value || getTodayCST(); let year = new Date().getFullYear(); const m = fd.match(/^(\d{4})/); if (m) year = parseInt(m[1]); const currentIssue = getCurrentIssueNumber(year, fd); if (!currentIssue) { container.style.display = 'none'; return; } const storageKey = `drawRecord_${currentRegion}_${year}`; let savedData = {}; try { savedData = JSON.parse(localStorage.getItem(storageKey) || '{}'); } catch (e) {} const zodiacList = []; for (let i = currentIssue - count; i < currentIssue; i++) { if (i < 1) continue; const issueId = i.toString().padStart(2, '0'); const entry = savedData[issueId]; if (entry && entry.number && entry.number.trim()) { const num = entry.number.trim().padStart(2, '0'); if (/^\d{2}$/.test(num) && parseInt(num) >= 1 && parseInt(num) <= 49) { const zodiac = currentZodiacMap[num] || ''; if (zodiac) zodiacList.push(zodiac); } } } if (zodiacList.length === 0) { container.style.display = 'none'; return; } const freq = {}; zodiacList.forEach(z => { freq[z] = (freq[z] || 0) + 1; }); const sorted = Object.entries(freq).sort((a, b) => b[1] - a[1]); const repeated = []; const single = []; sorted.forEach(([zodiac, cnt]) => { if (cnt > 1) { repeated.push({ zodiac, cnt }); } else { single.push(zodiac); } }); let html = ''; repeated.forEach(item => { html += `<div>${item.cnt}次：<span class="${getZodiacColorClass(item.zodiac)}">${item.zodiac}</span></div>`; }); if (single.length > 0) { const singleSpans = single.map(z => `<span class="${getZodiacColorClass(z)}">${z}</span>`).join('、'); html += `<div>${singleSpans}</div>`; } container.innerHTML = html; container.style.display = ''; }
 
 function updateFilterDateDrawInfo() { const span = document.getElementById('filterDateDrawInfo'); if (!span) return; const fd = document.getElementById('filterDate')?.value || getTodayCST(); let year = new Date().getFullYear(); const m = fd.match(/^(\d{4})/); if (m) year = parseInt(m[1]); const issueNumber = getCurrentIssueNumber(year, fd); if (!issueNumber) { span.style.display = 'none'; return; } const issueId = issueNumber.toString().padStart(2, '0'); const storageKey = `drawRecord_${currentRegion}_${year}`; let savedData = {}; try { savedData = JSON.parse(localStorage.getItem(storageKey) || '{}'); } catch (e) {} const entry = savedData[issueId]; if (!entry || !entry.number || !entry.number.trim()) { span.style.display = 'none'; return; } const num = entry.number.trim().padStart(2, '0'); if (!/^\d{2}$/.test(num) || parseInt(num) < 1 || parseInt(num) > 49) { span.style.display = 'none'; return; } const zodiac = currentZodiacMap[num] || ''; span.innerHTML = `<span class="num ${getNumberColorClass(num)}">${num}</span><span class="slash" style="color:#000;">/</span><span class="${getZodiacColorClass(zodiac)}">${zodiac}</span>`; span.style.display = ''; }
-// ========== 平特肖数据存储 ==========
+    // ========== 平特肖数据存储 ==========
 function getPingtexiaoKey() { const fd = document.getElementById('filterDate')?.value || getTodayCST(); return `pingtexiao_${currentRegion}_${fd}`; }
 function getPingtexiaoData() { try { return JSON.parse(localStorage.getItem(getPingtexiaoKey()) || '{}'); } catch (e) { return {}; } }
 function savePingtexiaoData(data) { localStorage.setItem(getPingtexiaoKey(), JSON.stringify(data)); }
@@ -1932,4 +1965,4 @@ window.onload = async () => {
 };
 </script>
 </body>
-</html>    
+</html>
