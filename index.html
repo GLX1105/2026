@@ -218,6 +218,7 @@ tr.selected-row{background-color:#dceeff!important;font-weight:bold;box-shadow:i
 .draw-number-input{width:30px;padding:0;text-align:center;font-size:12px;border:1px solid #ccc;border-radius:2px;}
 .draw-number-input:disabled{background:#f8f8f8;color:#333;}
 .draw-pl-input{width:50px;padding:0;text-align:center;font-size:12px;border:1px solid #ccc;border-radius:2px;}
+.draw-pl-input:disabled{background:#f8f8f8;}
 .recent-draw-text{font-size:13px;line-height:1.6;margin-top:6px;padding:6px;background:#fff;border:1px solid #eee;border-radius:6px;white-space:pre-wrap;}
 .recent-draw-text .num{font-weight:bold;}
 .recent-draw-text .slash{color:#000;}
@@ -237,9 +238,11 @@ tr.selected-row{background-color:#dceeff!important;font-weight:bold;box-shadow:i
 .draw-pl-text{font-size:11px;min-width:36px;display:inline-block;}
 .cat-insert-text{font-size:12px;color:#000;cursor:pointer;user-select:none;}
 .cat-insert-text:hover{color:#000;text-decoration:none;}
-.pt-display-text{font-size:12px;text-align:center;min-width:45px;display:inline-block;cursor:pointer;}
-.pt-display-text.amount-red-text{min-width:45px;}
-.pt-display-text.pt-report-text{min-width:45px;}
+.pt-edit-input{outline:none;}
+.pt-edit-input:focus{outline:none;}
+.pt-edit-input[readonly]{cursor:pointer;user-select:none;}
+.monthly-summary-table .pt-sum-pl-green{color:#27ae60!important;font-weight:bold;}
+.monthly-summary-table .pt-sum-pl-red{color:#e74c3c!important;font-weight:bold;}
 </style>
 </head>
 <body>
@@ -1272,7 +1275,7 @@ function formatDateMD(dateStr) { const d = new Date(dateStr + 'T00:00:00'); retu
     }
   };
 })();
-// ===== 开奖记录窗口（盈亏列颜色渲染 + 月度汇总按月统计 + 保存/回显） =====
+    // ===== 开奖记录窗口（盈亏列颜色渲染 + 月度汇总按月统计 + 保存/回显） =====
 function getZodiacColorClass(zodiac) { if (!zodiac) return ''; const redSet = new Set(['鼠','兔','马','鸡']); const blueSet = new Set(['虎','蛇','猴','猪']); const greenSet = new Set(['牛','龙','羊','狗']); if (redSet.has(zodiac)) return 'red-text'; if (blueSet.has(zodiac)) return 'blue-text'; if (greenSet.has(zodiac)) return 'green-text'; return ''; }
 function getNumberColorClass(num) { if (redNumbers.includes(num)) return 'red-text'; if (blueNumbers.includes(num)) return 'blue-text'; if (greenNumbers.includes(num)) return 'green-text'; return ''; }
 
@@ -1450,7 +1453,7 @@ function updateRecentDrawNumbers() { const container = document.getElementById('
 function updateRecentZodiacStats() { const container = document.getElementById('recentZodiacStats'); if (!container) return; const countStr = localStorage.getItem(`recentDrawCount_${currentRegion}`); if (!countStr) { container.style.display = 'none'; return; } const count = parseInt(countStr); if (isNaN(count) || count < 1) { container.style.display = 'none'; return; } const fd = document.getElementById('filterDate')?.value || getTodayCST(); let year = new Date().getFullYear(); const m = fd.match(/^(\d{4})/); if (m) year = parseInt(m[1]); const currentIssue = getCurrentIssueNumber(year, fd); if (!currentIssue) { container.style.display = 'none'; return; } const storageKey = `drawRecord_${currentRegion}_${year}`; let savedData = {}; try { savedData = JSON.parse(localStorage.getItem(storageKey) || '{}'); } catch (e) {} const zodiacList = []; for (let i = currentIssue - count; i < currentIssue; i++) { if (i < 1) continue; const issueId = i.toString().padStart(2, '0'); const entry = savedData[issueId]; if (entry && entry.number && entry.number.trim()) { const num = entry.number.trim().padStart(2, '0'); if (/^\d{2}$/.test(num) && parseInt(num) >= 1 && parseInt(num) <= 49) { const zodiac = currentZodiacMap[num] || ''; if (zodiac) zodiacList.push(zodiac); } } } if (zodiacList.length === 0) { container.style.display = 'none'; return; } const freq = {}; zodiacList.forEach(z => { freq[z] = (freq[z] || 0) + 1; }); const sorted = Object.entries(freq).sort((a, b) => b[1] - a[1]); const repeated = []; const single = []; sorted.forEach(([zodiac, cnt]) => { if (cnt > 1) { repeated.push({ zodiac, cnt }); } else { single.push(zodiac); } }); let html = ''; repeated.forEach(item => { html += `<div>${item.cnt}次：<span class="${getZodiacColorClass(item.zodiac)}">${item.zodiac}</span></div>`; }); if (single.length > 0) { const singleSpans = single.map(z => `<span class="${getZodiacColorClass(z)}">${z}</span>`).join('、'); html += `<div>${singleSpans}</div>`; } container.innerHTML = html; container.style.display = ''; }
 
 function updateFilterDateDrawInfo() { const span = document.getElementById('filterDateDrawInfo'); if (!span) return; const fd = document.getElementById('filterDate')?.value || getTodayCST(); let year = new Date().getFullYear(); const m = fd.match(/^(\d{4})/); if (m) year = parseInt(m[1]); const issueNumber = getCurrentIssueNumber(year, fd); if (!issueNumber) { span.style.display = 'none'; return; } const issueId = issueNumber.toString().padStart(2, '0'); const storageKey = `drawRecord_${currentRegion}_${year}`; let savedData = {}; try { savedData = JSON.parse(localStorage.getItem(storageKey) || '{}'); } catch (e) {} const entry = savedData[issueId]; if (!entry || !entry.number || !entry.number.trim()) { span.style.display = 'none'; return; } const num = entry.number.trim().padStart(2, '0'); if (!/^\d{2}$/.test(num) || parseInt(num) < 1 || parseInt(num) > 49) { span.style.display = 'none'; return; } const zodiac = currentZodiacMap[num] || ''; span.innerHTML = `<span class="num ${getNumberColorClass(num)}">${num}</span><span class="slash" style="color:#000;">/</span><span class="${getZodiacColorClass(zodiac)}">${zodiac}</span>`; span.style.display = ''; }
-    // ========== 平特肖数据存储 ==========
+// ========== 平特肖数据存储 ==========
 function getPingtexiaoKey() { const fd = document.getElementById('filterDate')?.value || getTodayCST(); return `pingtexiao_${currentRegion}_${fd}`; }
 function getPingtexiaoData() { try { return JSON.parse(localStorage.getItem(getPingtexiaoKey()) || '{}'); } catch (e) { return {}; } }
 function savePingtexiaoData(data) { localStorage.setItem(getPingtexiaoKey(), JSON.stringify(data)); }
@@ -1929,4 +1932,4 @@ window.onload = async () => {
 };
 </script>
 </body>
-</html>
+</html>    
