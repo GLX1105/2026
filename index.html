@@ -1478,7 +1478,7 @@ function loadPtParams() {
   } catch (e) {}
 }
 
-// ========== 渲染平特肖表格（直接可编辑input） ==========
+// ========== 渲染平特肖表格（金额列和上报列均为双击编辑） ==========
 function renderPingtexiaoTable() {
   const container = document.getElementById('pingtexiaoTableContainer');
   if (!container) return;
@@ -1503,8 +1503,10 @@ function renderPingtexiaoTable() {
       const remain = (amountVal !== '') ? (parseFloat(amountVal) - (reportVal !== '' ? parseFloat(reportVal) : 0)) : '';
       const highlighted = highlightData[zodiac] === true ? ' pt-remain-highlight' : '';
       html += `<td class="${zcm[zodiac] || ''}">${zodiac}</td>`;
-      html += `<td><input type="number" class="pingtexiao-input pingtexiao-amount amount-red-text" data-zodiac="${zodiac}" value="${amountVal}" oninput="updatePingtexiaoRemain(this)" onblur="savePingtexiaoCell()" style="width:50px;padding:1px 2px;font-size:12px;text-align:center;border:1px solid #ccc;border-radius:2px;"></td>`;
-      html += `<td><input type="number" class="pingtexiao-input pingtexiao-report pt-report-text" data-zodiac="${zodiac}" value="${reportVal}" oninput="updatePingtexiaoRemain(this)" onblur="savePingtexiaoCell()" style="width:50px;padding:1px 2px;font-size:12px;text-align:center;border:1px solid #ccc;border-radius:2px;"></td>`;
+      // 金额列：只读 input，双击进入编辑
+      html += `<td><input type="number" class="pt-edit-input amount-red-text" data-zodiac="${zodiac}" data-field="amount" value="${amountVal}" readonly style="width:50px;padding:1px 2px;font-size:12px;text-align:center;border:1px solid transparent;background:transparent;"></td>`;
+      // 上报列：只读 input，双击进入编辑
+      html += `<td><input type="number" class="pt-edit-input pt-report-text" data-zodiac="${zodiac}" data-field="report" value="${reportVal}" readonly style="width:50px;padding:1px 2px;font-size:12px;text-align:center;border:1px solid transparent;background:transparent;"></td>`;
       html += `<td class="pt-remain-text${highlighted}" style="font-size:12px;" data-zodiac="${zodiac}">${remain !== '' ? remain : ''}</td>`;
     });
     html += '</tr>';
@@ -1512,6 +1514,35 @@ function renderPingtexiaoTable() {
   html += '</tbody></table>';
   container.innerHTML = html;
 
+  // 事件委托：双击进入编辑
+  container.addEventListener('dblclick', function(e) {
+    const input = e.target.closest('.pt-edit-input');
+    if (!input) return;
+    input.removeAttribute('readonly');
+    input.style.border = '1px solid #ccc';
+    input.style.background = '#fff';
+    input.focus();
+    input.select();
+  });
+
+  // 事件委托：失焦恢复只读并保存
+  container.addEventListener('blur', function(e) {
+    const input = e.target.closest('.pt-edit-input');
+    if (!input) return;
+    finishPtEdit(input);
+  }, true);
+
+  // 事件委托：回车恢复只读并保存
+  container.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') {
+      const input = e.target.closest('.pt-edit-input');
+      if (!input) return;
+      e.preventDefault();
+      finishPtEdit(input);
+    }
+  });
+
+  // 绑定剩余列点击高亮
   container.querySelectorAll('.pt-remain-text').forEach(td => {
     td.onclick = function() { togglePingtexiaoHighlight(this, this.dataset.zodiac); };
   });
@@ -1519,15 +1550,27 @@ function renderPingtexiaoTable() {
   updatePingtexiaoTotal();
 }
 
-function updatePingtexiaoRemain(input) {
+// 完成编辑：恢复只读 + 更新剩余列 + 保存
+function finishPtEdit(input) {
+  if (input.hasAttribute('readonly')) return;
+  input.setAttribute('readonly', 'readonly');
+  input.style.border = '1px solid transparent';
+  input.style.background = 'transparent';
+  updatePtRemain(input);
+  savePingtexiaoCell();
+}
+
+function updatePtRemain(input) {
   const row = input.closest('tr');
   if (!row) return;
   const zodiac = input.dataset.zodiac;
-  const allInputs = row.querySelectorAll('.pingtexiao-input');
+  const allInputs = row.querySelectorAll('.pt-edit-input');
   let amountInput, reportInput;
   for (const inp of allInputs) {
-    if (inp.dataset.zodiac === zodiac && inp.classList.contains('pingtexiao-amount')) amountInput = inp;
-    if (inp.dataset.zodiac === zodiac && inp.classList.contains('pingtexiao-report')) reportInput = inp;
+    if (inp.dataset.zodiac === zodiac) {
+      if (inp.dataset.field === 'amount') amountInput = inp;
+      if (inp.dataset.field === 'report') reportInput = inp;
+    }
   }
   if (!amountInput || !reportInput) return;
   const a = amountInput.value.trim() !== '' ? parseFloat(amountInput.value) : 0;
@@ -1555,12 +1598,12 @@ function clearPingtexiaoHighlight() {
 
 function savePingtexiaoCell() {
   const data = getPingtexiaoData();
-  document.querySelectorAll('.pingtexiao-amount').forEach(input => {
+  document.querySelectorAll('.pt-edit-input[data-field="amount"]').forEach(input => {
     const zodiac = input.dataset.zodiac;
     if (!data[zodiac]) data[zodiac] = { amount: '', report: '' };
     data[zodiac].amount = input.value.trim();
   });
-  document.querySelectorAll('.pingtexiao-report').forEach(input => {
+  document.querySelectorAll('.pt-edit-input[data-field="report"]').forEach(input => {
     const zodiac = input.dataset.zodiac;
     if (!data[zodiac]) data[zodiac] = { amount: '', report: '' };
     data[zodiac].report = input.value.trim();
@@ -1572,11 +1615,11 @@ function savePingtexiaoCell() {
 
 function updatePingtexiaoTotal() {
   let amountTotal = 0, reportTotal = 0;
-  document.querySelectorAll('.pingtexiao-amount').forEach(input => {
+  document.querySelectorAll('.pt-edit-input[data-field="amount"]').forEach(input => {
     const v = parseFloat(input.value.trim());
     if (!isNaN(v)) amountTotal += v;
   });
-  document.querySelectorAll('.pingtexiao-report').forEach(input => {
+  document.querySelectorAll('.pt-edit-input[data-field="report"]').forEach(input => {
     const v = parseFloat(input.value.trim());
     if (!isNaN(v)) reportTotal += v;
   });
@@ -1600,8 +1643,7 @@ function updatePingtexiaoTotal() {
   if (!sumTotalEl || !sumWinEl || !sumPLEl) return;
 
   let hasData = false;
-  document.querySelectorAll('.pingtexiao-amount').forEach(input => { if (input.value.trim() !== '') hasData = true; });
-  document.querySelectorAll('.pingtexiao-report').forEach(input => { if (input.value.trim() !== '') hasData = true; });
+  document.querySelectorAll('.pt-edit-input').forEach(input => { if (input.value.trim() !== '') hasData = true; });
 
   if (!hasData) {
     sumTotalEl.textContent = '';
@@ -1630,7 +1672,7 @@ function updatePingtexiaoTotal() {
   let payout = 0;
   document.querySelectorAll('.pt-remain-highlight').forEach(td => {
     const zodiac = td.dataset.zodiac;
-    const input = document.querySelector(`.pingtexiao-amount[data-zodiac="${zodiac}"]`);
+    const input = document.querySelector(`.pt-edit-input[data-zodiac="${zodiac}"][data-field="amount"]`);
     if (input) {
       const val = parseFloat(td.textContent) || 0;
       const mult = (zodiac === curYearZodiac) ? yearMultiple : multiple;
