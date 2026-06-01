@@ -801,7 +801,7 @@ function insertCategoryText(text) {
   ta.setSelectionRange(start + text.length, start + text.length);
   convertOrderText();
 }
- // ===== 识别弹窗（标题显示当前地区） =====
+    // ===== 识别弹窗（标题显示当前地区） =====
 function showRecognizeModal() {
   if (document.getElementById('recognizeWin')) return;
   const regionLabel = currentRegion === 'macau' ? '澳门' : currentRegion === 'hongkong' ? '香港' : '粤港';
@@ -1345,7 +1345,123 @@ async function addUserAction() { const name = document.getElementById('newUserNa
 async function deleteUserAction(name) { if (!(await confirm(`确定删除用户"${name}"及其数据吗？`))) return; deleteUser(name); renderUserList(); updateSelects(); showToast('用户已删除'); }
 
 window.dragSelectionActive = false;
-function enableRowDragSelect(tableId) { const tbody = document.getElementById(tableId === 'riskTable' ? 'tableBody' : 'reportTableBody'); if (!tbody) return; let startRow = null; let endRow = null; function clearSelection() { tbody.querySelectorAll('tr.selected-row').forEach(tr => tr.classList.remove('selected-row')); } function selectRows(row1, row2) { if (!row1 || !row2) return; const rows = Array.from(tbody.querySelectorAll('tr')); const idx1 = rows.indexOf(row1); const idx2 = rows.indexOf(row2); if (idx1 === -1 || idx2 === -1) return; const minIdx = Math.min(idx1, idx2); const maxIdx = Math.max(idx1, idx2); for (let i = minIdx; i <= maxIdx; i++) { rows[i].classList.add('selected-row'); } } tbody.addEventListener('mousedown', (e) => { if (e.button !== 0) return; if (e.ctrlKey || e.shiftKey) return; const targetRow = e.target.closest('tr'); if (!targetRow) return; window.dragSelectionActive = true; clearSelection(); startRow = targetRow; endRow = targetRow; targetRow.classList.add('selected-row'); e.preventDefault(); }); document.addEventListener('mousemove', (e) => { if (!window.dragSelectionActive) return; const target = document.elementFromPoint(e.clientX, e.clientY); if (!target) return; const tr = target.closest('tr'); if (!tr || tr.parentElement !== tbody) return; if (tr !== endRow) { endRow = tr; clearSelection(); selectRows(startRow, endRow); } }); document.addEventListener('mouseup', () => { if (window.dragSelectionActive) { window.dragSelectionActive = false; startRow = null; endRow = null; } }); let longPressTimer = null; let longPressTriggered = false; let touchStartY = 0; let touchMoved = false; tbody.addEventListener('touchstart', (e) => { const targetRow = e.target.closest('tr'); if (!targetRow) return; touchMoved = false; touchStartY = e.touches[0].clientY; longPressTriggered = false; longPressTimer = setTimeout(() => { longPressTriggered = true; window.dragSelectionActive = true; clearSelection(); startRow = targetRow; endRow = targetRow; targetRow.classList.add('selected-row'); }, 1000); e.preventDefault(); }, { passive: false }); tbody.addEventListener('touchmove', (e) => { const deltaY = Math.abs(e.touches[0].clientY - touchStartY); if (deltaY > 10) { touchMoved = true; if (longPressTimer) { clearTimeout(longPressTimer); longPressTimer = null; } } if (!longPressTriggered) return; if (!window.dragSelectionActive) return; const touch = e.touches[0]; const target = document.elementFromPoint(touch.clientX, touch.clientY); if (!target) return; const tr = target.closest('tr'); if (!tr || tr.parentElement !== tbody) return; if (tr !== endRow) { endRow = tr; clearSelection(); selectRows(startRow, endRow); } e.preventDefault(); }, { passive: false }); tbody.addEventListener('touchend', () => { if (longPressTimer) { clearTimeout(longPressTimer); longPressTimer = null; } if (window.dragSelectionActive) { window.dragSelectionActive = false; startRow = null; endRow = null; } longPressTriggered = false; }); }
+function enableRowDragSelect(tableId) {
+  const tbody = document.getElementById(tableId === 'riskTable' ? 'tableBody' : 'reportTableBody');
+  if (!tbody) return;
+  let startRow = null;
+  let endRow = null;
+  function clearSelection() {
+    tbody.querySelectorAll('tr.selected-row').forEach(tr => tr.classList.remove('selected-row'));
+  }
+  function selectRows(row1, row2) {
+    if (!row1 || !row2) return;
+    const rows = Array.from(tbody.querySelectorAll('tr'));
+    const idx1 = rows.indexOf(row1);
+    const idx2 = rows.indexOf(row2);
+    if (idx1 === -1 || idx2 === -1) return;
+    const minIdx = Math.min(idx1, idx2);
+    const maxIdx = Math.max(idx1, idx2);
+    for (let i = minIdx; i <= maxIdx; i++) {
+      rows[i].classList.add('selected-row');
+    }
+  }
+
+  // 桌面端拖拽
+  tbody.addEventListener('mousedown', (e) => {
+    if (e.button !== 0) return;
+    if (e.ctrlKey || e.shiftKey) return;
+    const targetRow = e.target.closest('tr');
+    if (!targetRow) return;
+    window.dragSelectionActive = true;
+    clearSelection();
+    startRow = targetRow;
+    endRow = targetRow;
+    targetRow.classList.add('selected-row');
+    e.preventDefault();
+  });
+  document.addEventListener('mousemove', (e) => {
+    if (!window.dragSelectionActive) return;
+    const target = document.elementFromPoint(e.clientX, e.clientY);
+    if (!target) return;
+    const tr = target.closest('tr');
+    if (!tr || tr.parentElement !== tbody) return;
+    if (tr !== endRow) {
+      endRow = tr;
+      clearSelection();
+      selectRows(startRow, endRow);
+    }
+  });
+  document.addEventListener('mouseup', () => {
+    if (window.dragSelectionActive) {
+      window.dragSelectionActive = false;
+      startRow = null;
+      endRow = null;
+    }
+  });
+
+  // 移动端：只有长按才进入选择模式，短滑正常滚动
+  let longPressTimer = null;
+  let longPressTriggered = false;
+  let touchStartY = 0;
+  let touchStartX = 0;
+
+  tbody.addEventListener('touchstart', (e) => {
+    const targetRow = e.target.closest('tr');
+    if (!targetRow) return;
+    longPressTriggered = false;
+    touchStartY = e.touches[0].clientY;
+    touchStartX = e.touches[0].clientX;
+    if (longPressTimer) clearTimeout(longPressTimer);
+    longPressTimer = setTimeout(() => {
+      longPressTriggered = true;
+      window.dragSelectionActive = true;
+      clearSelection();
+      startRow = targetRow;
+      endRow = targetRow;
+      targetRow.classList.add('selected-row');
+    }, 1000);
+    // 不阻止默认行为，允许正常滚动
+  }, { passive: true });
+
+  tbody.addEventListener('touchmove', (e) => {
+    if (!longPressTriggered) {
+      const dy = Math.abs(e.touches[0].clientY - touchStartY);
+      const dx = Math.abs(e.touches[0].clientX - touchStartX);
+      if (dy > 10 || dx > 10) {
+        if (longPressTimer) {
+          clearTimeout(longPressTimer);
+          longPressTimer = null;
+        }
+      }
+      return; // 让浏览器正常滚动
+    }
+    if (!window.dragSelectionActive) return;
+    e.preventDefault();
+    const touch = e.touches[0];
+    const target = document.elementFromPoint(touch.clientX, touch.clientY);
+    if (!target) return;
+    const tr = target.closest('tr');
+    if (!tr || tr.parentElement !== tbody) return;
+    if (tr !== endRow) {
+      endRow = tr;
+      clearSelection();
+      selectRows(startRow, endRow);
+    }
+  }, { passive: false });
+
+  tbody.addEventListener('touchend', () => {
+    if (longPressTimer) {
+      clearTimeout(longPressTimer);
+      longPressTimer = null;
+    }
+    if (window.dragSelectionActive) {
+      window.dragSelectionActive = false;
+      startRow = null;
+      endRow = null;
+    }
+    longPressTriggered = false;
+  });
+}
 function copySelectedNumbers(tableId) { const tbody = document.getElementById(tableId === 'riskTable' ? 'tableBody' : 'reportTableBody'); if (!tbody) return; const selectedRows = Array.from(tbody.querySelectorAll('tr.selected-row')); if (selectedRows.length === 0) { showToast('请先选择号码'); return; } const ids = selectedRows.map(row => { const cells = row.querySelectorAll('td'); return cells[3] ? cells[3].textContent.trim() : ''; }).filter(id => id && /^\d+$/.test(id)); if (ids.length === 0) { showToast('无有效号码'); return; } const uniqueIds = [...new Set(ids)]; const text = uniqueIds.join('-'); navigator.clipboard.writeText(text).then(() => { showToast('已复制: ' + text); }).catch(() => { showToast('复制失败'); }); }
 
 document.getElementById('rebateRate')?.addEventListener('input', generateRiskTable);
