@@ -1151,20 +1151,18 @@ async function showOperationLog() {
       const logDate = log.timestamp.slice(0, 10);
       // 用户行
       const userLine = detailLines.length > 0 ? detailLines[0] : '';
-      // 订单内容行（中间部分）
+      // 订单内容行（中间部分，不包括用户行和合计行）
       let contentLines = '';
       for (let i = 1; i < detailLines.length - 1; i++) {
         contentLines += detailLines[i] + '\n';
       }
       // 合计行
       const totalLine = detailLines.length > 1 ? detailLines[detailLines.length - 1] : '';
-      // 组装显示内容：用户 + 内容 + 合计
-      const displayContent = userLine + '\n' + contentLines.trim() + '\n' + totalLine;
       html += `<div class="order-item log-item" data-date="${logDate}" data-action="${log.action}">
-        <div class="order-content">${displayContent.replace(/\n/g, '<br>')}</div>
+        <div class="order-content">${contentLines.trim().replace(/\n/g, '<br>')}</div>
         <div class="order-info">
           <span class="order-total" style="color:#000;">${totalLine}</span>
-          <span class="order-meta"><span class="log-type-tag ${colorClass}">${actionLabel}</span> &nbsp; ${ts}</span>
+          <span class="order-meta"><span style="color:#2980b9;">${userLine}</span> &nbsp; <span class="log-type-tag ${colorClass}">${actionLabel}</span> &nbsp; ${ts}</span>
         </div>
       </div>`;
     });
