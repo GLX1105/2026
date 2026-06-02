@@ -55,6 +55,8 @@ body {background:#f5f7fa;font-size:14px;line-height:1.4;overflow-x:hidden;positi
     .database-modal-body {padding:10px!important;max-height:70vh!important;}
     .freq-container {flex-direction:column!important;gap:10px!important;}
     .freq-card {width:100%!important;}
+    /* 移动端恢复等分 */
+    .number-amount-card {flex: 1 !important;}
     #originalAmountTable {min-width:100%!important;font-size:11px!important;}
     #originalAmountTable th,#originalAmountTable td {padding:4px 2px!important;font-size:11px!important;white-space:nowrap!important;}
     #originalAmountTable th:nth-child(1),#originalAmountTable td:nth-child(1){width:40px!important;}
@@ -208,6 +210,8 @@ tr.selected-row{background-color:#dceeff!important;font-weight:bold;box-shadow:i
 /* 其他原有卡片内部并列样式 */
 .freq-container{display:flex;gap:15px;flex-wrap:wrap;}
 .freq-card{flex:1;min-width:220px;background:#fafafa;border:1px solid #eee;border-radius:6px;padding:10px;}
+/* 号码金额卡片桌面端宽度加大 */
+.number-amount-card {flex: 2;}
 .freq-title{font-size:13px;font-weight:bold;color:#1a1a2e;margin-bottom:8px;text-align:center;padding-bottom:4px;border-bottom:1px solid #eee;}
 .freq-table{width:100%;border-collapse:collapse;font-size:12px;}
 .freq-table th{background:#f0f0f0;font-weight:bold;color:#333;padding:3px 4px;}
@@ -383,7 +387,7 @@ tr.selected-row{background-color:#dceeff!important;font-weight:bold;box-shadow:i
       <div class="card" style="margin-top:0;">
         <div class="card-title">号码统计</div>
         <div class="freq-container">
-          <div class="freq-card">
+          <div class="freq-card number-amount-card">
             <div class="freq-title">
               号码金额
               <div class="amount-stat-box" id="directOrderTotalBox" style="display:none; margin-left:8px;"><span>号码合计：</span><span id="directOrderTotalAmount">0</span></div>
@@ -2126,34 +2130,46 @@ function updateCardA() {
   const topNInput = document.getElementById('topNInput');
   const nVal = topNInput ? parseInt(topNInput.value) : NaN;
   if (!isNaN(nVal) && nVal > 0) {
+    // 构建完整的49个号码条目
     const entries = Object.entries(numberAmountCount).map(([num, cnt]) => ({ num, cnt: cnt || 0 }));
     for (let i = 1; i <= 49; i++) {
       const n = i.toString().padStart(2, '0');
       if (!numberAmountCount[n]) entries.push({ num: n, cnt: 0 });
     }
+
+    // 活跃次数（高频）：取前N名的次数作为门槛，包含所有并列
     const sortedDesc = [...entries].sort((a, b) => b.cnt - a.cnt || parseInt(a.num) - parseInt(b.num));
-    const cutoffDesc = sortedDesc[nVal - 1]?.cnt;
-    const activeNums = sortedDesc.filter(e => e.cnt >= cutoffDesc);
+    const idxDesc = Math.min(nVal - 1, sortedDesc.length - 1);
+    const cutoffDesc = sortedDesc[idxDesc]?.cnt ?? 0;
+    const activeNums = sortedDesc.filter(e => e.cnt >= cutoffDesc && e.cnt > 0);
+    activeNums.sort((a, b) => b.cnt - a.cnt || parseInt(a.num) - parseInt(b.num));
+
+    // 不活跃次数（低频）：取后N名的次数作为门槛，包含所有并列
     const sortedAsc = [...entries].sort((a, b) => a.cnt - b.cnt || parseInt(a.num) - parseInt(b.num));
-    const cutoffAsc = sortedAsc[nVal - 1]?.cnt;
+    const idxAsc = Math.min(nVal - 1, sortedAsc.length - 1);
+    const cutoffAsc = sortedAsc[idxAsc]?.cnt ?? 0;
     let inactiveNums = sortedAsc.filter(e => e.cnt <= cutoffAsc);
     inactiveNums.sort((a, b) => b.cnt - a.cnt || parseInt(a.num) - parseInt(b.num));
 
-    html += '<div style="margin-bottom:4px;"><b>活跃次数：</b>';
-    activeNums.forEach((e, idx) => {
-      const cls = redNumbers.includes(e.num) ? 'red-text' : (blueNumbers.includes(e.num) ? 'blue-text' : 'green-text');
-      html += `<span class="${cls}">${e.num}</span>`;
-      if (idx < activeNums.length - 1) html += '-';
-    });
-    html += '</div>';
+    if (activeNums.length > 0) {
+      html += '<div style="margin-bottom:4px;"><b>活跃次数：</b>';
+      activeNums.forEach((e, idx) => {
+        const cls = redNumbers.includes(e.num) ? 'red-text' : (blueNumbers.includes(e.num) ? 'blue-text' : 'green-text');
+        html += `<span class="${cls}">${e.num}</span>`;
+        if (idx < activeNums.length - 1) html += '-';
+      });
+      html += '</div>';
+    }
 
-    html += '<div style="margin-bottom:4px;"><b>不活跃次数：</b>';
-    inactiveNums.forEach((e, idx) => {
-      const cls = redNumbers.includes(e.num) ? 'red-text' : (blueNumbers.includes(e.num) ? 'blue-text' : 'green-text');
-      html += `<span class="${cls}">${e.num}</span>`;
-      if (idx < inactiveNums.length - 1) html += '-';
-    });
-    html += '</div>';
+    if (inactiveNums.length > 0) {
+      html += '<div style="margin-bottom:4px;"><b>不活跃次数：</b>';
+      inactiveNums.forEach((e, idx) => {
+        const cls = redNumbers.includes(e.num) ? 'red-text' : (blueNumbers.includes(e.num) ? 'blue-text' : 'green-text');
+        html += `<span class="${cls}">${e.num}</span>`;
+        if (idx < inactiveNums.length - 1) html += '-';
+      });
+      html += '</div>';
+    }
   }
 
   if (zodiacRankVisible) {
