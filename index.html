@@ -2255,7 +2255,7 @@ let heatVisible = false;
 let adviceVisible = false;
 let surgeVisible = false;
 let surgeThreshold = parseInt(localStorage.getItem('surgeThreshold') || '50');
-let surgeAmountThreshold = parseInt(localStorage.getItem('surgeAmountThreshold') || '50');
+let surgeAmountThreshold = parseInt(localStorage.getItem('surgeAmountThreshold') || '4');
 let surgeMinOrders = 3;
 
 // ========== 暴增监控数据计算 ==========
@@ -2326,14 +2326,16 @@ async function computeSurge() {
     amountTriggered.sort((a, b) => b.ratio - a.ratio);
 
     if (countTriggered.length > 0 || amountTriggered.length > 0) {
-      let globalMaxRatio = 0;
-      const allTriggered = [...countTriggered, ...amountTriggered];
-      allTriggered.forEach(item => { if (item.ratio > globalMaxRatio) globalMaxRatio = item.ratio; });
+      // 计算每个维度的最高占比
+      const maxRatioCount = countTriggered.length > 0 ? countTriggered[0].ratio : 0;
+      const maxRatioAmount = amountTriggered.length > 0 ? amountTriggered[0].ratio : 0;
+
       result.push({
         user,
         countItems: countTriggered,
         amountItems: amountTriggered,
-        globalMaxRatio,
+        maxRatioCount,
+        maxRatioAmount,
         totalOrders,
         totalAmount
       });
@@ -2795,7 +2797,7 @@ function renderSmartDecision() {
     surgeHtml += `<div style="margin-bottom:4px;">
       <b>⏱ 暴增监控</b>
       <span style="margin-left:8px;">条数阈值：<input type="number" value="${surgeThreshold}" min="10" max="100" style="width:50px;font-size:11px;" onchange="surgeThreshold=parseInt(this.value);localStorage.setItem('surgeThreshold', surgeThreshold); computeSurge().then(()=>renderSmartDecision());">%</span>
-      <span style="margin-left:8px;">金额阈值：<input type="number" value="${surgeAmountThreshold}" min="10" max="100" style="width:50px;font-size:11px;" onchange="surgeAmountThreshold=parseInt(this.value);localStorage.setItem('surgeAmountThreshold', surgeAmountThreshold); computeSurge().then(()=>renderSmartDecision());">%</span>
+      <span style="margin-left:8px;">金额阈值：<input type="number" value="${surgeAmountThreshold}" min="1" max="100" style="width:50px;font-size:11px;" onchange="surgeAmountThreshold=parseInt(this.value);localStorage.setItem('surgeAmountThreshold', surgeAmountThreshold); computeSurge().then(()=>renderSmartDecision());">%</span>
       <span style="margin-left:8px;">最少${surgeMinOrders}条订单</span>
     </div>`;
     if (window._surgeResult && window._surgeResult.length > 0) {
@@ -2804,17 +2806,19 @@ function renderSmartDecision() {
         surgeHtml += `<div style="margin-bottom:4px;"><b>${username}:</b> `;
         const countItems = user.countItems || [];
         const amountItems = user.amountItems || [];
+        // 条数部分
         if (countItems.length > 0) {
           surgeHtml += '(条) ';
           countItems.forEach(item => {
-            const tag = (item.ratio === user.globalMaxRatio) ? '🔥' : '';
+            const tag = (item.ratio === user.maxRatioCount) ? '🔥' : '';
             surgeHtml += `${tag ? tag + ' ' : ''}<span class="${getNumCls(item.num)}">${item.num}</span> `;
           });
         }
+        // 金额部分
         if (amountItems.length > 0) {
           surgeHtml += '(金) ';
           amountItems.forEach(item => {
-            const tag = (item.ratio === user.globalMaxRatio) ? '🔥' : '';
+            const tag = (item.ratio === user.maxRatioAmount) ? '🔥' : '';
             surgeHtml += `${tag ? tag + ' ' : ''}<span class="${getNumCls(item.num)}">${item.num}</span> `;
           });
         }
