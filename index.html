@@ -443,7 +443,7 @@ tr.selected-row{background-color:#dceeff!important;font-weight:bold;box-shadow:i
       </div>
     </div>
 
-    <!-- 右侧风险报告区域 - 去掉sticky，跟随自然滚动 -->
+    <!-- 右侧风险报告区域 -->
     <div class="risk-report-area">
         <div class="card">
           <div class="card-title">
@@ -496,7 +496,7 @@ tr.selected-row{background-color:#dceeff!important;font-weight:bold;box-shadow:i
     </div>
   </div>
 
-  <!-- 右侧存储抽屉面板（固定在右下角底部，透明背景蓝色标签） -->
+  <!-- 右侧存储抽屉面板 -->
   <div class="storage-drawer" id="storageDrawer">
     <div class="storage-tab" id="storageTab" onclick="toggleStorageDrawer()">存储</div>
     <div class="storage-panel" id="storagePanel">
@@ -1022,7 +1022,6 @@ async function resetPresetsToDefault(){
   localStorage.setItem('categoryAliases',JSON.stringify(defaultAliases));
   renderPresetList(); showToast('已恢复默认替换预设和分类缩写');
 }
-
 function applyCategoryAliases(text) { const a=getCategoryAliases(); if(!a.length)return text; const s=[...a].sort((x,y)=>y.alias.length-x.alias.length); let r=text; s.forEach(x=>{ if(x.alias&&x.target)r=r.split(x.alias).join(x.target); }); return r; }
 
 // ===== 修正后的替换预设（已去掉后边界限制） =====
@@ -1031,7 +1030,7 @@ function applyReplacePresets(text) { const p = getReplacePresets(); let r = text
 async function semanticReplace() { const ta=document.querySelector('.source-order-input'); if(!ta)return; const s=ta.selectionStart,e=ta.selectionEnd; if(s===e){showToast('请先选择文本');return;} const sel=ta.value.substring(s,e); const cfg=getAllConfigData(); const vc=getAllValidCategories(cfg); const tokens=sel.split(/[\s,，.。、+\-*＊\/\\|]+/).filter(t=>t.trim()); const matched=tokens.filter(t=>vc.has(t)); if(!matched.length){showToast('未识别有效分类');return;} let sets=matched.map(cat=>{ let nums=[]; if(cfg.shengxiaoAttr[cat]){ cfg.shengxiaoAttr[cat].forEach(z=>{ if(cfg.zodiac[z])nums.push(...cfg.zodiac[z].map(n=>n.toString().padStart(2,'0'))); }); } const dir=cfg.wuxing[cat]||cfg.bose[cat]||cfg.banbo[cat]||cfg.danshuang[cat]||cfg.weishu[cat]||cfg.daxiaodanshuang[cat]||cfg.daxiao[cat]||cfg.heshu[cat]||cfg.toushu[cat]||cfg.menshu[cat]||cfg.duanwei[cat]||cfg.hedahexiao[cat]||cfg.weidaweixiao[cat]||cfg.hewei[cat]||cfg.heshudanshuang[cat]||cfg.toushuDanshuang[cat]; if(dir)nums.push(...dir.map(n=>n.toString().padStart(2,'0'))); if(cfg.zodiac[cat])nums.push(...cfg.zodiac[cat].map(n=>n.toString().padStart(2,'0'))); return new Set(nums); }); let inter=sets[0]; for(let i=1;i<sets.length;i++)inter=new Set([...inter].filter(x=>sets[i].has(x))); const res=[...inter].sort((a,b)=>parseInt(a)-parseInt(b)); if(!res.length){showToast('无共同号码');return;} const str=res.join('-'); const cf=await confirm(`转换结果：${str}\n是否替换选中文本？`); if(cf){ta.value=ta.value.substring(0,s)+str+ta.value.substring(e);convertOrderText();} }
 
 function tokenizeAndJoin(content) { const cfg = getAllConfigData(); const vc = getAllValidCategories(cfg); const tokens = content.split(/[^\u4e00-\u9fa5\d]+/).filter(t => t.trim()).map(t => t.trim()); const res = []; tokens.forEach(t => { const tm = t.match(/^(\d{2,})尾$/); const hm = t.match(/^(\d{2,})头$/); if (tm) { const ds = tm[1].split('').map(d => d + '尾'); res.push(...ds); } else if (hm) { const ds = hm[1].split('').map(d => d + '头'); res.push(...ds); } else if (/^\d{1,2}$/.test(t)) { const n = parseInt(t); if (n >= 1 && n <= 49) res.push(t.length === 1 ? '0' + t : t); } else if (vc.has(t)) { res.push(t); } else if (/^[\u4e00-\u9fa5]+$/.test(t)) { const cs = t.match(/[\u4e00-\u9fa5]/g) || []; if (cs.some(c => vc.has(c))) { cs.forEach(c => { if (vc.has(c)) res.push(c); }); } } }); return res.join('-'); }
-    function convertOrderText() { const inputEl = document.querySelector('.source-order-input'); const resultEl = document.getElementById('orderResult'); const invalidSpan = document.getElementById('invalidTokensDisplay'); if (!inputEl || !resultEl) return; let text = applyCategoryAliases(applyReplacePresets(inputEl.value.trim())); if (!text) { resultEl.innerHTML = ''; if (invalidSpan) { invalidSpan.textContent = ''; invalidSpan.style.display = 'none'; } updateOrderTotalDisplay(); return; } const lines = text.split('\n'); const resultLines = []; const originalContents = []; const skipInvalidCheck = new Set(); const HARD_AMP_LIST = ['每个号','各号码','各数','每数','每号','个号','各号','各码','号','个','=','各']; const cusAmp = getCustomAmountPrefixes(); const allAmpList = [...HARD_AMP_LIST, ...cusAmp]; allAmpList.sort((a, b) => b.length - a.length); const AMP_ORIGINAL = '(?:' + allAmpList.map(s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|') + ')'; const IGN = ['奥特','特码','澳门特码','特','奥','澳','澳门','澳門','澳門特碼','澳门特码','澳門特码',':','。','.','新',',','新','新奥','门','，','新澳','新特','新澳特','特碼']; const cusPre = getCustomPrefixes(); const allPre = [...IGN, ...cusPre]; const baseSuf = '元块咪米斤#،。\\s'; const cusAmtSuf = getCustomAmountSuffixes(); const allAmtChars = [...new Set([...baseSuf.split(''), ...cusAmtSuf])].join(''); const AMTS = `[${allAmtChars}]*`; function cn2n(s) { const m = {'零':0,'一':1,'二':2,'三':3,'四':4,'五':5,'六':6,'七':7,'八':8,'九':9,'十':10,'百':100,'千':1000}; let sum = 0, tmp = 0; for (let c of s) { const v = m[c]; if (v === 10 || v === 100 || v === 1000) { if (tmp === 0) tmp = 1; tmp *= v; sum += tmp; tmp = 0; } else if (v !== undefined) { if (tmp > 0) { sum += tmp; tmp = 0; } tmp = v; } } sum += tmp; return sum; } const SIMPLE_PAIR = /^(\d{1,2})[^\d\s]+(\d+)$/; const cfg = getAllConfigData(); const vc = getAllValidCategories(cfg); const allCatNames = new Set(); Object.keys(cfg.zodiac).forEach(z => allCatNames.add(z)); vc.forEach(c => allCatNames.add(c)); const ZODIAC_SET = new Set(Object.keys(cfg.zodiac)); function startsWithCategory(str) { for (let cat of allCatNames) { if (str.startsWith(cat)) return true; } return false; } function isValidNumber(token) { return /^(0[1-9]|[1-4][0-9]|49?|[1-9])$/.test(token); } const PUNCT_REGEX = /[\s,，.。、+\-*＊\/\\|!@#$%^&*()=+_{}\[\]:;"'<>,.?\/~！@#￥%…&*（）—+【】{}|："；"''《》，。？、]/g; function isValidToken(token) { const clean = token.replace(PUNCT_REGEX, ''); if (clean === '') return false; if (isValidNumber(clean)) return true; if (/^\d+尾$/.test(clean) || /^\d+头$/.test(clean)) return true; if (allCatNames.has(clean)) return true; if (/^[\u4e00-\u9fa5]+$/.test(clean) && clean.length > 1) { const chars = clean.split(''); if (chars.every(ch => allCatNames.has(ch))) return true; } return false; } lines.forEach(line => { line = line.trim(); if (!line) return; const rangeFullMatch = line.match(new RegExp(`^([\\u4e00-\\u9fa5\\-]*?)(\\d{1,2})到(\\d{1,2})\\s*${AMP_ORIGINAL}\\s*(\\d+)\\s*${AMTS}$`)); if (rangeFullMatch) { const prefix = rangeFullMatch[1].replace(/-$/, '').trim(); const startNum = parseInt(rangeFullMatch[2]); const endNum = parseInt(rangeFullMatch[3]); const amt = rangeFullMatch[4]; if (startNum >= 1 && startNum <= 49 && endNum >= 1 && endNum <= 49 && startNum <= endNum) { const numList = []; for (let i = startNum; i <= endNum; i++) { numList.push(i.toString().padStart(2, '0')); } const expanded = numList.join('-'); const finalLine = prefix ? `${prefix}-${expanded}` : expanded; resultLines.push(`${finalLine} 各数 ${amt}`); originalContents.push(finalLine); skipInvalidCheck.add(resultLines.length - 1); return; } } const pairMatch = line.match(SIMPLE_PAIR); if (pairMatch) { let num = pairMatch[1]; const amount = pairMatch[2]; if (num.length === 1) num = '0' + num; resultLines.push(`${num} 各数 ${amount}`); originalContents.push(pairMatch[1]); return; } let cl = line; allPre.forEach(p => { if (cl.startsWith(p)) cl = cl.substring(p.length).trim(); }); cl = cl.replace(/[^\u4e00-\u9fa5\d]+$/, ''); cl = cl.replace(/([一二三四五六七八九十百千]+)/g, (m) => cn2n(m)); while (cl && !/^[\d\u4e00-\u9fa5]/.test(cl)) { cl = cl.substring(1).trim(); } while (cl && !/^\d/.test(cl) && !startsWithCategory(cl)) { cl = cl.substring(1).trim(); } if (!cl) return; const shxMatch = cl.match(new RegExp(`^(.+?)(各肖|各)\\s*(\\d+)${AMTS}$`)); if (shxMatch) { const rawContent = shxMatch[1]; const amtRaw = parseInt(shxMatch[3]) || 0; if (!/\d/.test(rawContent)) { const zodiacs = []; for (const ch of rawContent) { if (ZODIAC_SET.has(ch)) zodiacs.push(ch); } if (zodiacs.length > 0) { const curBenming = document.getElementById('startZodiacSelect')?.value || '马'; const benmingList = [], otherList = []; zodiacs.forEach(z => { if (z === curBenming) benmingList.push(z); else otherList.push(z); }); const amtPerBen = Math.round(amtRaw / 5); const amtPerOther = Math.round(amtRaw / 4); if (benmingList.length > 0) { resultLines.push(`${benmingList.join('-')} 各数 ${amtPerBen}`); originalContents.push(benmingList.join('-')); } if (otherList.length > 0) { resultLines.push(`${otherList.join('-')} 各数 ${amtPerOther}`); originalContents.push(otherList.join('-')); } return; } } } const op = new RegExp(`(${AMP_ORIGINAL}\\s*\\d+${AMTS})`, 'g'); const om = cl.match(op); if (om && om.length > 0) { let rl = cl; om.forEach(om => { const oi = rl.indexOf(om); if (oi !== -1) { const cont = rl.substring(0, oi).trim(); const am = om.match(/(\d+)/); if (am) { const amt = am[1]; if (cont) { const jo = tokenizeAndJoin(cont); if (jo) { resultLines.push(`${jo} 各数 ${amt}`); originalContents.push(cont); } } rl = rl.substring(oi + om.length); } } }); if (rl.trim()) { const jo = tokenizeAndJoin(rl.trim()); if (jo) { resultLines.push(`${jo} 各数 0`); originalContents.push(rl.trim()); } } } else { const pat = new RegExp(`^(.+?)${AMP_ORIGINAL}\\s*(\\d+)$`); const m = cl.match(pat); if (m) { const jo = tokenizeAndJoin(m[1].trim()); if (jo) { resultLines.push(`${jo} 各数 ${m[2]}`); originalContents.push(m[1].trim()); } } else { const sp = new RegExp(`(\\d+)(?:号|${AMP_ORIGINAL})\\s*(\\d+)$`); const sm = cl.match(sp); if (sm) { let num = sm[1].trim(); if (parseInt(num) >= 1 && parseInt(num) <= 49) { num = num.length === 1 ? `0${num}` : num; resultLines.push(`${num} 各数 ${sm[2]}`); originalContents.push(num); } } else { const jo = tokenizeAndJoin(cl); if (jo) { resultLines.push(`${jo} 各数 0`); originalContents.push(cl); } } } } }); const lineInvalidTokens = []; resultLines.forEach((line, idx) => { if (skipInvalidCheck.has(idx)) { lineInvalidTokens.push([]); return; } const originalContent = originalContents[idx] || ''; const rawTokens = originalContent.split(/[\s,，.。、+\-*＊\/\\|]+/).filter(t => t.trim()); const invalidInLine = []; rawTokens.forEach(token => { if (!isValidToken(token)) { const clean = token.replace(PUNCT_REGEX, ''); if (clean) { if (/^[\u4e00-\u9fa5]+$/.test(clean) && clean.length > 1) { const chars = clean.split(''); chars.forEach(ch => { if (!allCatNames.has(ch)) invalidInLine.push(ch); }); } else { invalidInLine.push(clean); } } } }); lineInvalidTokens.push(invalidInLine); }); let html = ''; resultLines.forEach((line, idx) => { const m = line.match(/^(.+?)\s+各数\s+(\d+)$/); if (!m) { html += `<div style="color:red;">${line}</div>`; return; } const content = m[1]; const amt = parseInt(m[2]) || 0; const hasInvalidInSource = lineInvalidTokens[idx].length > 0; const isSkipped = skipInvalidCheck.has(idx); const { numbers, zodiacs } = countItemsInLine(line, cfg, vc); const totalItems = numbers.length + zodiacs.length; const isInvalid = !isSkipped && (totalItems === 0 || amt <= 0 || hasInvalidInSource); if (isInvalid) { html += `<div style="color:red;">${line}</div>`; } else { html += `<div>${line}</div>`; } }); resultEl.innerHTML = html; if (invalidSpan) { const displayLines = []; lineInvalidTokens.forEach(arr => { if (arr.length > 0) { displayLines.push('无效: ' + arr.join(', ')); } }); if (displayLines.length > 0) { invalidSpan.innerHTML = displayLines.join('<br>'); invalidSpan.style.display = 'inline'; } else { invalidSpan.innerHTML = ''; invalidSpan.style.display = 'none'; } } updateOrderTotalDisplay(); }
+function convertOrderText() { const inputEl = document.querySelector('.source-order-input'); const resultEl = document.getElementById('orderResult'); const invalidSpan = document.getElementById('invalidTokensDisplay'); if (!inputEl || !resultEl) return; let text = applyCategoryAliases(applyReplacePresets(inputEl.value.trim())); if (!text) { resultEl.innerHTML = ''; if (invalidSpan) { invalidSpan.textContent = ''; invalidSpan.style.display = 'none'; } updateOrderTotalDisplay(); return; } const lines = text.split('\n'); const resultLines = []; const originalContents = []; const skipInvalidCheck = new Set(); const HARD_AMP_LIST = ['每个号','各号码','各数','每数','每号','个号','各号','各码','号','个','=','各']; const cusAmp = getCustomAmountPrefixes(); const allAmpList = [...HARD_AMP_LIST, ...cusAmp]; allAmpList.sort((a, b) => b.length - a.length); const AMP_ORIGINAL = '(?:' + allAmpList.map(s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|') + ')'; const IGN = ['奥特','特码','澳门特码','特','奥','澳','澳门','澳門','澳門特碼','澳门特码','澳門特码',':','。','.','新',',','新','新奥','门','，','新澳','新特','新澳特','特碼']; const cusPre = getCustomPrefixes(); const allPre = [...IGN, ...cusPre]; const baseSuf = '元块咪米斤#،。\\s'; const cusAmtSuf = getCustomAmountSuffixes(); const allAmtChars = [...new Set([...baseSuf.split(''), ...cusAmtSuf])].join(''); const AMTS = `[${allAmtChars}]*`; function cn2n(s) { const m = {'零':0,'一':1,'二':2,'三':3,'四':4,'五':5,'六':6,'七':7,'八':8,'九':9,'十':10,'百':100,'千':1000}; let sum = 0, tmp = 0; for (let c of s) { const v = m[c]; if (v === 10 || v === 100 || v === 1000) { if (tmp === 0) tmp = 1; tmp *= v; sum += tmp; tmp = 0; } else if (v !== undefined) { if (tmp > 0) { sum += tmp; tmp = 0; } tmp = v; } } sum += tmp; return sum; } const SIMPLE_PAIR = /^(\d{1,2})[^\d\s]+(\d+)$/; const cfg = getAllConfigData(); const vc = getAllValidCategories(cfg); const allCatNames = new Set(); Object.keys(cfg.zodiac).forEach(z => allCatNames.add(z)); vc.forEach(c => allCatNames.add(c)); const ZODIAC_SET = new Set(Object.keys(cfg.zodiac)); function startsWithCategory(str) { for (let cat of allCatNames) { if (str.startsWith(cat)) return true; } return false; } function isValidNumber(token) { return /^(0[1-9]|[1-4][0-9]|49?|[1-9])$/.test(token); } const PUNCT_REGEX = /[\s,，.。、+\-*＊\/\\|!@#$%^&*()=+_{}\[\]:;"'<>,.?\/~！@#￥%…&*（）—+【】{}|："；"''《》，。？、]/g; function isValidToken(token) { const clean = token.replace(PUNCT_REGEX, ''); if (clean === '') return false; if (isValidNumber(clean)) return true; if (/^\d+尾$/.test(clean) || /^\d+头$/.test(clean)) return true; if (allCatNames.has(clean)) return true; if (/^[\u4e00-\u9fa5]+$/.test(clean) && clean.length > 1) { const chars = clean.split(''); if (chars.every(ch => allCatNames.has(ch))) return true; } return false; } lines.forEach(line => { line = line.trim(); if (!line) return; const rangeFullMatch = line.match(new RegExp(`^([\\u4e00-\\u9fa5\\-]*?)(\\d{1,2})到(\\d{1,2})\\s*${AMP_ORIGINAL}\\s*(\\d+)\\s*${AMTS}$`)); if (rangeFullMatch) { const prefix = rangeFullMatch[1].replace(/-$/, '').trim(); const startNum = parseInt(rangeFullMatch[2]); const endNum = parseInt(rangeFullMatch[3]); const amt = rangeFullMatch[4]; if (startNum >= 1 && startNum <= 49 && endNum >= 1 && endNum <= 49 && startNum <= endNum) { const numList = []; for (let i = startNum; i <= endNum; i++) { numList.push(i.toString().padStart(2, '0')); } const expanded = numList.join('-'); const finalLine = prefix ? `${prefix}-${expanded}` : expanded; resultLines.push(`${finalLine} 各数 ${amt}`); originalContents.push(finalLine); skipInvalidCheck.add(resultLines.length - 1); return; } } const pairMatch = line.match(SIMPLE_PAIR); if (pairMatch) { let num = pairMatch[1]; const amount = pairMatch[2]; if (num.length === 1) num = '0' + num; resultLines.push(`${num} 各数 ${amount}`); originalContents.push(pairMatch[1]); return; } let cl = line; allPre.forEach(p => { if (cl.startsWith(p)) cl = cl.substring(p.length).trim(); }); cl = cl.replace(/[^\u4e00-\u9fa5\d]+$/, ''); cl = cl.replace(/([一二三四五六七八九十百千]+)/g, (m) => cn2n(m)); while (cl && !/^[\d\u4e00-\u9fa5]/.test(cl)) { cl = cl.substring(1).trim(); } while (cl && !/^\d/.test(cl) && !startsWithCategory(cl)) { cl = cl.substring(1).trim(); } if (!cl) return; const shxMatch = cl.match(new RegExp(`^(.+?)(各肖|各)\\s*(\\d+)${AMTS}$`)); if (shxMatch) { const rawContent = shxMatch[1]; const amtRaw = parseInt(shxMatch[3]) || 0; if (!/\d/.test(rawContent)) { const zodiacs = []; for (const ch of rawContent) { if (ZODIAC_SET.has(ch)) zodiacs.push(ch); } if (zodiacs.length > 0) { const curBenming = document.getElementById('startZodiacSelect')?.value || '马'; const benmingList = [], otherList = []; zodiacs.forEach(z => { if (z === curBenming) benmingList.push(z); else otherList.push(z); }); const amtPerBen = Math.round(amtRaw / 5); const amtPerOther = Math.round(amtRaw / 4); if (benmingList.length > 0) { resultLines.push(`${benmingList.join('-')} 各数 ${amtPerBen}`); originalContents.push(benmingList.join('-')); } if (otherList.length > 0) { resultLines.push(`${otherList.join('-')} 各数 ${amtPerOther}`); originalContents.push(otherList.join('-')); } return; } } } const op = new RegExp(`(${AMP_ORIGINAL}\\s*\\d+${AMTS})`, 'g'); const om = cl.match(op); if (om && om.length > 0) { let rl = cl; om.forEach(om => { const oi = rl.indexOf(om); if (oi !== -1) { const cont = rl.substring(0, oi).trim(); const am = om.match(/(\d+)/); if (am) { const amt = am[1]; if (cont) { const jo = tokenizeAndJoin(cont); if (jo) { resultLines.push(`${jo} 各数 ${amt}`); originalContents.push(cont); } } rl = rl.substring(oi + om.length); } } }); if (rl.trim()) { const jo = tokenizeAndJoin(rl.trim()); if (jo) { resultLines.push(`${jo} 各数 0`); originalContents.push(rl.trim()); } } } else { const pat = new RegExp(`^(.+?)${AMP_ORIGINAL}\\s*(\\d+)$`); const m = cl.match(pat); if (m) { const jo = tokenizeAndJoin(m[1].trim()); if (jo) { resultLines.push(`${jo} 各数 ${m[2]}`); originalContents.push(m[1].trim()); } } else { const sp = new RegExp(`(\\d+)(?:号|${AMP_ORIGINAL})\\s*(\\d+)$`); const sm = cl.match(sp); if (sm) { let num = sm[1].trim(); if (parseInt(num) >= 1 && parseInt(num) <= 49) { num = num.length === 1 ? `0${num}` : num; resultLines.push(`${num} 各数 ${sm[2]}`); originalContents.push(num); } } else { const jo = tokenizeAndJoin(cl); if (jo) { resultLines.push(`${jo} 各数 0`); originalContents.push(cl); } } } } }); const lineInvalidTokens = []; resultLines.forEach((line, idx) => { if (skipInvalidCheck.has(idx)) { lineInvalidTokens.push([]); return; } const originalContent = originalContents[idx] || ''; const rawTokens = originalContent.split(/[\s,，.。、+\-*＊\/\\|]+/).filter(t => t.trim()); const invalidInLine = []; rawTokens.forEach(token => { if (!isValidToken(token)) { const clean = token.replace(PUNCT_REGEX, ''); if (clean) { if (/^[\u4e00-\u9fa5]+$/.test(clean) && clean.length > 1) { const chars = clean.split(''); chars.forEach(ch => { if (!allCatNames.has(ch)) invalidInLine.push(ch); }); } else { invalidInLine.push(clean); } } } }); lineInvalidTokens.push(invalidInLine); }); let html = ''; resultLines.forEach((line, idx) => { const m = line.match(/^(.+?)\s+各数\s+(\d+)$/); if (!m) { html += `<div style="color:red;">${line}</div>`; return; } const content = m[1]; const amt = parseInt(m[2]) || 0; const hasInvalidInSource = lineInvalidTokens[idx].length > 0; const isSkipped = skipInvalidCheck.has(idx); const { numbers, zodiacs } = countItemsInLine(line, cfg, vc); const totalItems = numbers.length + zodiacs.length; const isInvalid = !isSkipped && (totalItems === 0 || amt <= 0 || hasInvalidInSource); if (isInvalid) { html += `<div style="color:red;">${line}</div>`; } else { html += `<div>${line}</div>`; } }); resultEl.innerHTML = html; if (invalidSpan) { const displayLines = []; lineInvalidTokens.forEach(arr => { if (arr.length > 0) { displayLines.push('无效: ' + arr.join(', ')); } }); if (displayLines.length > 0) { invalidSpan.innerHTML = displayLines.join('<br>'); invalidSpan.style.display = 'inline'; } else { invalidSpan.innerHTML = ''; invalidSpan.style.display = 'none'; } } updateOrderTotalDisplay(); }
 
 function getAllValidCategories(cfg) { const s=new Set(); Object.keys(cfg.zodiac).forEach(k=>s.add(k)); Object.keys(cfg.shengxiaoAttr).forEach(k=>s.add(k)); Object.keys(cfg.wuxing).forEach(k=>s.add(k)); Object.keys(cfg.bose).forEach(k=>s.add(k)); Object.keys(cfg.banbo).forEach(k=>s.add(k)); Object.keys(cfg.danshuang).forEach(k=>s.add(k)); Object.keys(cfg.weishu).forEach(k=>s.add(k)); Object.keys(cfg.daxiaodanshuang).forEach(k=>s.add(k)); Object.keys(cfg.daxiao).forEach(k=>s.add(k)); Object.keys(cfg.heshu).forEach(k=>s.add(k)); Object.keys(cfg.toushu).forEach(k=>s.add(k)); Object.keys(cfg.menshu).forEach(k=>s.add(k)); Object.keys(cfg.duanwei).forEach(k=>s.add(k)); Object.keys(cfg.hedahexiao).forEach(k=>s.add(k)); Object.keys(cfg.weidaweixiao).forEach(k=>s.add(k)); Object.keys(cfg.hewei).forEach(k=>s.add(k)); Object.keys(cfg.heshudanshuang).forEach(k=>s.add(k)); Object.keys(cfg.toushuDanshuang).forEach(k=>s.add(k)); s.add('蓝大'); s.add('蓝小'); s.add('红大'); s.add('红小'); s.add('绿大'); s.add('绿小'); s.add('蓝波大'); s.add('蓝波小'); s.add('红波大'); s.add('红波小'); s.add('绿波大'); s.add('绿波小'); return s; }
 
@@ -1165,7 +1164,7 @@ async function screenshotTable(tid){ const tbl=document.getElementById(tid); if(
 function renderReportAmountTable(){ const tbl=document.getElementById('reportAmountTable'); if(!tbl)return; tbl.innerHTML=''; const cols=[...Array(5)].map((_,c)=>Array.from({length:c===4?9:10},(_,r)=>(c*10+r+1).toString().padStart(2,'0'))); let th='<thead><tr>'; for(let c=0;c<5;c++)th+='<th>号码</th><th>金额</th>'; th+='</tr></thead>'; let tb='<tbody>'; for(let r=0;r<10;r++){ tb+='<tr>'; for(let c=0;c<5;c++){ const n=cols[c][r]||''; if(n){ const a=reportAmountData[n]||0; const cls=redNumbers.includes(n)?'red-text':(blueNumbers.includes(n)?'blue-text':'green-text'); tb+=`<td class="${cls}">${n}</td><td class="black-text">${a||''}</td>`; }else{tb+='<td></td><td></td>';} } tb+='</tr>'; } tb+='</tbody>'; tbl.innerHTML=th+tb; updateReportAmountTotal(); }
 function renderFrequencyCards(){ const nt=document.getElementById('numberFreqTable'); if(!nt)return; nt.innerHTML=''; const cols=[...Array(5)].map((_,c)=>Array.from({length:c===4?9:10},(_,r)=>(c*10+r+1).toString().padStart(2,'0'))); let th='<thead><tr>'; for(let c=0;c<5;c++)th+='<th>号码</th><th>次数</th>'; th+='</tr></thead>'; let tb='<tbody>'; for(let r=0;r<10;r++){ tb+='<tr>'; for(let c=0;c<5;c++){ const n=cols[c][r]||''; if(n){ const cnt=numberCount[n]||0; const cls=redNumbers.includes(n)?'red-text':(blueNumbers.includes(n)?'blue-text':'green-text'); tb+=`<td class="${cls}">${n}</td><td class="black-text">${cnt||''}</td>`; }else{tb+='<td></td><td></td>';} } tb+='</tr>'; } tb+='</tbody>'; nt.innerHTML=th+tb; const zt=document.getElementById('zodiacFreqTable'); if(!zt)return; zt.innerHTML=''; const lz=['鼠','牛','虎','兔','龙','蛇'],rz=['马','羊','猴','鸡','狗','猪']; const zcm={'鼠':'red-text','兔':'red-text','马':'red-text','鸡':'red-text','虎':'blue-text','蛇':'blue-text','猴':'blue-text','猪':'blue-text','牛':'green-text','龙':'green-text','羊':'green-text','狗':'green-text'}; let zth='<thead><tr><th>生肖</th><th>次数</th><th>金额</th><th>上报</th><th>生肖</th><th>次数</th><th>金额</th><th>上报</th></tr></thead>',ztb='<tbody>'; for(let r=0;r<6;r++){ const l=lz[r],r2=rz[r]; const lc=zodiacCount[l]||0,rc=zodiacCount[r2]||0; const la=zodiacDirectAmount[l]||0,ra=zodiacDirectAmount[r2]||0; const lrp=zodiacReportAmount[l]||0,rrp=zodiacReportAmount[r2]||0; ztb+=`<tr><td class="${zcm[l]}">${l}</td><td class="black-text">${lc||''}</td><td class="amount-red-text">${la||''}</td><td class="report-red-text">${lrp||''}</td><td class="${zcm[r2]}">${r2}</td><td class="black-text">${rc||''}</td><td class="amount-red-text">${ra||''}</td><td class="report-red-text">${rrp||''}</td></tr>`; } ztb+='</tbody>'; zt.innerHTML=zth+ztb; }
 function renderAmountFrequencyCards(){ const nt=document.getElementById('numberAmountFreqTable'); if(!nt)return; nt.innerHTML=''; const cols=[...Array(5)].map((_,c)=>Array.from({length:c===4?9:10},(_,r)=>(c*10+r+1).toString().padStart(2,'0'))); let th='<thead><tr>'; for(let c=0;c<5;c++)th+='<th>号码</th><th>次数</th>'; th+='</table></thead>'; let tb='<tbody>'; for(let r=0;r<10;r++){ tb+='<tr>'; for(let c=0;c<5;c++){ const n=cols[c][r]||''; if(n){ const cnt=numberAmountCount[n]||0; const cls=redNumbers.includes(n)?'red-text':(blueNumbers.includes(n)?'blue-text':'green-text'); tb+=`<td class="${cls}">${n}</td><td class="black-text">${cnt||''}</td>`; }else{tb+='<td></td><td></td>';} } tb+='</tr>'; } tb+='</tbody>'; nt.innerHTML=th+tb; const zt=document.getElementById('zodiacAmountFreqTable'); if(!zt)return; zt.innerHTML=''; const lz=['鼠','牛','虎','兔','龙','蛇'],rz=['马','羊','猴','鸡','狗','猪']; const zcm={'鼠':'red-text','兔':'red-text','马':'red-text','鸡':'red-text','虎':'blue-text','蛇':'blue-text','猴':'blue-text','猪':'blue-text','牛':'green-text','龙':'green-text','羊':'green-text','狗':'green-text'}; let zth='<thead><tr><th>生肖</th><th>次数</th><th>金额</th><th>上报</th><th>生肖</th><th>次数</th><th>金额</th><th>上报</th></tr></thead>',ztb='<tbody>'; for(let r=0;r<6;r++){ const l=lz[r],r2=rz[r]; const lc=zodiacAmountCount[l]||0,rc=zodiacAmountCount[r2]||0; const la=zodiacFilteredAmount[l]||0,ra=zodiacFilteredAmount[r2]||0; const lrp=zodiacFilteredReportAmount[l]||0,rrp=zodiacFilteredReportAmount[r2]||0; ztb+=`<tr><td class="${zcm[l]}">${l}</td><td class="black-text">${lc||''}</td><td class="amount-red-text">${la||''}</td><td class="report-red-text">${lrp||''}</td><td class="${zcm[r2]}">${r2}</td><td class="black-text">${rc||''}</td><td class="amount-red-text">${ra||''}</td><td class="report-red-text">${rrp||''}</td></tr>`; } ztb+='</tbody>'; zt.innerHTML=zth+ztb; }
-    function getNumberListForCategory(cat,cfg){
+function getNumberListForCategory(cat,cfg){
   const nums=[];
   if(cat==='蓝大'||cat==='蓝波大'){ const lanbo = cfg.bose['蓝波']||[]; const dashu = cfg.daxiao['大']||[]; lanbo.forEach(n=>{ if(dashu.includes(n)) nums.push(n.padStart(2,'0')); }); return [...new Set(nums)]; }
   if(cat==='蓝小'||cat==='蓝波小'){ const lanbo = cfg.bose['蓝波']||[]; const xiao = cfg.daxiao['小']||[]; lanbo.forEach(n=>{ if(xiao.includes(n)) nums.push(n.padStart(2,'0')); }); return [...new Set(nums)]; }
@@ -1528,7 +1527,6 @@ function switchParseMethod() { const text = document.getElementById('reportCapIn
 function copyOrderGroup() { const text = document.getElementById('parseResultArea').innerText; if (!text) { showToast('没有解析结果'); return; } navigator.clipboard.writeText(text).then(() => showToast('订单组已复制')); }
 const originalApplyReportCap = applyReportCap;
 applyReportCap = function() { originalApplyReportCap(); const info = document.getElementById('reportCapInfo').innerText; if (!info || info === '无超出的号码') { document.getElementById('parseResultArea').innerText = ''; } };
-
 // ===== 修正后的回收站窗口（按地区隔离显示） =====
 async function showRecycleBin() { const existingWin = document.getElementById('recycleWin'); if (existingWin) existingWin.remove(); const allRecords = await getRecycleBinRecords(); const records = allRecords.filter(r => r.region === currentRegion); const win = document.createElement('div'); win.className = 'floating-window'; win.id = 'recycleWin'; win.style.width = '750px'; win.style.height = '550px'; win.style.left = '50%'; win.style.top = '50%'; win.style.transform = 'translate(-50%, -50%)'; let html = `<div class="modal-header"><h3>🗑️ 回收站</h3><div class="window-controls"><button onclick="maximizeWindow('recycleWin')">🗖</button><button onclick="document.getElementById('recycleWin').remove()">×</button></div></div>`; html += `<div class="modal-body" style="display:flex; flex-direction:column; height: calc(100% - 120px);">`; html += `<div style="margin-bottom:10px;display:flex;gap:12px;flex-wrap:wrap;align-items:center;position:sticky;top:0;background:rgba(255,255,255,0.9);z-index:2;padding:5px 0;"><button onclick="checkAllRecycle()" style="padding:6px 12px;background:#007bff;color:#fff;border:none;border-radius:4px;">全选</button><button onclick="uncheckAllRecycle()" style="padding:6px 12px;background:#6c757d;color:#fff;border:none;border-radius:4px;">取消全选</button><button onclick="restoreCheckedRecycle()" style="padding:6px 12px;background:#27ae60;color:#fff;border:none;border-radius:4px;">恢复选中</button><button onclick="deleteCheckedRecycle()" style="padding:6px 12px;background:#e74c3c;color:#fff;border:none;border-radius:4px;">彻底删除</button><button onclick="emptyRecycleBin()" style="padding:6px 12px;background:#8e44ad;color:#fff;border:none;border-radius:4px;margin-left:auto;">清空回收站</button></div>`; html += `<div id="recycleListContainer" style="flex:1; overflow-y:auto;">`; if (records.length === 0) { html += `<div style="padding:20px;text-align:center;color:#666;">回收站为空</div>`; } else { records.sort((a,b) => new Date(b.deletedAt) - new Date(a.deletedAt)); records.forEach(rec => { const ts = formatTimestampToCST(rec.deletedAt); const typeLabel = rec.type === 'order' ? '下单' : '上报'; const typeColor = rec.type === 'order' ? '#3498db' : '#e67e22'; html += `<div class="order-item"><input type="checkbox" class="recycle-check" data-id="${rec.id}"><div class="order-content">${rec.content.replace(/\n/g,'<br>')}</div><div class="order-info"><span class="order-total" style="color:#000;">合计：${rec.totalAmount || 0}</span><span class="order-meta"><span style="color:${typeColor};">类型：${typeLabel}</span><span style="color:#e74c3c;">删除：${ts}</span><span>用户：${rec.user || '未知'}</span></span></div><button class="order-del" onclick="restoreRecycleRecord('${rec.id}')" style="background:#27ae60;margin-right:4px;">恢复</button><button class="order-del" onclick="permanentlyDeleteRecycleRecord('${rec.id}')">删除</button></div>`; }); } html += `</div></div><div class="modal-footer" style="justify-content:space-between;"><span style="font-size:12px;color:#666;" id="recycleStorageInfo"></span><button onclick="document.getElementById('recycleWin').remove()" style="padding:8px 16px;background:#6c757d;color:#fff;border:none;border-radius:4px;">关闭</button></div>`; win.innerHTML = html; document.body.appendChild(win); updateRecycleStorageInfo(); makeWindowDraggable('recycleWin'); highestZ += 1; win.style.zIndex = highestZ; updateRecycleCount(); }
 function updateRecycleStorageInfo() { const span = document.getElementById('recycleStorageInfo'); if (!span) return; getRecycleBinRecords().then(allRecords => { const records = allRecords.filter(r => r.region === currentRegion); let bytes = 0; records.forEach(r => bytes += JSON.stringify(r).length * 2); const usedMB = (bytes / (1024*1024)).toFixed(2); span.textContent = `回收站占用：${usedMB} MB（共${records.length}条记录）`; }); }
@@ -2236,7 +2234,6 @@ function copyCardANumbers(type) {
     showToast('复制失败');
   });
 }
-
 // ========== 智能决策中心核心函数 ==========
 function renderSmartDecision() {
   const container = document.getElementById('smartDecisionContent');
@@ -2264,6 +2261,7 @@ function renderSmartDecision() {
   if (!currentIssue) { container.innerHTML = ''; return; }
 
   const drawList = [];
+  const drawIssueMap = [];
   const numCount = {};
   for (let i = currentIssue - period; i < currentIssue; i++) {
     if (i < 1) continue;
@@ -2273,6 +2271,7 @@ function renderSmartDecision() {
       const num = entry.number.trim().padStart(2, '0');
       if (/^\d{2}$/.test(num) && parseInt(num) >= 1 && parseInt(num) <= 49) {
         drawList.push(num);
+        drawIssueMap.push({ num, issue: issueId });
         numCount[num] = (numCount[num] || 0) + 1;
       }
     }
@@ -2292,45 +2291,94 @@ function renderSmartDecision() {
   let xiaoCount = 0, daCount = 0;
 
   const zodiacSeq = [];
+  const zodiacIssueSeq = [];
   const boseSeq = [];
+  const boseIssueSeq = [];
   const weishuSeq = [];
+  const weishuIssueSeq = [];
   const toushuSeq = [];
+  const toushuIssueSeq = [];
   const jysxSeq = [];
+  const jysxIssueSeq = [];
   const dsSeq = [];
+  const dsIssueSeq = [];
   const dxSeq = [];
+  const dxIssueSeq = [];
 
-  drawList.forEach(num => {
+  drawIssueMap.forEach(({num, issue}) => {
     const z = currentZodiacMap[num] || '';
-    if (z) { zodiacCountLocal[z] = (zodiacCountLocal[z] || 0) + 1; zodiacSeq.push(z); }
+    if (z) { zodiacCountLocal[z] = (zodiacCountLocal[z] || 0) + 1; zodiacSeq.push(z); zodiacIssueSeq.push(issue); }
     const intNum = parseInt(num);
 
     let b = '';
     if (redNumbers.includes(num)) b = '红波';
     else if (blueNumbers.includes(num)) b = '蓝波';
     else if (greenNumbers.includes(num)) b = '绿波';
-    boseCount[b] = (boseCount[b] || 0) + 1; boseSeq.push(b);
+    boseCount[b] = (boseCount[b] || 0) + 1; boseSeq.push(b); boseIssueSeq.push(issue);
 
     const ws = num.slice(-1) + '尾';
-    weishuCount[ws] = (weishuCount[ws] || 0) + 1; weishuSeq.push(ws);
+    weishuCount[ws] = (weishuCount[ws] || 0) + 1; weishuSeq.push(ws); weishuIssueSeq.push(issue);
 
     const ts = num[0] + '头';
-    toushuCount[ts] = (toushuCount[ts] || 0) + 1; toushuSeq.push(ts);
+    toushuCount[ts] = (toushuCount[ts] || 0) + 1; toushuSeq.push(ts); toushuIssueSeq.push(issue);
 
     const jiaqinZodiacs = cfg.shengxiaoAttr['家禽'] || [];
     const jy = (z && jiaqinZodiacs.includes(z)) ? '家禽' : '野兽';
     if (jy === '家禽') jiaqinCount++; else yeshouCount++;
-    jysxSeq.push(jy);
+    jysxSeq.push(jy); jysxIssueSeq.push(issue);
 
     const ds = intNum % 2 === 1 ? '单' : '双';
     if (ds === '单') danCount++; else shuangCount++;
-    dsSeq.push(ds);
+    dsSeq.push(ds); dsIssueSeq.push(issue);
 
     const dx = intNum <= 24 ? '小' : '大';
     if (dx === '小') xiaoCount++; else daCount++;
-    dxSeq.push(dx);
+    dxSeq.push(dx); dxIssueSeq.push(issue);
   });
 
-  // 收集冷维度（次数为0的维度名）
+  function analyzeStreak(seq, issueSeq, name, clsFn) {
+    if (seq.length === 0) return '';
+    const lastItem = seq[seq.length - 1];
+    let streak = 0;
+    for (let i = seq.length - 1; i >= 0; i--) {
+      if (seq[i] === lastItem) streak++;
+      else break;
+    }
+    const cls = typeof clsFn === 'function' ? clsFn(lastItem) : '';
+    if (streak >= 2) {
+      const startIssue = issueSeq[issueSeq.length - streak];
+      const endIssue = issueSeq[issueSeq.length - 1];
+      const issueRange = startIssue === endIssue ? `第${startIssue}期` : `第${startIssue}-${endIssue}期`;
+      if (streak >= 4) {
+        return `<span style="color:#e74c3c;font-weight:bold;">⚠ ${name}连续${streak}期<span class="${cls}">${lastItem}</span>（${issueRange}）</span>`;
+      }
+      return `<span style="color:#f39c12;">📈 ${name}连续${streak}期<span class="${cls}">${lastItem}</span>（${issueRange}）</span>`;
+    }
+    return `<span style="color:#888;">${name}<span class="${cls}">${lastItem}</span>（第${issueSeq[issueSeq.length-1]}期）</span>`;
+  }
+
+  function getNumCls(n) {
+    if (redNumbers.includes(n)) return 'red-text';
+    if (blueNumbers.includes(n)) return 'blue-text';
+    if (greenNumbers.includes(n)) return 'green-text';
+    return '';
+  }
+  function getZodiacCls(z) {
+    const redSet = new Set(['鼠','兔','马','鸡']);
+    const blueSet = new Set(['虎','蛇','猴','猪']);
+    const greenSet = new Set(['牛','龙','羊','狗']);
+    if (redSet.has(z)) return 'red-text';
+    if (blueSet.has(z)) return 'blue-text';
+    if (greenSet.has(z)) return 'green-text';
+    return '';
+  }
+  function getBoseCls(b) {
+    if (b === '红波') return 'red-text';
+    if (b === '蓝波') return 'blue-text';
+    if (b === '绿波') return 'green-text';
+    return '';
+  }
+
   function getColdItems(countMap, allKeys) {
     return allKeys.filter(k => (countMap[k] || 0) === 0);
   }
@@ -2343,7 +2391,6 @@ function renderSmartDecision() {
   const coldDS = getColdItems({'单':danCount,'双':shuangCount}, ['单','双']);
   const coldDX = getColdItems({'小':xiaoCount,'大':daCount}, ['小','大']);
 
-  // 辅助：根据维度名获取号码集合
   function getNumsByZodiac(z) { return (cfg.zodiac[z] || []).map(n => n.padStart(2, '0')); }
   function getNumsByBose(b) { return (cfg.bose[b] || []).map(n => n.padStart(2, '0')); }
   function getNumsByWeishu(w) { const d = w.replace('尾',''); return Array.from({length:5}, (_,i) => (i*10+parseInt(d)).toString().padStart(2,'0')).filter(n => parseInt(n)>=1 && parseInt(n)<=49); }
@@ -2352,7 +2399,6 @@ function renderSmartDecision() {
   function getNumsByJYSX(jy) { const zs = cfg.shengxiaoAttr[jy] || []; const result = []; zs.forEach(z => { result.push(...getNumsByZodiac(z)); }); return [...new Set(result)]; }
   function getNumsByDX(dx) { const result = []; for (let i=1;i<=49;i++) { const n=i.toString().padStart(2,'0'); if ((dx==='小'&&i<=24)||(dx==='大'&&i>=25)) result.push(n); } return result; }
 
-  // 构建冷门监控行（合并显示，每个维度一行）
   function buildColdRow(label, coldItems, getNumsFn) {
     if (coldItems.length === 0) return '';
     const allNums = new Set();
@@ -2383,7 +2429,6 @@ function renderSmartDecision() {
   coldMonitorHtml += buildColdRow('冷单双', coldDS, getNumsByDS);
   coldMonitorHtml += buildColdRow('冷大小', coldDX, getNumsByDX);
 
-  // 如果有冷门数据，添加复制全部按钮
   let allColdNums = new Set();
   const coldPairs = [
     { items: coldZodiacs, fn: getNumsByZodiac },
@@ -2409,48 +2454,6 @@ function renderSmartDecision() {
     coldMonitorHtml += `<div style="margin-top:6px;"><button class="copy-advice-btn" onclick="copyNumsToClipboard('${sortedAll.join('-')}')">📋复制全部冷门号码</button></div>`;
   }
 
-  // 连续分析辅助函数
-  function analyzeStreak(seq, name, clsFn) {
-    if (seq.length === 0) return '';
-    const lastItem = seq[seq.length - 1];
-    let streak = 0;
-    for (let i = seq.length - 1; i >= 0; i--) {
-      if (seq[i] === lastItem) streak++;
-      else break;
-    }
-    const cls = typeof clsFn === 'function' ? clsFn(lastItem) : '';
-    if (streak >= 4) {
-      return `<span style="color:#e74c3c;font-weight:bold;">⚠ ${name}连续${streak}期<span class="${cls}">${lastItem}</span></span>`;
-    }
-    if (streak >= 2) {
-      return `<span style="color:#f39c12;">📈 ${name}连续${streak}期<span class="${cls}">${lastItem}</span></span>`;
-    }
-    return `<span style="color:#888;">${name}<span class="${cls}">${lastItem}</span></span>`;
-  }
-
-  function getNumCls(n) {
-    if (redNumbers.includes(n)) return 'red-text';
-    if (blueNumbers.includes(n)) return 'blue-text';
-    if (greenNumbers.includes(n)) return 'green-text';
-    return '';
-  }
-  function getZodiacCls(z) {
-    const redSet = new Set(['鼠','兔','马','鸡']);
-    const blueSet = new Set(['虎','蛇','猴','猪']);
-    const greenSet = new Set(['牛','龙','羊','狗']);
-    if (redSet.has(z)) return 'red-text';
-    if (blueSet.has(z)) return 'blue-text';
-    if (greenSet.has(z)) return 'green-text';
-    return '';
-  }
-  function getBoseCls(b) {
-    if (b === '红波') return 'red-text';
-    if (b === '蓝波') return 'blue-text';
-    if (b === '绿波') return 'green-text';
-    return '';
-  }
-
-  // 构建热度分析HTML
   let html = '<div style="font-size:11px;">';
   html += `<div style="margin-bottom:4px;color:#666;">📊 开奖热度分析（最近${actualPeriod}期，共${drawList.length}条记录）</div>`;
 
@@ -2465,7 +2468,7 @@ function renderSmartDecision() {
     const prefix = tag === 'hot' ? '🔥' : (tag === 'cold' ? '❄️' : '');
     html += `<span class="${tagClass} ${getZodiacCls(item.name)}">${prefix}${item.name}(${item.cnt}次)</span> `;
   });
-  html += '</div><div style="margin-bottom:6px;font-size:10px;color:#666;">' + analyzeStreak(zodiacSeq, '生肖', getZodiacCls) + '</div>';
+  html += '</div><div style="margin-bottom:6px;font-size:10px;color:#666;">' + analyzeStreak(zodiacSeq, zodiacIssueSeq, '生肖', getZodiacCls) + '</div>';
 
   html += '<div style="margin-bottom:4px;"><b>波色：</b>';
   const boseList = ['红波','蓝波','绿波'].map(b => ({ name: b, cnt: boseCount[b] || 0 }));
@@ -2476,7 +2479,7 @@ function renderSmartDecision() {
     const prefix = tag === 'hot' ? '🔥' : (tag === 'cold' ? '❄️' : '');
     html += `<span class="${tagClass} ${getBoseCls(item.name)}">${prefix}${item.name}(${item.cnt}次)</span> `;
   });
-  html += '</div><div style="margin-bottom:6px;font-size:10px;color:#666;">' + analyzeStreak(boseSeq, '波色', getBoseCls) + '</div>';
+  html += '</div><div style="margin-bottom:6px;font-size:10px;color:#666;">' + analyzeStreak(boseSeq, boseIssueSeq, '波色', getBoseCls) + '</div>';
 
   html += '<div style="margin-bottom:4px;"><b>尾数：</b>';
   const weishuList = [];
@@ -2488,7 +2491,7 @@ function renderSmartDecision() {
     const prefix = tag === 'hot' ? '🔥' : (tag === 'cold' ? '❄️' : '');
     html += `<span class="${tagClass}">${prefix}${item.name}(${item.cnt}次)</span> `;
   });
-  html += '</div><div style="margin-bottom:6px;font-size:10px;color:#666;">' + analyzeStreak(weishuSeq, '尾数', '') + '</div>';
+  html += '</div><div style="margin-bottom:6px;font-size:10px;color:#666;">' + analyzeStreak(weishuSeq, weishuIssueSeq, '尾数', '') + '</div>';
 
   html += '<div style="margin-bottom:4px;"><b>头数：</b>';
   const toushuList = [];
@@ -2500,7 +2503,7 @@ function renderSmartDecision() {
     const prefix = tag === 'hot' ? '🔥' : (tag === 'cold' ? '❄️' : '');
     html += `<span class="${tagClass}">${prefix}${item.name}(${item.cnt}次)</span> `;
   });
-  html += '</div><div style="margin-bottom:6px;font-size:10px;color:#666;">' + analyzeStreak(toushuSeq, '头数', '') + '</div>';
+  html += '</div><div style="margin-bottom:6px;font-size:10px;color:#666;">' + analyzeStreak(toushuSeq, toushuIssueSeq, '头数', '') + '</div>';
 
   html += '<div style="margin-bottom:4px;"><b>家禽/野兽：</b>';
   const jysxList = [
@@ -2514,7 +2517,7 @@ function renderSmartDecision() {
     const prefix = tag === 'hot' ? '🔥' : (tag === 'cold' ? '❄️' : '');
     html += `<span class="${tagClass}">${prefix}${item.name}(${item.cnt}次)</span> `;
   });
-  html += '</div><div style="margin-bottom:6px;font-size:10px;color:#666;">' + analyzeStreak(jysxSeq, '', '') + '</div>';
+  html += '</div><div style="margin-bottom:6px;font-size:10px;color:#666;">' + analyzeStreak(jysxSeq, jysxIssueSeq, '', '') + '</div>';
 
   html += '<div style="margin-bottom:4px;"><b>单双：</b>';
   const dsList = [
@@ -2528,7 +2531,7 @@ function renderSmartDecision() {
     const prefix = tag === 'hot' ? '🔥' : (tag === 'cold' ? '❄️' : '');
     html += `<span class="${tagClass}">${prefix}${item.name}(${item.cnt}次)</span> `;
   });
-  html += '</div><div style="margin-bottom:6px;font-size:10px;color:#666;">' + analyzeStreak(dsSeq, '', '') + '</div>';
+  html += '</div><div style="margin-bottom:6px;font-size:10px;color:#666;">' + analyzeStreak(dsSeq, dsIssueSeq, '', '') + '</div>';
 
   html += '<div style="margin-bottom:4px;"><b>大小：</b>';
   const dxList = [
@@ -2542,9 +2545,8 @@ function renderSmartDecision() {
     const prefix = tag === 'hot' ? '🔥' : (tag === 'cold' ? '❄️' : '');
     html += `<span class="${tagClass}">${prefix}${item.name}(${item.cnt}次)</span> `;
   });
-  html += '</div><div style="margin-bottom:6px;font-size:10px;color:#666;">' + analyzeStreak(dxSeq, '', '') + '</div>';
+  html += '</div><div style="margin-bottom:6px;font-size:10px;color:#666;">' + analyzeStreak(dxSeq, dxIssueSeq, '', '') + '</div>';
 
-  // 智能建议区域（两列布局）
   html += '<div style="margin-top:8px;font-size:11px;">';
   html += '<div style="margin-bottom:2px;color:#666;">🎯 智能建议</div>';
 
@@ -2605,10 +2607,8 @@ function renderSmartDecision() {
     }
   }
 
-  // 两列表格
   html += '<table style="width:100%;border-collapse:collapse;font-size:11px;"><tr>';
   
-  // 左列
   html += '<td style="width:50%;vertical-align:top;padding:4px;border:1px solid #eee;">';
   
   html += '<div class="advice-urgent" style="margin-bottom:6px;">';
@@ -2625,7 +2625,7 @@ function renderSmartDecision() {
   html += '<b>🔍 最近生肖监控（往前6个不重复生肖）</b><br>';
   if (zodiacMonitorNums.length > 0) {
     html += '生肖：' + recent6Zodiacs.map(z => `<span class="${getZodiacCls(z)}">${z}</span>`).join(' ') + '<br>';
-          html += '风险号码：' + zodiacMonitorNums.map(n => `<span class="${getNumCls(n)}">${n}</span>`).join(' ');
+    html += '风险号码：' + zodiacMonitorNums.map(n => `<span class="${getNumCls(n)}">${n}</span>`).join(' ');
     html += ` <button class="copy-advice-btn" onclick="copyNumsToClipboard([${zodiacMonitorNums.map(n=>"'"+n+"'").join(',')}])">📋复制</button>`;
   } else {
     html += '<span style="color:#888;">暂无</span>';
@@ -2643,7 +2643,6 @@ function renderSmartDecision() {
   
   html += '</td>';
   
-  // 右列
   html += '<td style="width:50%;vertical-align:top;padding:4px;border:1px solid #eee;">';
   html += '<div class="advice-monitor" style="margin-bottom:6px;">';
   html += '<b>❄️ 冷门监控（冷维度 × 上报风险负数）</b><br>';
@@ -2657,8 +2656,8 @@ function renderSmartDecision() {
   
   html += '</tr></table>';
 
-  html += '</div>'; // 建议区域结束
-  html += '</div>'; // 整体结束
+  html += '</div>';
+  html += '</div>';
 
   container.innerHTML = html;
 }
