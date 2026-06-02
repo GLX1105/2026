@@ -3380,15 +3380,20 @@ window.onload = async () => {
     await window._systemReady();
   }
 
-  // 确保范围筛选输入框绑定事件
-  const numMin = document.getElementById('numAmountMin');
-  const numMax = document.getElementById('numAmountMax');
-  const zodMin = document.getElementById('zodiacAmountMin');
-  const zodMax = document.getElementById('zodiacAmountMax');
-  if (numMin) numMin.addEventListener('input', updateTableFromRecords);
-  if (numMax) numMax.addEventListener('input', updateTableFromRecords);
-  if (zodMin) zodMin.addEventListener('input', updateTableFromRecords);
-  if (zodMax) zodMax.addEventListener('input', updateTableFromRecords);
+  // 确保范围筛选输入框绑定事件（先清除缓存再更新）
+  const fixRangeInput = (id) => {
+    const el = document.getElementById(id);
+    if (el) {
+      el.addEventListener('input', () => {
+        clearStatsCache();          // 清除分层缓存
+        updateTableFromRecords();   // 重新计算
+      });
+    }
+  };
+  fixRangeInput('numAmountMin');
+  fixRangeInput('numAmountMax');
+  fixRangeInput('zodiacAmountMin');
+  fixRangeInput('zodiacAmountMax');
 
   // ===== 全局快捷键 =====
   function closeTopWindow() {
