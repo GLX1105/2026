@@ -2282,60 +2282,33 @@ async function computeSurge() {
   for (const [user, orders] of Object.entries(userOrders)) {
     if (orders.length < surgeMinOrders) continue;
     const totalOrders = orders.length;
-    let totalAmount = 0;
-    const numCount = {};  // 号码出现在多少条订单中
-    const numAmount = {}; // 号码总下注金额
+    const numCount = {};
+    const numAmount = {};
     for (let i = 1; i <= 49; i++) {
       const n = i.toString().padStart(2, '0');
       numCount[n] = 0;
       numAmount[n] = 0;
     }
 
-    orders.forEach(o => {
-      const lines = o.content.split('\n');
-      lines.forEach(line => {
-        const m = line.match(/^(.+?)\s+各数\s+(\d+)$/);
-        if (!m) return;
-        const tokensPart = m[1];
-        const amount = parseInt(m[2]) || 0;
-        totalAmount += amount * (tokensPart.split('-').length || 1); // 近似，实际应精确到号码，下面遍历号码时会分配金额
-        // 这里我们后续按号码计算金额，但 order.totalAmount 已存储了总金额，可以直接累加
-        // 不过精确的号码金额分配需要使用 order.content 解析每个号码的金额。
-        // 简便起见，我们直接累加 order.totalAmount，但号码级别的金额分配会很复杂。
-        // 为求准确，我们遍历每个号码，计算该号码在本订单中的金额（可能为0如果未命中）。
-        // 此处先将总金额计入，后续可优化，为保证功能先使用 order.totalAmount 均分？
-        // 实际上，countItemsInLine 可提取每个号码的金额，但需要修改。暂时跳过精确金额分配，
-        // 采用简单方式：订单中包含该号码，则将该订单的总金额平均分配？不合理。
-        // 我们采用匹配方式，若号码被订单覆盖，则加上该订单的 totalAmount（整单金额）。
-        // 这会导致金额重复计算，但因为一个订单可能覆盖多个号码，所以不能直接加 totalAmount。
-        // 正确的做法：解析订单内容，获取每个 token 对应的号码和金额，然后累加。
-        // 我们使用 countItemsInLine 来获取每条订单行的号码列表和金额。
-        const { numbers } = countItemsInLine(line, cfg, getAllValidCategories(cfg));
-        const amtPerNum = amount; // 每个号码的金额 = 该行的各数金额
-        numbers.forEach(num => {
-          const n = num.padStart(2, '0');
-          numAmount[n] = (numAmount[n] || 0) + amtPerNum;
-        });
-      });
-      // 计算 totalAmount 基于 numAmount 总和
-    });
-    // 重新计算 totalAmount 基于每个号码金额之和（避免重复）
-    totalAmount = Object.values(numAmount).reduce((a, b) => a + b, 0);
+    let totalAmount = 0;
 
-    // 统计订单条数覆盖：遍历每个号码，判断是否在订单中出现
-    for (const o of orders) {
+    orders.forEach(o => {
       const lines = o.content.split('\n');
       let orderCovered = new Set();
       lines.forEach(line => {
-        const { numbers } = countItemsInLine(line, cfg, getAllValidCategories(cfg));
-        numbers.forEach(n => orderCovered.add(n));
+        const { numbers, amount } = countItemsInLine(line, cfg, getAllValidCategories(cfg));
+        const amtPerNum = amount;
+        numbers.forEach(num => {
+          orderCovered.add(num);
+          numAmount[num] = (numAmount[num] || 0) + amtPerNum;
+          totalAmount += amtPerNum;
+        });
       });
       orderCovered.forEach(n => {
         numCount[n] = (numCount[n] || 0) + 1;
       });
-    }
+    });
 
-    // 条数触发
     const countTriggered = [];
     for (const [num, cnt] of Object.entries(numCount)) {
       if (totalOrders > 0 && cnt / totalOrders >= countThreshold) {
@@ -2344,7 +2317,6 @@ async function computeSurge() {
     }
     countTriggered.sort((a, b) => b.ratio - a.ratio);
 
-    // 金额触发
     const amountTriggered = [];
     for (const [num, amt] of Object.entries(numAmount)) {
       if (totalAmount > 0 && amt / totalAmount >= amountThreshold) {
@@ -2354,7 +2326,6 @@ async function computeSurge() {
     amountTriggered.sort((a, b) => b.ratio - a.ratio);
 
     if (countTriggered.length > 0 || amountTriggered.length > 0) {
-      // 确定全局最高占比（条数或金额）加🔥
       let globalMaxRatio = 0;
       const allTriggered = [...countTriggered, ...amountTriggered];
       allTriggered.forEach(item => { if (item.ratio > globalMaxRatio) globalMaxRatio = item.ratio; });
@@ -2369,7 +2340,6 @@ async function computeSurge() {
     }
   }
 
-  // 按触发号码总数降序
   result.sort((a, b) => (b.countItems.length + b.amountItems.length) - (a.countItems.length + a.amountItems.length));
   window._surgeResult = result;
 }
@@ -2377,16 +2347,25 @@ async function computeSurge() {
 // ========== 折叠切换函数 ==========
 function toggleHeat() { heatVisible = !heatVisible; renderSmartDecision(); }
 function toggleAdvice() { adviceVisible = !adviceVisible; renderSmartDecision(); }
-function toggleSurge() { surgeVisible = !surgeVisible; if (surgeVisible) { computeSurge().then(() => renderSmartDecision()); } else renderSmartDecision(); }
+async function toggleSurge() { surgeVisible = !surgeVisible; if (surgeVisible) { await computeSurge(); renderSmartDecision(); } else renderSmartDecision(); }
 
 // ========== 复制单个用户暴增号码 ==========
-function copyUserSurgeNums(user, countItems, amountItems) {
+function copyUserSurgeNums(username) {
+  if (!window._surgeResult || window._surgeResult.length === 0) {
+    showToast('暂无号码');
+    return;
+  }
+  const userData = window._surgeResult.find(u => u.user === username);
+  if (!userData) {
+    showToast('该用户暂无数据');
+    return;
+  }
   const nums = new Set();
-  countItems.forEach(i => nums.add(i.num));
-  amountItems.forEach(i => nums.add(i.num));
-  const arr = [...nums].sort((a,b) => parseInt(a)-parseInt(b));
+  userData.countItems.forEach(i => nums.add(i.num));
+  userData.amountItems.forEach(i => nums.add(i.num));
+  const arr = [...nums].sort((a, b) => parseInt(a) - parseInt(b));
   navigator.clipboard.writeText(arr.join(' ')).then(() => {
-    showToast('已复制' + user + '的号码');
+    showToast('已复制' + username + '的号码');
   }).catch(() => showToast('复制失败'));
 }
 
@@ -2401,7 +2380,7 @@ function copyAllSurgeNums() {
     user.countItems.forEach(i => allNums.add(i.num));
     user.amountItems.forEach(i => allNums.add(i.num));
   });
-  const arr = [...allNums].sort((a,b) => parseInt(a)-parseInt(b));
+  const arr = [...allNums].sort((a, b) => parseInt(a) - parseInt(b));
   navigator.clipboard.writeText(arr.join(' ')).then(() => {
     showToast('已复制全部号码');
   }).catch(() => showToast('复制失败'));
@@ -2558,7 +2537,6 @@ function renderSmartDecision() {
     heatHtml = '<div style="font-size:11px;">';
     heatHtml += `<div style="margin-bottom:4px;color:#666;">📊 开奖热度分析（最近${actualPeriod}期，共${drawList.length}条记录）</div>`;
 
-    // 生肖
     heatHtml += '<div style="margin-bottom:4px;"><b>生肖：</b>';
     const zodiacAll = ['鼠','牛','虎','兔','龙','蛇','马','羊','猴','鸡','狗','猪'];
     const zodiacItems = zodiacAll.map(z => ({ name: z, cnt: zodiacCountLocal[z] || 0 }));
@@ -2572,7 +2550,6 @@ function renderSmartDecision() {
     });
     heatHtml += '</div><div style="margin-bottom:6px;font-size:10px;color:#666;">' + analyzeStreak(zodiacSeq, zodiacIssueSeq, '生肖', getZodiacCls) + '</div>';
 
-    // 波色
     heatHtml += '<div style="margin-bottom:4px;"><b>波色：</b>';
     const boseList = ['红波','蓝波','绿波'].map(b => ({ name: b, cnt: boseCount[b] || 0 }));
     boseList.sort((a, b) => b.cnt - a.cnt);
@@ -2584,7 +2561,6 @@ function renderSmartDecision() {
     });
     heatHtml += '</div><div style="margin-bottom:6px;font-size:10px;color:#666;">' + analyzeStreak(boseSeq, boseIssueSeq, '波色', getBoseCls) + '</div>';
 
-    // 尾数
     heatHtml += '<div style="margin-bottom:4px;"><b>尾数：</b>';
     const weishuList = [];
     for (let i = 0; i <= 9; i++) weishuList.push({ name: i + '尾', cnt: weishuCount[i + '尾'] || 0 });
@@ -2597,7 +2573,6 @@ function renderSmartDecision() {
     });
     heatHtml += '</div><div style="margin-bottom:6px;font-size:10px;color:#666;">' + analyzeStreak(weishuSeq, weishuIssueSeq, '尾数', '') + '</div>';
 
-    // 头数
     heatHtml += '<div style="margin-bottom:4px;"><b>头数：</b>';
     const toushuList = [];
     for (let i = 0; i <= 4; i++) toushuList.push({ name: i + '头', cnt: toushuCount[i + '头'] || 0 });
@@ -2610,7 +2585,6 @@ function renderSmartDecision() {
     });
     heatHtml += '</div><div style="margin-bottom:6px;font-size:10px;color:#666;">' + analyzeStreak(toushuSeq, toushuIssueSeq, '头数', '') + '</div>';
 
-    // 家禽/野兽
     heatHtml += '<div style="margin-bottom:4px;"><b>家禽/野兽：</b>';
     const jysxList = [
       { name: '家禽', cnt: jiaqinCount },
@@ -2625,7 +2599,6 @@ function renderSmartDecision() {
     });
     heatHtml += '</div><div style="margin-bottom:6px;font-size:10px;color:#666;">' + analyzeStreak(jysxSeq, jysxIssueSeq, '', '') + '</div>';
 
-    // 单双
     heatHtml += '<div style="margin-bottom:4px;"><b>单双：</b>';
     const dsList = [
       { name: '单', cnt: danCount },
@@ -2640,7 +2613,6 @@ function renderSmartDecision() {
     });
     heatHtml += '</div><div style="margin-bottom:6px;font-size:10px;color:#666;">' + analyzeStreak(dsSeq, dsIssueSeq, '', '') + '</div>';
 
-    // 大小
     heatHtml += '<div style="margin-bottom:4px;"><b>大小：</b>';
     const dxList = [
       { name: '小', cnt: xiaoCount },
@@ -2700,7 +2672,6 @@ function renderSmartDecision() {
     if ((risk === undefined || risk >= 0) && (numCount[n]||0) === 0) betNums.push(n);
   }
 
-  // 冷门监控相关函数
   function getColdItems(countMap, allKeys) {
     return allKeys.filter(k => (countMap[k] || 0) === 0);
   }
@@ -2829,10 +2800,10 @@ function renderSmartDecision() {
     </div>`;
     if (window._surgeResult && window._surgeResult.length > 0) {
       window._surgeResult.forEach(user => {
-        surgeHtml += `<div style="margin-bottom:4px;"><b>${user.user}:</b> `;
+        const username = user.user;
+        surgeHtml += `<div style="margin-bottom:4px;"><b>${username}:</b> `;
         const countItems = user.countItems || [];
         const amountItems = user.amountItems || [];
-        // 条数部分
         if (countItems.length > 0) {
           surgeHtml += '(条) ';
           countItems.forEach(item => {
@@ -2840,7 +2811,6 @@ function renderSmartDecision() {
             surgeHtml += `${tag ? tag + ' ' : ''}<span class="${getNumCls(item.num)}">${item.num}</span> `;
           });
         }
-        // 金额部分
         if (amountItems.length > 0) {
           surgeHtml += '(金) ';
           amountItems.forEach(item => {
@@ -2848,8 +2818,7 @@ function renderSmartDecision() {
             surgeHtml += `${tag ? tag + ' ' : ''}<span class="${getNumCls(item.num)}">${item.num}</span> `;
           });
         }
-        // 复制按钮
-        surgeHtml += `<button class="copy-advice-btn" onclick="copyUserSurgeNums('${user.user}', ${JSON.stringify(countItems.map(i=>i.num))}, ${JSON.stringify(amountItems.map(i=>i.num))})" style="margin-left:4px;">📋复制</button>`;
+        surgeHtml += `<button class="copy-advice-btn" onclick="copyUserSurgeNums('${username}')" style="margin-left:4px;">📋复制</button>`;
         surgeHtml += '</div>';
       });
       surgeHtml += '<button class="copy-advice-btn" onclick="copyAllSurgeNums()">📋复制全部号码</button>';
@@ -2861,7 +2830,6 @@ function renderSmartDecision() {
 
   // ========== 最终组装 ==========
   let finalHtml = '';
-  // 标题行：期数 + 三个按钮
   finalHtml += `<div style="display:flex; align-items:center; gap:6px; margin-bottom:6px; flex-wrap:wrap;">`;
   finalHtml += `<span style="font-size:12px;">期数：</span><input type="number" id="smartPeriodInput" class="range-input" value="${period}" placeholder="10" min="1" style="width:50px;" onchange="renderSmartDecision()">`;
   finalHtml += `<button class="btn-copy" style="padding:2px 8px; font-size:11px; min-height:auto; border-radius:20px; background:${heatVisible?'#2ecc71':'#95a5a6'}; color:#fff; border:none; cursor:pointer;" onclick="toggleHeat()">开奖热度分析</button>`;
