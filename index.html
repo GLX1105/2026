@@ -1026,7 +1026,7 @@ async function resetPresetsToDefault(){
   localStorage.setItem('categoryAliases',JSON.stringify(defaultAliases));
   renderPresetList(); showToast('已恢复默认替换预设和分类缩写');
 }
-    function applyCategoryAliases(text) { const a=getCategoryAliases(); if(!a.length)return text; const s=[...a].sort((x,y)=>y.alias.length-x.alias.length); let r=text; s.forEach(x=>{ if(x.alias&&x.target)r=r.split(x.alias).join(x.target); }); return r; }
+function applyCategoryAliases(text) { const a=getCategoryAliases(); if(!a.length)return text; const s=[...a].sort((x,y)=>y.alias.length-x.alias.length); let r=text; s.forEach(x=>{ if(x.alias&&x.target)r=r.split(x.alias).join(x.target); }); return r; }
 
 // ===== 修正后的替换预设（已去掉后边界限制） =====
 function applyReplacePresets(text) { const p = getReplacePresets(); let r = text; p.forEach(x => { if (x.old && x.new) { const escapedOld = x.old.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); const regex = new RegExp(escapedOld, 'g'); r = r.replace(regex, x.new); } }); return r; }
@@ -1168,7 +1168,7 @@ async function screenshotTable(tid){ const tbl=document.getElementById(tid); if(
 function renderReportAmountTable(){ const tbl=document.getElementById('reportAmountTable'); if(!tbl)return; tbl.innerHTML=''; const cols=[...Array(5)].map((_,c)=>Array.from({length:c===4?9:10},(_,r)=>(c*10+r+1).toString().padStart(2,'0'))); let th='<thead><tr>'; for(let c=0;c<5;c++)th+='<th>号码</th><th>金额</th>'; th+='</tr></thead>'; let tb='<tbody>'; for(let r=0;r<10;r++){ tb+='<tr>'; for(let c=0;c<5;c++){ const n=cols[c][r]||''; if(n){ const a=reportAmountData[n]||0; const cls=redNumbers.includes(n)?'red-text':(blueNumbers.includes(n)?'blue-text':'green-text'); tb+=`<td class="${cls}">${n}</td><td class="black-text">${a||''}</td>`; }else{tb+='<td></td><td></td>';} } tb+='</tr>'; } tb+='</tbody>'; tbl.innerHTML=th+tb; updateReportAmountTotal(); }
 function renderFrequencyCards(){ const nt=document.getElementById('numberFreqTable'); if(!nt)return; nt.innerHTML=''; const cols=[...Array(5)].map((_,c)=>Array.from({length:c===4?9:10},(_,r)=>(c*10+r+1).toString().padStart(2,'0'))); let th='<thead><tr>'; for(let c=0;c<5;c++)th+='<th>号码</th><th>次数</th>'; th+='</tr></thead>'; let tb='<tbody>'; for(let r=0;r<10;r++){ tb+='<tr>'; for(let c=0;c<5;c++){ const n=cols[c][r]||''; if(n){ const cnt=numberCount[n]||0; const cls=redNumbers.includes(n)?'red-text':(blueNumbers.includes(n)?'blue-text':'green-text'); tb+=`<td class="${cls}">${n}</td><td class="black-text">${cnt||''}</td>`; }else{tb+='<td></td><td></td>';} } tb+='</tr>'; } tb+='</tbody>'; nt.innerHTML=th+tb; const zt=document.getElementById('zodiacFreqTable'); if(!zt)return; zt.innerHTML=''; const lz=['鼠','牛','虎','兔','龙','蛇'],rz=['马','羊','猴','鸡','狗','猪']; const zcm={'鼠':'red-text','兔':'red-text','马':'red-text','鸡':'red-text','虎':'blue-text','蛇':'blue-text','猴':'blue-text','猪':'blue-text','牛':'green-text','龙':'green-text','羊':'green-text','狗':'green-text'}; let zth='<thead><tr><th>生肖</th><th>次数</th><th>金额</th><th>上报</th><th>生肖</th><th>次数</th><th>金额</th><th>上报</th></tr></thead>',ztb='<tbody>'; for(let r=0;r<6;r++){ const l=lz[r],r2=rz[r]; const lc=zodiacCount[l]||0,rc=zodiacCount[r2]||0; const la=zodiacDirectAmount[l]||0,ra=zodiacDirectAmount[r2]||0; const lrp=zodiacReportAmount[l]||0,rrp=zodiacReportAmount[r2]||0; ztb+=`<tr><td class="${zcm[l]}">${l}</td><td class="black-text">${lc||''}</td><td class="amount-red-text">${la||''}</td><td class="report-red-text">${lrp||''}</td><td class="${zcm[r2]}">${r2}</td><td class="black-text">${rc||''}</td><td class="amount-red-text">${ra||''}</td><td class="report-red-text">${rrp||''}</td></tr>`; } ztb+='</tbody>'; zt.innerHTML=zth+ztb; }
 function renderAmountFrequencyCards(){ const nt=document.getElementById('numberAmountFreqTable'); if(!nt)return; nt.innerHTML=''; const cols=[...Array(5)].map((_,c)=>Array.from({length:c===4?9:10},(_,r)=>(c*10+r+1).toString().padStart(2,'0'))); let th='<thead><tr>'; for(let c=0;c<5;c++)th+='<th>号码</th><th>次数</th>'; th+='</table></thead>'; let tb='<tbody>'; for(let r=0;r<10;r++){ tb+='<tr>'; for(let c=0;c<5;c++){ const n=cols[c][r]||''; if(n){ const cnt=numberAmountCount[n]||0; const cls=redNumbers.includes(n)?'red-text':(blueNumbers.includes(n)?'blue-text':'green-text'); tb+=`<td class="${cls}">${n}</td><td class="black-text">${cnt||''}</td>`; }else{tb+='<td></td><td></td>';} } tb+='</tr>'; } tb+='</tbody>'; nt.innerHTML=th+tb; const zt=document.getElementById('zodiacAmountFreqTable'); if(!zt)return; zt.innerHTML=''; const lz=['鼠','牛','虎','兔','龙','蛇'],rz=['马','羊','猴','鸡','狗','猪']; const zcm={'鼠':'red-text','兔':'red-text','马':'red-text','鸡':'red-text','虎':'blue-text','蛇':'blue-text','猴':'blue-text','猪':'blue-text','牛':'green-text','龙':'green-text','羊':'green-text','狗':'green-text'}; let zth='<thead><tr><th>生肖</th><th>次数</th><th>金额</th><th>上报</th><th>生肖</th><th>次数</th><th>金额</th><th>上报</th></tr></thead>',ztb='<tbody>'; for(let r=0;r<6;r++){ const l=lz[r],r2=rz[r]; const lc=zodiacAmountCount[l]||0,rc=zodiacAmountCount[r2]||0; const la=zodiacFilteredAmount[l]||0,ra=zodiacFilteredAmount[r2]||0; const lrp=zodiacFilteredReportAmount[l]||0,rrp=zodiacFilteredReportAmount[r2]||0; ztb+=`<tr><td class="${zcm[l]}">${l}</td><td class="black-text">${lc||''}</td><td class="amount-red-text">${la||''}</td><td class="report-red-text">${lrp||''}</td><td class="${zcm[r2]}">${r2}</td><td class="black-text">${rc||''}</td><td class="amount-red-text">${ra||''}</td><td class="report-red-text">${rrp||''}</td></tr>`; } ztb+='</tbody>'; zt.innerHTML=zth+ztb; }
-    function getNumberListForCategory(cat,cfg){
+function getNumberListForCategory(cat,cfg){
   const nums=[];
   if(cat==='蓝大'||cat==='蓝波大'){ const lanbo = cfg.bose['蓝波']||[]; const dashu = cfg.daxiao['大']||[]; lanbo.forEach(n=>{ if(dashu.includes(n)) nums.push(n.padStart(2,'0')); }); return [...new Set(nums)]; }
   if(cat==='蓝小'||cat==='蓝波小'){ const lanbo = cfg.bose['蓝波']||[]; const xiao = cfg.daxiao['小']||[]; lanbo.forEach(n=>{ if(xiao.includes(n)) nums.push(n.padStart(2,'0')); }); return [...new Set(nums)]; }
@@ -1531,7 +1531,7 @@ function switchParseMethod() { const text = document.getElementById('reportCapIn
 function copyOrderGroup() { const text = document.getElementById('parseResultArea').innerText; if (!text) { showToast('没有解析结果'); return; } navigator.clipboard.writeText(text).then(() => showToast('订单组已复制')); }
 const originalApplyReportCap = applyReportCap;
 applyReportCap = function() { originalApplyReportCap(); const info = document.getElementById('reportCapInfo').innerText; if (!info || info === '无超出的号码') { document.getElementById('parseResultArea').innerText = ''; } };
-    // ===== 修正后的回收站窗口（按地区隔离显示） =====
+// ===== 修正后的回收站窗口（按地区隔离显示） =====
 async function showRecycleBin() { const existingWin = document.getElementById('recycleWin'); if (existingWin) existingWin.remove(); const allRecords = await getRecycleBinRecords(); const records = allRecords.filter(r => r.region === currentRegion); const win = document.createElement('div'); win.className = 'floating-window'; win.id = 'recycleWin'; win.style.width = '750px'; win.style.height = '550px'; win.style.left = '50%'; win.style.top = '50%'; win.style.transform = 'translate(-50%, -50%)'; let html = `<div class="modal-header"><h3>🗑️ 回收站</h3><div class="window-controls"><button onclick="maximizeWindow('recycleWin')">🗖</button><button onclick="document.getElementById('recycleWin').remove()">×</button></div></div>`; html += `<div class="modal-body" style="display:flex; flex-direction:column; height: calc(100% - 120px);">`; html += `<div style="margin-bottom:10px;display:flex;gap:12px;flex-wrap:wrap;align-items:center;position:sticky;top:0;background:rgba(255,255,255,0.9);z-index:2;padding:5px 0;"><button onclick="checkAllRecycle()" style="padding:6px 12px;background:#007bff;color:#fff;border:none;border-radius:4px;">全选</button><button onclick="uncheckAllRecycle()" style="padding:6px 12px;background:#6c757d;color:#fff;border:none;border-radius:4px;">取消全选</button><button onclick="restoreCheckedRecycle()" style="padding:6px 12px;background:#27ae60;color:#fff;border:none;border-radius:4px;">恢复选中</button><button onclick="deleteCheckedRecycle()" style="padding:6px 12px;background:#e74c3c;color:#fff;border:none;border-radius:4px;">彻底删除</button><button onclick="emptyRecycleBin()" style="padding:6px 12px;background:#8e44ad;color:#fff;border:none;border-radius:4px;margin-left:auto;">清空回收站</button></div>`; html += `<div id="recycleListContainer" style="flex:1; overflow-y:auto;">`; if (records.length === 0) { html += `<div style="padding:20px;text-align:center;color:#666;">回收站为空</div>`; } else { records.sort((a,b) => new Date(b.deletedAt) - new Date(a.deletedAt)); records.forEach(rec => { const ts = formatTimestampToCST(rec.deletedAt); const typeLabel = rec.type === 'order' ? '下单' : '上报'; const typeColor = rec.type === 'order' ? '#3498db' : '#e67e22'; html += `<div class="order-item"><input type="checkbox" class="recycle-check" data-id="${rec.id}"><div class="order-content">${rec.content.replace(/\n/g,'<br>')}</div><div class="order-info"><span class="order-total" style="color:#000;">合计：${rec.totalAmount || 0}</span><span class="order-meta"><span style="color:${typeColor};">类型：${typeLabel}</span><span style="color:#e74c3c;">删除：${ts}</span><span>用户：${rec.user || '未知'}</span></span></div><button class="order-del" onclick="restoreRecycleRecord('${rec.id}')" style="background:#27ae60;margin-right:4px;">恢复</button><button class="order-del" onclick="permanentlyDeleteRecycleRecord('${rec.id}')">删除</button></div>`; }); } html += `</div></div><div class="modal-footer" style="justify-content:space-between;"><span style="font-size:12px;color:#666;" id="recycleStorageInfo"></span><button onclick="document.getElementById('recycleWin').remove()" style="padding:8px 16px;background:#6c757d;color:#fff;border:none;border-radius:4px;">关闭</button></div>`; win.innerHTML = html; document.body.appendChild(win); updateRecycleStorageInfo(); makeWindowDraggable('recycleWin'); highestZ += 1; win.style.zIndex = highestZ; updateRecycleCount(); }
 function updateRecycleStorageInfo() { const span = document.getElementById('recycleStorageInfo'); if (!span) return; getRecycleBinRecords().then(allRecords => { const records = allRecords.filter(r => r.region === currentRegion); let bytes = 0; records.forEach(r => bytes += JSON.stringify(r).length * 2); const usedMB = (bytes / (1024*1024)).toFixed(2); span.textContent = `回收站占用：${usedMB} MB（共${records.length}条记录）`; }); }
 async function updateRecycleCount() { const span = document.getElementById('recycleCount'); if (!span) return; try { const allRecords = await getRecycleBinRecords(); const count = allRecords.filter(r => r.region === currentRegion).length; if (count > 0) { span.textContent = count; span.style.display = 'inline-block'; } else { span.style.display = 'none'; } } catch(e) { span.style.display = 'none'; } }
@@ -2250,18 +2250,106 @@ function copyCardANumbers(type) {
     showToast('复制失败');
   });
 }
-  // ========== 折叠切换函数 ==========
-function toggleDecisionSection(titleEl) {
-  const contentEl = titleEl.nextElementSibling;
-  if (contentEl) {
-    if (contentEl.style.display === 'none') {
-      contentEl.style.display = '';
-      titleEl.querySelector('.toggle-icon').textContent = '▼';
-    } else {
-      contentEl.style.display = 'none';
-      titleEl.querySelector('.toggle-icon').textContent = '▶';
+// ========== 折叠状态与暴增参数 ==========
+let heatVisible = false;
+let adviceVisible = false;
+let surgeVisible = false;
+let surgeThreshold = parseInt(localStorage.getItem('surgeThreshold') || '50');
+let surgeMinOrders = 3;
+
+// ========== 暴增监控数据计算 ==========
+async function computeSurge() {
+  const fd = document.getElementById('filterDate')?.value || getTodayCST();
+  const allOrders = await getOrderRecords();
+  const todayOrders = allOrders.filter(o => o.date === fd);
+  if (todayOrders.length === 0) {
+    window._surgeResult = [];
+    return;
+  }
+
+  const userOrders = {};
+  todayOrders.forEach(o => {
+    if (!userOrders[o.user]) userOrders[o.user] = [];
+    userOrders[o.user].push(o);
+  });
+
+  const cfg = getAllConfigData();
+  const threshold = surgeThreshold / 100;
+  const result = [];
+
+  for (const [user, orders] of Object.entries(userOrders)) {
+    if (orders.length < surgeMinOrders) continue;
+    const total = orders.length;
+    const numCount = {};
+    for (let i = 1; i <= 49; i++) {
+      numCount[i.toString().padStart(2, '0')] = 0;
+    }
+    orders.forEach(o => {
+      const lines = o.content.split('\n');
+      lines.forEach(line => {
+        const m = line.match(/^(.+?)\s+各数\s+(\d+)$/);
+        if (!m) return;
+        const tokensPart = m[1];
+        const tokens = tokensPart.split('-').map(t => t.trim());
+        for (let num = 1; num <= 49; num++) {
+          const numStr = num.toString().padStart(2, '0');
+          let hit = false;
+          for (const token of tokens) {
+            if (isTokenMatching(token, numStr, cfg)) {
+              hit = true;
+              break;
+            }
+          }
+          if (hit) numCount[numStr] = (numCount[numStr] || 0) + 1;
+        }
+      });
+    });
+
+    const triggered = [];
+    for (const [num, cnt] of Object.entries(numCount)) {
+      if (cnt / total >= threshold) {
+        triggered.push({ num, cnt, ratio: cnt / total });
+      }
+    }
+    if (triggered.length > 0) {
+      triggered.sort((a, b) => b.ratio - a.ratio);
+      const maxRatio = triggered[0].ratio;
+      const uniqueRatios = [...new Set(triggered.map(t => t.ratio))].sort((a,b) => b-a);
+      triggered.forEach(item => {
+        if (item.ratio === maxRatio) {
+          item.tag = '🔥';
+        } else if (uniqueRatios.length > 1 && item.ratio === uniqueRatios[1]) {
+          item.tag = '📈';
+        } else {
+          item.tag = '';
+        }
+      });
+      result.push({ user, items: triggered });
     }
   }
+
+  result.sort((a, b) => b.items.length - a.items.length);
+  window._surgeResult = result;
+}
+
+// ========== 折叠切换函数 ==========
+function toggleHeat() { heatVisible = !heatVisible; renderSmartDecision(); }
+function toggleAdvice() { adviceVisible = !adviceVisible; renderSmartDecision(); }
+function toggleSurge() { surgeVisible = !surgeVisible; renderSmartDecision(); }
+
+// ========== 复制全部暴增号码 ==========
+function copySurgeNums() {
+  if (!window._surgeResult || window._surgeResult.length === 0) {
+    showToast('暂无号码');
+    return;
+  }
+  const allNums = [];
+  window._surgeResult.forEach(user => {
+    user.items.forEach(item => allNums.push(item.num));
+  });
+  navigator.clipboard.writeText(allNums.join(' ')).then(() => {
+    showToast('已复制全部号码');
+  }).catch(() => showToast('复制失败'));
 }
 
 // ========== 智能决策中心核心函数 ==========
@@ -2307,7 +2395,7 @@ function renderSmartDecision() {
     }
   }
 
-  if (drawList.length === 0) { container.innerHTML = ''; return; }
+  if (drawList.length === 0) { container.innerHTML = '无开奖数据'; return; }
 
   const actualPeriod = Math.min(period, currentIssue - 1);
   const cfg = getAllConfigData();
@@ -2409,10 +2497,158 @@ function renderSmartDecision() {
     return '';
   }
 
+  // ========== 热度分析 HTML ==========
+  let heatHtml = '';
+  if (heatVisible) {
+    heatHtml = '<div style="font-size:11px;">';
+    heatHtml += `<div style="margin-bottom:4px;color:#666;">📊 开奖热度分析（最近${actualPeriod}期，共${drawList.length}条记录）</div>`;
+
+    // 生肖
+    heatHtml += '<div style="margin-bottom:4px;"><b>生肖：</b>';
+    const zodiacAll = ['鼠','牛','虎','兔','龙','蛇','马','羊','猴','鸡','狗','猪'];
+    const zodiacItems = zodiacAll.map(z => ({ name: z, cnt: zodiacCountLocal[z] || 0 }));
+    zodiacItems.sort((a, b) => b.cnt - a.cnt);
+    const zodiacAvg = drawList.length / 12;
+    zodiacItems.forEach(item => {
+      const tag = item.cnt >= Math.max(zodiacAvg * 1.5, 3) ? 'hot' : (item.cnt === 0 ? 'cold' : '');
+      const tagClass = tag === 'hot' ? 'hot-item' : (tag === 'cold' ? 'cold-item' : 'normal-item');
+      const prefix = tag === 'hot' ? '🔥' : (tag === 'cold' ? '❄️' : '');
+      heatHtml += `<span class="${tagClass} ${getZodiacCls(item.name)}">${prefix}${item.name}(${item.cnt}次)</span> `;
+    });
+    heatHtml += '</div><div style="margin-bottom:6px;font-size:10px;color:#666;">' + analyzeStreak(zodiacSeq, zodiacIssueSeq, '生肖', getZodiacCls) + '</div>';
+
+    // 波色
+    heatHtml += '<div style="margin-bottom:4px;"><b>波色：</b>';
+    const boseList = ['红波','蓝波','绿波'].map(b => ({ name: b, cnt: boseCount[b] || 0 }));
+    boseList.sort((a, b) => b.cnt - a.cnt);
+    boseList.forEach(item => {
+      const tag = item.cnt >= Math.max(drawList.length/3 * 1.5, 3) ? 'hot' : (item.cnt === 0 ? 'cold' : '');
+      const tagClass = tag === 'hot' ? 'hot-item' : (tag === 'cold' ? 'cold-item' : 'normal-item');
+      const prefix = tag === 'hot' ? '🔥' : (tag === 'cold' ? '❄️' : '');
+      heatHtml += `<span class="${tagClass} ${getBoseCls(item.name)}">${prefix}${item.name}(${item.cnt}次)</span> `;
+    });
+    heatHtml += '</div><div style="margin-bottom:6px;font-size:10px;color:#666;">' + analyzeStreak(boseSeq, boseIssueSeq, '波色', getBoseCls) + '</div>';
+
+    // 尾数
+    heatHtml += '<div style="margin-bottom:4px;"><b>尾数：</b>';
+    const weishuList = [];
+    for (let i = 0; i <= 9; i++) weishuList.push({ name: i + '尾', cnt: weishuCount[i + '尾'] || 0 });
+    weishuList.sort((a, b) => b.cnt - a.cnt);
+    weishuList.forEach(item => {
+      const tag = item.cnt >= Math.max(drawList.length/10 * 1.5, 3) ? 'hot' : (item.cnt === 0 ? 'cold' : '');
+      const tagClass = tag === 'hot' ? 'hot-item' : (tag === 'cold' ? 'cold-item' : 'normal-item');
+      const prefix = tag === 'hot' ? '🔥' : (tag === 'cold' ? '❄️' : '');
+      heatHtml += `<span class="${tagClass}">${prefix}${item.name}(${item.cnt}次)</span> `;
+    });
+    heatHtml += '</div><div style="margin-bottom:6px;font-size:10px;color:#666;">' + analyzeStreak(weishuSeq, weishuIssueSeq, '尾数', '') + '</div>';
+
+    // 头数
+    heatHtml += '<div style="margin-bottom:4px;"><b>头数：</b>';
+    const toushuList = [];
+    for (let i = 0; i <= 4; i++) toushuList.push({ name: i + '头', cnt: toushuCount[i + '头'] || 0 });
+    toushuList.sort((a, b) => b.cnt - a.cnt);
+    toushuList.forEach(item => {
+      const tag = item.cnt >= Math.max(drawList.length/5 * 1.5, 3) ? 'hot' : (item.cnt === 0 ? 'cold' : '');
+      const tagClass = tag === 'hot' ? 'hot-item' : (tag === 'cold' ? 'cold-item' : 'normal-item');
+      const prefix = tag === 'hot' ? '🔥' : (tag === 'cold' ? '❄️' : '');
+      heatHtml += `<span class="${tagClass}">${prefix}${item.name}(${item.cnt}次)</span> `;
+    });
+    heatHtml += '</div><div style="margin-bottom:6px;font-size:10px;color:#666;">' + analyzeStreak(toushuSeq, toushuIssueSeq, '头数', '') + '</div>';
+
+    // 家禽/野兽
+    heatHtml += '<div style="margin-bottom:4px;"><b>家禽/野兽：</b>';
+    const jysxList = [
+      { name: '家禽', cnt: jiaqinCount },
+      { name: '野兽', cnt: yeshouCount }
+    ];
+    jysxList.sort((a, b) => b.cnt - a.cnt);
+    jysxList.forEach(item => {
+      const tag = item.cnt >= Math.max(drawList.length/2 * 1.5, 3) ? 'hot' : (item.cnt === 0 ? 'cold' : '');
+      const tagClass = tag === 'hot' ? 'hot-item' : (tag === 'cold' ? 'cold-item' : 'normal-item');
+      const prefix = tag === 'hot' ? '🔥' : (tag === 'cold' ? '❄️' : '');
+      heatHtml += `<span class="${tagClass}">${prefix}${item.name}(${item.cnt}次)</span> `;
+    });
+    heatHtml += '</div><div style="margin-bottom:6px;font-size:10px;color:#666;">' + analyzeStreak(jysxSeq, jysxIssueSeq, '', '') + '</div>';
+
+    // 单双
+    heatHtml += '<div style="margin-bottom:4px;"><b>单双：</b>';
+    const dsList = [
+      { name: '单', cnt: danCount },
+      { name: '双', cnt: shuangCount }
+    ];
+    dsList.sort((a, b) => b.cnt - a.cnt);
+    dsList.forEach(item => {
+      const tag = item.cnt >= Math.max(drawList.length/2 * 1.5, 3) ? 'hot' : (item.cnt === 0 ? 'cold' : '');
+      const tagClass = tag === 'hot' ? 'hot-item' : (tag === 'cold' ? 'cold-item' : 'normal-item');
+      const prefix = tag === 'hot' ? '🔥' : (tag === 'cold' ? '❄️' : '');
+      heatHtml += `<span class="${tagClass}">${prefix}${item.name}(${item.cnt}次)</span> `;
+    });
+    heatHtml += '</div><div style="margin-bottom:6px;font-size:10px;color:#666;">' + analyzeStreak(dsSeq, dsIssueSeq, '', '') + '</div>';
+
+    // 大小
+    heatHtml += '<div style="margin-bottom:4px;"><b>大小：</b>';
+    const dxList = [
+      { name: '小', cnt: xiaoCount },
+      { name: '大', cnt: daCount }
+    ];
+    dxList.sort((a, b) => b.cnt - a.cnt);
+    dxList.forEach(item => {
+      const tag = item.cnt >= Math.max(drawList.length/2 * 1.5, 3) ? 'hot' : (item.cnt === 0 ? 'cold' : '');
+      const tagClass = tag === 'hot' ? 'hot-item' : (tag === 'cold' ? 'cold-item' : 'normal-item');
+      const prefix = tag === 'hot' ? '🔥' : (tag === 'cold' ? '❄️' : '');
+      heatHtml += `<span class="${tagClass}">${prefix}${item.name}(${item.cnt}次)</span> `;
+    });
+    heatHtml += '</div><div style="margin-bottom:6px;font-size:10px;color:#666;">' + analyzeStreak(dxSeq, dxIssueSeq, '', '') + '</div>';
+    heatHtml += '</div>';
+  }
+
+  // ========== 智能建议 HTML ==========
+  const reportBets = [];
+  for (let i = 1; i <= 49; i++) {
+    const n = i.toString().padStart(2, '0');
+    const bet = reportBetData[n] || 0;
+    if (bet > 0) reportBets.push({ num: n, bet });
+  }
+  const avgBet = reportBets.length > 0 ? (reportBets.reduce((s, it) => s + it.bet, 0) / reportBets.length) : 0;
+  const multiplier = parseFloat(document.getElementById('urgentMultiplierInput')?.value || '1.3');
+  let urgentNums = [];
+  if (reportBets.length > 0) {
+    urgentNums = reportBets.filter(item => item.bet > avgBet * multiplier)
+      .sort((a, b) => b.bet - a.bet).map(item => item.num);
+  }
+
+  const recent6Zodiacs = [];
+  for (let i = currentIssue - 1; i >= 1 && recent6Zodiacs.length < 6; i--) {
+    const issueId = i.toString().padStart(2, '0');
+    const entry = savedData[issueId];
+    if (entry && entry.number && entry.number.trim()) {
+      const num = entry.number.trim().padStart(2, '0');
+      if (/^\d{2}$/.test(num) && parseInt(num) >= 1 && parseInt(num) <= 49) {
+        const z = currentZodiacMap[num] || '';
+        if (z && !recent6Zodiacs.includes(z)) recent6Zodiacs.push(z);
+      }
+    }
+  }
+  let zodiacMonitorNums = [];
+  if (recent6Zodiacs.length > 0) {
+    const allZodiacNums = new Set();
+    recent6Zodiacs.forEach(z => { (cfg.zodiac[z]||[]).forEach(n => allZodiacNums.add(n.toString().padStart(2,'0'))); });
+    zodiacMonitorNums = [...allZodiacNums]
+      .filter(n => reportRiskData[n] !== undefined && reportRiskData[n] < 0)
+      .sort((a, b) => (reportRiskData[a]||0) - (reportRiskData[b]||0));
+  }
+
+  const betNums = [];
+  for (let i = 1; i <= 49; i++) {
+    const n = i.toString().padStart(2, '0');
+    const risk = reportRiskData[n];
+    if ((risk === undefined || risk >= 0) && (numCount[n]||0) === 0) betNums.push(n);
+  }
+
+  // 冷门监控相关函数
   function getColdItems(countMap, allKeys) {
     return allKeys.filter(k => (countMap[k] || 0) === 0);
   }
-
   const coldZodiacs = getColdItems(zodiacCountLocal, ['鼠','牛','虎','兔','龙','蛇','马','羊','猴','鸡','狗','猪']);
   const coldBoses = getColdItems(boseCount, ['红波','蓝波','绿波']);
   const coldWeishus = getColdItems(weishuCount, Array.from({length:10}, (_,i) => i+'尾'));
@@ -2484,227 +2720,94 @@ function renderSmartDecision() {
     coldMonitorHtml += `<div style="margin-top:6px;"><button class="copy-advice-btn" onclick="copyNumsToClipboard('${sortedAll.join('-')}')">📋复制全部冷门号码</button></div>`;
   }
 
-  // 构建热度分析内容
-  let heatHtml = '<div style="font-size:11px;">';
-  heatHtml += `<div style="margin-bottom:4px;color:#666;">📊 开奖热度分析（最近${actualPeriod}期，共${drawList.length}条记录）</div>`;
+  let adviceHtml = '';
+  if (adviceVisible) {
+    adviceHtml = '<div style="font-size:11px;">';
+    adviceHtml += '<div style="margin-bottom:2px;color:#666;">🎯 智能建议</div>';
+    adviceHtml += '<table style="width:100%;border-collapse:collapse;font-size:11px;"><tr>';
+    adviceHtml += '<td style="width:50%;vertical-align:top;padding:4px;border:1px solid #eee;">';
+    adviceHtml += '<div class="advice-urgent" style="margin-bottom:6px;">';
+    adviceHtml += `<b>🚨 紧急抛售（倍数：<input type="number" id="urgentMultiplierInput" value="${multiplier}" min="0.1" step="0.1" style="width:45px;padding:1px 3px;font-size:11px;border:1px solid #ccc;border-radius:3px;" onchange="renderSmartDecision()"> 均值：${avgBet.toFixed(0)}）</b><br>`;
+    if (urgentNums.length > 0) {
+      adviceHtml += '号码：' + urgentNums.map(n => `<span class="${getNumCls(n)}">${n}</span>`).join(' ');
+      adviceHtml += ` <button class="copy-advice-btn" onclick="copyNumsToClipboard([${urgentNums.map(n=>"'"+n+"'").join(',')}])">📋复制</button>`;
+    } else adviceHtml += '<span style="color:#888;">暂无</span>';
+    adviceHtml += '</div>';
 
-  heatHtml += '<div style="margin-bottom:4px;"><b>生肖：</b>';
-  const zodiacAll = ['鼠','牛','虎','兔','龙','蛇','马','羊','猴','鸡','狗','猪'];
-  const zodiacItems = zodiacAll.map(z => ({ name: z, cnt: zodiacCountLocal[z] || 0 }));
-  zodiacItems.sort((a, b) => b.cnt - a.cnt);
-  const zodiacAvg = drawList.length / 12;
-  zodiacItems.forEach(item => {
-    const tag = item.cnt >= Math.max(zodiacAvg * 1.5, 3) ? 'hot' : (item.cnt === 0 ? 'cold' : '');
-    const tagClass = tag === 'hot' ? 'hot-item' : (tag === 'cold' ? 'cold-item' : 'normal-item');
-    const prefix = tag === 'hot' ? '🔥' : (tag === 'cold' ? '❄️' : '');
-    heatHtml += `<span class="${tagClass} ${getZodiacCls(item.name)}">${prefix}${item.name}(${item.cnt}次)</span> `;
-  });
-  heatHtml += '</div><div style="margin-bottom:6px;font-size:10px;color:#666;">' + analyzeStreak(zodiacSeq, zodiacIssueSeq, '生肖', getZodiacCls) + '</div>';
+    adviceHtml += '<div class="advice-monitor" style="margin-bottom:6px;">';
+    adviceHtml += '<b>🔍 最近生肖监控（往前6个不重复生肖）</b><br>';
+    if (zodiacMonitorNums.length > 0) {
+      adviceHtml += '生肖：' + recent6Zodiacs.map(z => `<span class="${getZodiacCls(z)}">${z}</span>`).join(' ') + '<br>';
+      adviceHtml += '风险号码：' + zodiacMonitorNums.map(n => `<span class="${getNumCls(n)}">${n}</span>`).join(' ');
+      adviceHtml += ` <button class="copy-advice-btn" onclick="copyNumsToClipboard([${zodiacMonitorNums.map(n=>"'"+n+"'").join(',')}])">📋复制</button>`;
+    } else adviceHtml += '<span style="color:#888;">暂无</span>';
+    adviceHtml += '</div>';
 
-  heatHtml += '<div style="margin-bottom:4px;"><b>波色：</b>';
-  const boseList = ['红波','蓝波','绿波'].map(b => ({ name: b, cnt: boseCount[b] || 0 }));
-  boseList.sort((a, b) => b.cnt - a.cnt);
-  boseList.forEach(item => {
-    const tag = item.cnt >= Math.max(drawList.length/3 * 1.5, 3) ? 'hot' : (item.cnt === 0 ? 'cold' : '');
-    const tagClass = tag === 'hot' ? 'hot-item' : (tag === 'cold' ? 'cold-item' : 'normal-item');
-    const prefix = tag === 'hot' ? '🔥' : (tag === 'cold' ? '❄️' : '');
-    heatHtml += `<span class="${tagClass} ${getBoseCls(item.name)}">${prefix}${item.name}(${item.cnt}次)</span> `;
-  });
-  heatHtml += '</div><div style="margin-bottom:6px;font-size:10px;color:#666;">' + analyzeStreak(boseSeq, boseIssueSeq, '波色', getBoseCls) + '</div>';
-
-  heatHtml += '<div style="margin-bottom:4px;"><b>尾数：</b>';
-  const weishuList = [];
-  for (let i = 0; i <= 9; i++) weishuList.push({ name: i + '尾', cnt: weishuCount[i + '尾'] || 0 });
-  weishuList.sort((a, b) => b.cnt - a.cnt);
-  weishuList.forEach(item => {
-    const tag = item.cnt >= Math.max(drawList.length/10 * 1.5, 3) ? 'hot' : (item.cnt === 0 ? 'cold' : '');
-    const tagClass = tag === 'hot' ? 'hot-item' : (tag === 'cold' ? 'cold-item' : 'normal-item');
-    const prefix = tag === 'hot' ? '🔥' : (tag === 'cold' ? '❄️' : '');
-    heatHtml += `<span class="${tagClass}">${prefix}${item.name}(${item.cnt}次)</span> `;
-  });
-  heatHtml += '</div><div style="margin-bottom:6px;font-size:10px;color:#666;">' + analyzeStreak(weishuSeq, weishuIssueSeq, '尾数', '') + '</div>';
-
-  heatHtml += '<div style="margin-bottom:4px;"><b>头数：</b>';
-  const toushuList = [];
-  for (let i = 0; i <= 4; i++) toushuList.push({ name: i + '头', cnt: toushuCount[i + '头'] || 0 });
-  toushuList.sort((a, b) => b.cnt - a.cnt);
-  toushuList.forEach(item => {
-    const tag = item.cnt >= Math.max(drawList.length/5 * 1.5, 3) ? 'hot' : (item.cnt === 0 ? 'cold' : '');
-    const tagClass = tag === 'hot' ? 'hot-item' : (tag === 'cold' ? 'cold-item' : 'normal-item');
-    const prefix = tag === 'hot' ? '🔥' : (tag === 'cold' ? '❄️' : '');
-    heatHtml += `<span class="${tagClass}">${prefix}${item.name}(${item.cnt}次)</span> `;
-  });
-  heatHtml += '</div><div style="margin-bottom:6px;font-size:10px;color:#666;">' + analyzeStreak(toushuSeq, toushuIssueSeq, '头数', '') + '</div>';
-
-  heatHtml += '<div style="margin-bottom:4px;"><b>家禽/野兽：</b>';
-  const jysxList = [
-    { name: '家禽', cnt: jiaqinCount },
-    { name: '野兽', cnt: yeshouCount }
-  ];
-  jysxList.sort((a, b) => b.cnt - a.cnt);
-  jysxList.forEach(item => {
-    const tag = item.cnt >= Math.max(drawList.length/2 * 1.5, 3) ? 'hot' : (item.cnt === 0 ? 'cold' : '');
-    const tagClass = tag === 'hot' ? 'hot-item' : (tag === 'cold' ? 'cold-item' : 'normal-item');
-    const prefix = tag === 'hot' ? '🔥' : (tag === 'cold' ? '❄️' : '');
-    heatHtml += `<span class="${tagClass}">${prefix}${item.name}(${item.cnt}次)</span> `;
-  });
-  heatHtml += '</div><div style="margin-bottom:6px;font-size:10px;color:#666;">' + analyzeStreak(jysxSeq, jysxIssueSeq, '', '') + '</div>';
-
-  heatHtml += '<div style="margin-bottom:4px;"><b>单双：</b>';
-  const dsList = [
-    { name: '单', cnt: danCount },
-    { name: '双', cnt: shuangCount }
-  ];
-  dsList.sort((a, b) => b.cnt - a.cnt);
-  dsList.forEach(item => {
-    const tag = item.cnt >= Math.max(drawList.length/2 * 1.5, 3) ? 'hot' : (item.cnt === 0 ? 'cold' : '');
-    const tagClass = tag === 'hot' ? 'hot-item' : (tag === 'cold' ? 'cold-item' : 'normal-item');
-    const prefix = tag === 'hot' ? '🔥' : (tag === 'cold' ? '❄️' : '');
-    heatHtml += `<span class="${tagClass}">${prefix}${item.name}(${item.cnt}次)</span> `;
-  });
-  heatHtml += '</div><div style="margin-bottom:6px;font-size:10px;color:#666;">' + analyzeStreak(dsSeq, dsIssueSeq, '', '') + '</div>';
-
-  heatHtml += '<div style="margin-bottom:4px;"><b>大小：</b>';
-  const dxList = [
-    { name: '小', cnt: xiaoCount },
-    { name: '大', cnt: daCount }
-  ];
-  dxList.sort((a, b) => b.cnt - a.cnt);
-  dxList.forEach(item => {
-    const tag = item.cnt >= Math.max(drawList.length/2 * 1.5, 3) ? 'hot' : (item.cnt === 0 ? 'cold' : '');
-    const tagClass = tag === 'hot' ? 'hot-item' : (tag === 'cold' ? 'cold-item' : 'normal-item');
-    const prefix = tag === 'hot' ? '🔥' : (tag === 'cold' ? '❄️' : '');
-    heatHtml += `<span class="${tagClass}">${prefix}${item.name}(${item.cnt}次)</span> `;
-  });
-  heatHtml += '</div><div style="margin-bottom:6px;font-size:10px;color:#666;">' + analyzeStreak(dxSeq, dxIssueSeq, '', '') + '</div>';
-  heatHtml += '</div>';
-
-  // 构建智能建议内容
-  const reportBets = [];
-  for (let i = 1; i <= 49; i++) {
-    const n = i.toString().padStart(2, '0');
-    const bet = reportBetData[n] || 0;
-    if (bet > 0) reportBets.push({ num: n, bet });
-  }
-  const avgBet = reportBets.length > 0
-    ? (reportBets.reduce((sum, item) => sum + item.bet, 0) / reportBets.length)
-    : 0;
-
-  const multiplierInput = document.getElementById('urgentMultiplierInput');
-  const multiplier = multiplierInput ? (parseFloat(multiplierInput.value) || 1.3) : 1.3;
-
-  let urgentNums = [];
-  if (reportBets.length > 0) {
-    urgentNums = reportBets
-      .filter(item => item.bet > avgBet * multiplier)
-      .sort((a, b) => b.bet - a.bet)
-      .map(item => item.num);
+    adviceHtml += '<div class="advice-bet" style="margin-bottom:6px;">';
+    adviceHtml += '<b>📈 加注建议（正常风险+冷）</b><br>';
+    if (betNums.length > 0) {
+      adviceHtml += '号码：' + betNums.slice(0, 10).map(n => `<span class="${getNumCls(n)}">${n}</span>`).join(' ');
+    } else adviceHtml += '<span style="color:#888;">暂无</span>';
+    adviceHtml += '</div>';
+    adviceHtml += '</td>';
+    adviceHtml += '<td style="width:50%;vertical-align:top;padding:4px;border:1px solid #eee;">';
+    adviceHtml += '<div class="advice-monitor" style="margin-bottom:6px;">';
+    adviceHtml += '<b>❄️ 冷门监控（冷维度 × 上报风险负数）</b><br>';
+    if (coldMonitorHtml) {
+      adviceHtml += coldMonitorHtml;
+    } else {
+      adviceHtml += '<span style="color:#888;">暂无冷门风险号码</span>';
+    }
+    adviceHtml += '</div>';
+    adviceHtml += '</td></tr></table></div>';
   }
 
-  const recent6Zodiacs = [];
-  for (let i = currentIssue - 1; i >= 1 && recent6Zodiacs.length < 6; i--) {
-    const issueId = i.toString().padStart(2, '0');
-    const entry = savedData[issueId];
-    if (entry && entry.number && entry.number.trim()) {
-      const num = entry.number.trim().padStart(2, '0');
-      if (/^\d{2}$/.test(num) && parseInt(num) >= 1 && parseInt(num) <= 49) {
-        const z = currentZodiacMap[num] || '';
-        if (z && !recent6Zodiacs.includes(z)) {
-          recent6Zodiacs.push(z);
+  // ========== 暴增监控 HTML ==========
+  let surgeHtml = '';
+  if (surgeVisible) {
+    surgeHtml = '<div style="font-size:11px;">';
+    surgeHtml += `<div style="margin-bottom:4px;"><b>⏱ 暴增监控（阈值：<input type="number" value="${surgeThreshold}" min="10" max="100" style="width:50px;font-size:11px;" onchange="surgeThreshold=parseInt(this.value);localStorage.setItem('surgeThreshold', surgeThreshold); computeSurge().then(()=>renderSmartDecision());">% · 最少${surgeMinOrders}条订单）</b></div>`;
+    if (window._surgeResult && window._surgeResult.length > 0) {
+      window._surgeResult.forEach(user => {
+        surgeHtml += `<div style="margin-bottom:2px;">${user.user}: `;
+        const items = user.items;
+        const maxRatio = items[0].ratio;
+        let secondRatio = null;
+        for (const item of items) {
+          if (item.ratio < maxRatio) { secondRatio = item.ratio; break; }
         }
-      }
+        items.forEach((item, idx) => {
+          let tag = '';
+          if (item.ratio === maxRatio) tag = '🔥';
+          else if (secondRatio !== null && item.ratio === secondRatio) tag = '📈';
+          surgeHtml += `${tag ? tag + ' ' : ''}<span class="${getNumCls(item.num)}">${item.num}</span> `;
+        });
+        surgeHtml += '</div>';
+      });
+      surgeHtml += '<button class="copy-advice-btn" onclick="copySurgeNums()">📋复制全部号码</button>';
+    } else {
+      surgeHtml += '<div style="color:#888;">暂无暴增</div>';
     }
-  }
-  let zodiacMonitorNums = [];
-  if (recent6Zodiacs.length > 0) {
-    const allZodiacNums = new Set();
-    recent6Zodiacs.forEach(z => {
-      const nums = cfg.zodiac[z] || [];
-      nums.forEach(n => allZodiacNums.add(n.toString().padStart(2, '0')));
-    });
-    zodiacMonitorNums = [...allZodiacNums]
-      .filter(n => reportRiskData[n] !== undefined && reportRiskData[n] < 0)
-      .sort((a, b) => (reportRiskData[a] || 0) - (reportRiskData[b] || 0));
+    surgeHtml += '</div>';
   }
 
-  const betNums = [];
-  for (let i = 1; i <= 49; i++) {
-    const n = i.toString().padStart(2, '0');
-    const risk = reportRiskData[n];
-    const heat = numCount[n] || 0;
-    if ((risk === undefined || risk >= 0) && heat === 0) {
-      betNums.push(n);
-    }
-  }
-
-  let adviceHtml = '<div style="font-size:11px;">';
-  adviceHtml += '<div style="margin-bottom:2px;color:#666;">🎯 智能建议</div>';
-
-  adviceHtml += '<table style="width:100%;border-collapse:collapse;font-size:11px;"><tr>';
-  
-  adviceHtml += '<td style="width:50%;vertical-align:top;padding:4px;border:1px solid #eee;">';
-  
-  adviceHtml += '<div class="advice-urgent" style="margin-bottom:6px;">';
-  adviceHtml += `<b>🚨 紧急抛售（倍数：<input type="number" id="urgentMultiplierInput" value="${multiplier}" min="0.1" step="0.1" style="width:45px;padding:1px 3px;font-size:11px;border:1px solid #ccc;border-radius:3px;" onchange="renderSmartDecision()"> 均值：${avgBet.toFixed(0)}）</b><br>`;
-  if (urgentNums.length > 0) {
-    adviceHtml += '号码：' + urgentNums.map(n => `<span class="${getNumCls(n)}">${n}</span>`).join(' ');
-    adviceHtml += ` <button class="copy-advice-btn" onclick="copyNumsToClipboard([${urgentNums.map(n=>"'"+n+"'").join(',')}])">📋复制</button>`;
-  } else {
-    adviceHtml += '<span style="color:#888;">暂无</span>';
-  }
-  adviceHtml += '</div>';
-
-  adviceHtml += '<div class="advice-monitor" style="margin-bottom:6px;">';
-  adviceHtml += '<b>🔍 最近生肖监控（往前6个不重复生肖）</b><br>';
-  if (zodiacMonitorNums.length > 0) {
-    adviceHtml += '生肖：' + recent6Zodiacs.map(z => `<span class="${getZodiacCls(z)}">${z}</span>`).join(' ') + '<br>';
-    adviceHtml += '风险号码：' + zodiacMonitorNums.map(n => `<span class="${getNumCls(n)}">${n}</span>`).join(' ');
-    adviceHtml += ` <button class="copy-advice-btn" onclick="copyNumsToClipboard([${zodiacMonitorNums.map(n=>"'"+n+"'").join(',')}])">📋复制</button>`;
-  } else {
-    adviceHtml += '<span style="color:#888;">暂无</span>';
-  }
-  adviceHtml += '</div>';
-
-  adviceHtml += '<div class="advice-bet" style="margin-bottom:6px;">';
-  adviceHtml += '<b>📈 加注建议（正常风险+冷）</b><br>';
-  if (betNums.length > 0) {
-    adviceHtml += '号码：' + betNums.slice(0, 10).map(n => `<span class="${getNumCls(n)}">${n}</span>`).join(' ');
-  } else {
-    adviceHtml += '<span style="color:#888;">暂无</span>';
-  }
-  adviceHtml += '</div>';
-  
-  adviceHtml += '</td>';
-  
-  adviceHtml += '<td style="width:50%;vertical-align:top;padding:4px;border:1px solid #eee;">';
-  adviceHtml += '<div class="advice-monitor" style="margin-bottom:6px;">';
-  adviceHtml += '<b>❄️ 冷门监控（冷维度 × 上报风险负数）</b><br>';
-  if (coldMonitorHtml) {
-    adviceHtml += coldMonitorHtml;
-  } else {
-    adviceHtml += '<span style="color:#888;">暂无冷门风险号码</span>';
-  }
-  adviceHtml += '</div>';
-  adviceHtml += '</td>';
-  
-  adviceHtml += '</tr></table>';
-  adviceHtml += '</div>';
-
-  // 最终组装：可折叠标题 + 内容
+  // ========== 最终组装 ==========
   let finalHtml = '';
-  finalHtml += '<div style="margin-bottom:8px;">';
-  finalHtml += '<div style="cursor:pointer; font-weight:bold; font-size:13px; margin-bottom:4px;" onclick="toggleDecisionSection(this)">';
-  finalHtml += '<span class="toggle-icon" style="margin-right:4px;">▼</span>📊 开奖热度分析';
-  finalHtml += '</div>';
-  finalHtml += '<div style="display:block;">' + heatHtml + '</div>';
-  finalHtml += '</div>';
+  // 标题行：期数 + 三个按钮
+  finalHtml += `<div style="display:flex; align-items:center; gap:6px; margin-bottom:6px;">`;
+  finalHtml += `<span style="font-size:12px;">期数：</span><input type="number" id="smartPeriodInput" class="range-input" value="${period}" placeholder="10" min="1" style="width:50px;" onchange="renderSmartDecision()">`;
+  finalHtml += `<button class="btn-copy" style="padding:2px 8px; font-size:11px; min-height:auto; border-radius:20px; background:${heatVisible?'#2ecc71':'#95a5a6'}; color:#fff; border:none; cursor:pointer;" onclick="toggleHeat()">开奖热度分析</button>`;
+  finalHtml += `<button class="btn-copy" style="padding:2px 8px; font-size:11px; min-height:auto; border-radius:20px; background:${adviceVisible?'#2ecc71':'#95a5a6'}; color:#fff; border:none; cursor:pointer;" onclick="toggleAdvice()">智能建议</button>`;
+  finalHtml += `<button class="btn-copy" style="padding:2px 8px; font-size:11px; min-height:auto; border-radius:20px; background:${surgeVisible?'#2ecc71':'#95a5a6'}; color:#fff; border:none; cursor:pointer;" onclick="toggleSurge()">暴增监控</button>`;
+  finalHtml += `</div>`;
 
-  finalHtml += '<div style="margin-bottom:8px;">';
-  finalHtml += '<div style="cursor:pointer; font-weight:bold; font-size:13px; margin-bottom:4px;" onclick="toggleDecisionSection(this)">';
-  finalHtml += '<span class="toggle-icon" style="margin-right:4px;">▼</span>🎯 智能建议';
-  finalHtml += '</div>';
-  finalHtml += '<div style="display:block;">' + adviceHtml + '</div>';
-  finalHtml += '</div>';
+  if (heatVisible) finalHtml += heatHtml;
+  if (adviceVisible) finalHtml += adviceHtml;
+  if (surgeVisible) finalHtml += surgeHtml;
+
+  if (!heatVisible && !adviceVisible && !surgeVisible) {
+    finalHtml += '<div style="color:#888; font-size:12px; text-align:center; padding:10px;">点击上方按钮查看分析</div>';
+  }
 
   container.innerHTML = finalHtml;
 }
@@ -2742,11 +2845,12 @@ function copyNumsToClipboard(nums) {
   };
 })();
 
-// ========== 重写 updateTableFromRecords 追加平特肖刷新 ==========
+// ========== 重写 updateTableFromRecords 追加暴增计算和卡片更新 ==========
 (function() {
   const originalFn = updateTableFromRecords;
   updateTableFromRecords = async function() {
     await originalFn.apply(this, arguments);
+    await computeSurge(); // 计算暴增数据
     renderPingtexiaoTable();
     updateCardA();
     renderSmartDecision();
@@ -2914,4 +3018,4 @@ window.onload = async () => {
 };
 </script>
 </body>
-</html>  
+</html>
