@@ -1149,24 +1149,22 @@ async function showOperationLog() {
       const colorClass = actionColors[log.action] || 'log-type-login';
       const detailLines = (log.detail || '').split('\n');
       const logDate = log.timestamp.slice(0, 10);
-      html += `<div class="order-item log-item" data-date="${logDate}" data-action="${log.action}">
-        <div class="order-content">`;
       // 用户行
-      if (detailLines.length > 0) {
-        html += `<span style="color:#2980b9;font-weight:bold;">${detailLines[0]}</span><br>`;
-      }
+      const userLine = detailLines.length > 0 ? detailLines[0] : '';
       // 订单内容行（中间部分）
+      let contentLines = '';
       for (let i = 1; i < detailLines.length - 1; i++) {
-        html += `${detailLines[i]}<br>`;
+        contentLines += detailLines[i] + '\n';
       }
       // 合计行
-      if (detailLines.length > 1) {
-        html += `<span style="color:#e67e22;font-weight:bold;">${detailLines[detailLines.length - 1]}</span>`;
-      }
-      html += `</div>
+      const totalLine = detailLines.length > 1 ? detailLines[detailLines.length - 1] : '';
+      // 组装显示内容：用户 + 内容 + 合计
+      const displayContent = userLine + '\n' + contentLines.trim() + '\n' + totalLine;
+      html += `<div class="order-item log-item" data-date="${logDate}" data-action="${log.action}">
+        <div class="order-content">${displayContent.replace(/\n/g, '<br>')}</div>
         <div class="order-info">
-          <span class="log-type-tag ${colorClass}">${actionLabel}</span>
-          <span class="order-meta">${ts}</span>
+          <span class="order-total" style="color:#000;">${totalLine}</span>
+          <span class="order-meta"><span class="log-type-tag ${colorClass}">${actionLabel}</span> &nbsp; ${ts}</span>
         </div>
       </div>`;
     });
@@ -1872,10 +1870,10 @@ function updateRecycleStorageInfo() { const span = document.getElementById('recy
 async function updateRecycleCount() { const span = document.getElementById('recycleCount'); if (!span) return; try { const allRecords = await getRecycleBinRecords(); const count = allRecords.filter(r => r.region === currentRegion).length; if (count > 0) { span.textContent = count; span.style.display = 'inline-block'; } else { span.style.display = 'none'; } } catch(e) { span.style.display = 'none'; } }
 function checkAllRecycle() { document.querySelectorAll('.recycle-check').forEach(cb => cb.checked = true); }
 function uncheckAllRecycle() { document.querySelectorAll('.recycle-check').forEach(cb => cb.checked = false); }
-async function restoreRecycleRecord(id) { if (!(await confirm('确定恢复该记录吗？'))) return; try { const records = await getRecycleBinRecords(); const record = records.find(r => r.id === id); if (!record) { showToast('记录不存在'); return; } if (record.type === 'order') { await saveOrderRecordToIDB(record.content, record.user, record.date, record.totalAmount || 0, record.timestamp, record.region); } else { await saveReportOrderRecordToIDB(record.content, record.user, record.date, record.totalAmount || 0, record.timestamp, record.region); } await deleteFromRecycleBin(id); addOperationLog('restore', `恢复1条${record.type === 'order' ? '订单' : '上报'}记录\n用户：${record.user}\n日期：${record.date}\n${record.content}`); showToast('已恢复'); await updateTableFromRecords(); calculateStorageUsage(); showRecycleBin(); updateRecycleCount(); clearStatsCache(); } catch(e) { showToast('恢复失败'); } }
-async function permanentlyDeleteRecycleRecord(id) { if (!(await confirm('确定彻底删除吗？此操作不可恢复！'))) return; const record = await new Promise((resolve) => { const tx = db.transaction([RECYCLE_STORE_NAME], 'readonly'); const store = tx.objectStore(RECYCLE_STORE_NAME); const req = store.get(id); req.onsuccess = () => resolve(req.result); req.onerror = () => resolve(null); }); const detailText = record ? `用户：${record.user}\n日期：${record.date}\n${record.content}` : '记录详情未知'; await deleteFromRecycleBin(id); addOperationLog('permanent_delete', detailText); showToast('已彻底删除'); updateRecycleStorageInfo(); showRecycleBin(); updateRecycleCount(); }
-async function restoreCheckedRecycle() { const ids = []; document.querySelectorAll('.recycle-check:checked').forEach(cb => ids.push(String(cb.dataset.id))); if (ids.length === 0) { showToast('请选择'); return; } if (!(await confirm(`确定恢复选中的 ${ids.length} 条记录吗？`))) return; const records = await getRecycleBinRecords(); let count = 0; const details = []; for (const id of ids) { const record = records.find(r => r.id === id); if (!record) continue; if (record.type === 'order') { await saveOrderRecordToIDB(record.content, record.user, record.date, record.totalAmount || 0, record.timestamp, record.region); } else { await saveReportOrderRecordToIDB(record.content, record.user, record.date, record.totalAmount || 0, record.timestamp, record.region); } details.push(`用户：${record.user} 日期：${record.date}\n${record.content}`); await deleteFromRecycleBin(id); count++; } addOperationLog('restore', `批量恢复${count}条记录\n` + details.join('\n---\n')); showToast(`已恢复 ${count} 条`); await updateTableFromRecords(); calculateStorageUsage(); showRecycleBin(); updateRecycleCount(); clearStatsCache(); }
-async function deleteCheckedRecycle() { const ids = []; document.querySelectorAll('.recycle-check:checked').forEach(cb => ids.push(String(cb.dataset.id))); if (ids.length === 0) { showToast('请选择'); return; } if (!(await confirm(`确定彻底删除选中的 ${ids.length} 条记录吗？此操作不可恢复！`))) return; const records = await getRecycleBinRecords(); const details = []; for (const id of ids) { const record = records.find(r => r.id === id); if (record) details.push(`用户：${record.user} 日期：${record.date}\n${record.content}`); } await batchDeleteFromRecycleBin(ids); addOperationLog('permanent_delete', `批量彻底删除${ids.length}条记录\n` + details.join('\n---\n')); showToast(`已彻底删除 ${ids.length} 条`); updateRecycleStorageInfo(); showRecycleBin(); updateRecycleCount(); }
+async function restoreRecycleRecord(id) { if (!(await confirm('确定恢复该记录吗？'))) return; try { const records = await getRecycleBinRecords(); const record = records.find(r => r.id === id); if (!record) { showToast('记录不存在'); return; } if (record.type === 'order') { await saveOrderRecordToIDB(record.content, record.user, record.date, record.totalAmount || 0, record.timestamp, record.region); } else { await saveReportOrderRecordToIDB(record.content, record.user, record.date, record.totalAmount || 0, record.timestamp, record.region); } await deleteFromRecycleBin(id); addOperationLog('restore', `用户：${record.user}\n${record.content}\n合计：${record.totalAmount || 0}`); showToast('已恢复'); await updateTableFromRecords(); calculateStorageUsage(); showRecycleBin(); updateRecycleCount(); clearStatsCache(); } catch(e) { showToast('恢复失败'); } }
+async function permanentlyDeleteRecycleRecord(id) { if (!(await confirm('确定彻底删除吗？此操作不可恢复！'))) return; const record = await new Promise((resolve) => { const tx = db.transaction([RECYCLE_STORE_NAME], 'readonly'); const store = tx.objectStore(RECYCLE_STORE_NAME); const req = store.get(id); req.onsuccess = () => resolve(req.result); req.onerror = () => resolve(null); }); const detailText = record ? `用户：${record.user}\n${record.content}\n合计：${record.totalAmount || 0}` : '记录详情未知'; await deleteFromRecycleBin(id); addOperationLog('permanent_delete', detailText); showToast('已彻底删除'); updateRecycleStorageInfo(); showRecycleBin(); updateRecycleCount(); }
+async function restoreCheckedRecycle() { const ids = []; document.querySelectorAll('.recycle-check:checked').forEach(cb => ids.push(String(cb.dataset.id))); if (ids.length === 0) { showToast('请选择'); return; } if (!(await confirm(`确定恢复选中的 ${ids.length} 条记录吗？`))) return; const records = await getRecycleBinRecords(); let count = 0; const details = []; for (const id of ids) { const record = records.find(r => r.id === id); if (!record) continue; if (record.type === 'order') { await saveOrderRecordToIDB(record.content, record.user, record.date, record.totalAmount || 0, record.timestamp, record.region); } else { await saveReportOrderRecordToIDB(record.content, record.user, record.date, record.totalAmount || 0, record.timestamp, record.region); } details.push(`用户：${record.user}\n${record.content}\n合计：${record.totalAmount || 0}`); await deleteFromRecycleBin(id); count++; } addOperationLog('restore', details.join('\n---\n')); showToast(`已恢复 ${count} 条`); await updateTableFromRecords(); calculateStorageUsage(); showRecycleBin(); updateRecycleCount(); clearStatsCache(); }
+async function deleteCheckedRecycle() { const ids = []; document.querySelectorAll('.recycle-check:checked').forEach(cb => ids.push(String(cb.dataset.id))); if (ids.length === 0) { showToast('请选择'); return; } if (!(await confirm(`确定彻底删除选中的 ${ids.length} 条记录吗？此操作不可恢复！`))) return; const records = await getRecycleBinRecords(); const details = []; for (const id of ids) { const record = records.find(r => r.id === id); if (record) details.push(`用户：${record.user}\n${record.content}\n合计：${record.totalAmount || 0}`); } await batchDeleteFromRecycleBin(ids); addOperationLog('permanent_delete', details.join('\n---\n')); showToast(`已彻底删除 ${ids.length} 条`); updateRecycleStorageInfo(); showRecycleBin(); updateRecycleCount(); }
 async function emptyRecycleBin() { if (!(await confirm('确定清空整个回收站吗？此操作不可恢复！'))) return; const pwd = await prompt("输入清空密码：",""); if (pwd !== PASSWORD) { await alert("密码错误"); return; } await clearRecycleBin(currentRegion); addOperationLog('reset', '清空回收站'); showToast('回收站已清空'); showRecycleBin(); updateRecycleCount(); }
 async function autoCleanRecycleBin() { try { const records = await getRecycleBinRecords(); const now = Date.now(); const expireMs = RECYCLE_RETENTION_DAYS * 24 * 60 * 60 * 1000; for (const record of records) { const deletedTime = new Date(record.deletedAt).getTime(); if (now - deletedTime > expireMs) { await deleteFromRecycleBin(record.id); } } updateRecycleCount(); } catch(e) {} }
 
