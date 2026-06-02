@@ -300,6 +300,11 @@ tr.selected-row{background-color:#dceeff!important;font-weight:bold;box-shadow:i
     word-break: break-word;
     white-space: normal;
 }
+
+/* 智能决策中心所有输入框文字居中 */
+#smartDecisionContent input {
+    text-align: center;
+}
 </style>
 </head>
 <body>
@@ -2255,7 +2260,7 @@ let heatVisible = false;
 let adviceVisible = false;
 let surgeVisible = false;
 let surgeThreshold = parseInt(localStorage.getItem('surgeThreshold') || '50');
-let surgeAmountThreshold = parseInt(localStorage.getItem('surgeAmountThreshold') || '4');
+let surgeAmountThreshold = parseFloat(localStorage.getItem('surgeAmountThreshold') || '4');
 let surgeMinOrders = 3;
 
 // ========== 暴增监控数据计算 ==========
@@ -2326,16 +2331,16 @@ async function computeSurge() {
     amountTriggered.sort((a, b) => b.ratio - a.ratio);
 
     if (countTriggered.length > 0 || amountTriggered.length > 0) {
-      // 计算每个维度的最高占比
-      const maxRatioCount = countTriggered.length > 0 ? countTriggered[0].ratio : 0;
-      const maxRatioAmount = amountTriggered.length > 0 ? amountTriggered[0].ratio : 0;
+      // 计算每个维度的前三占比值
+      const countRatios = [...new Set(countTriggered.map(item => item.ratio))].sort((a,b) => b-a);
+      const amountRatios = [...new Set(amountTriggered.map(item => item.ratio))].sort((a,b) => b-a);
 
       result.push({
         user,
         countItems: countTriggered,
         amountItems: amountTriggered,
-        maxRatioCount,
-        maxRatioAmount,
+        countTopRatios: countRatios.slice(0, 3),
+        amountTopRatios: amountRatios.slice(0, 3),
         totalOrders,
         totalAmount
       });
@@ -2386,6 +2391,14 @@ function copyAllSurgeNums() {
   navigator.clipboard.writeText(arr.join(' ')).then(() => {
     showToast('已复制全部号码');
   }).catch(() => showToast('复制失败'));
+}
+
+// ========== 获取标签函数 ==========
+function getTagForRatio(ratio, topRatios) {
+  if (topRatios.length > 0 && ratio === topRatios[0]) return '🔥';
+  if (topRatios.length > 1 && ratio === topRatios[1]) return '📈';
+  if (topRatios.length > 2 && ratio === topRatios[2]) return '💡';
+  return '';
 }
 
 // ========== 智能决策中心核心函数 ==========
@@ -2539,6 +2552,7 @@ function renderSmartDecision() {
     heatHtml = '<div style="font-size:11px;">';
     heatHtml += `<div style="margin-bottom:4px;color:#666;">📊 开奖热度分析（最近${actualPeriod}期，共${drawList.length}条记录）</div>`;
 
+    // 生肖
     heatHtml += '<div style="margin-bottom:4px;"><b>生肖：</b>';
     const zodiacAll = ['鼠','牛','虎','兔','龙','蛇','马','羊','猴','鸡','狗','猪'];
     const zodiacItems = zodiacAll.map(z => ({ name: z, cnt: zodiacCountLocal[z] || 0 }));
@@ -2552,6 +2566,7 @@ function renderSmartDecision() {
     });
     heatHtml += '</div><div style="margin-bottom:6px;font-size:10px;color:#666;">' + analyzeStreak(zodiacSeq, zodiacIssueSeq, '生肖', getZodiacCls) + '</div>';
 
+    // 波色
     heatHtml += '<div style="margin-bottom:4px;"><b>波色：</b>';
     const boseList = ['红波','蓝波','绿波'].map(b => ({ name: b, cnt: boseCount[b] || 0 }));
     boseList.sort((a, b) => b.cnt - a.cnt);
@@ -2563,6 +2578,7 @@ function renderSmartDecision() {
     });
     heatHtml += '</div><div style="margin-bottom:6px;font-size:10px;color:#666;">' + analyzeStreak(boseSeq, boseIssueSeq, '波色', getBoseCls) + '</div>';
 
+    // 尾数
     heatHtml += '<div style="margin-bottom:4px;"><b>尾数：</b>';
     const weishuList = [];
     for (let i = 0; i <= 9; i++) weishuList.push({ name: i + '尾', cnt: weishuCount[i + '尾'] || 0 });
@@ -2575,6 +2591,7 @@ function renderSmartDecision() {
     });
     heatHtml += '</div><div style="margin-bottom:6px;font-size:10px;color:#666;">' + analyzeStreak(weishuSeq, weishuIssueSeq, '尾数', '') + '</div>';
 
+    // 头数
     heatHtml += '<div style="margin-bottom:4px;"><b>头数：</b>';
     const toushuList = [];
     for (let i = 0; i <= 4; i++) toushuList.push({ name: i + '头', cnt: toushuCount[i + '头'] || 0 });
@@ -2587,6 +2604,7 @@ function renderSmartDecision() {
     });
     heatHtml += '</div><div style="margin-bottom:6px;font-size:10px;color:#666;">' + analyzeStreak(toushuSeq, toushuIssueSeq, '头数', '') + '</div>';
 
+    // 家禽/野兽
     heatHtml += '<div style="margin-bottom:4px;"><b>家禽/野兽：</b>';
     const jysxList = [
       { name: '家禽', cnt: jiaqinCount },
@@ -2601,6 +2619,7 @@ function renderSmartDecision() {
     });
     heatHtml += '</div><div style="margin-bottom:6px;font-size:10px;color:#666;">' + analyzeStreak(jysxSeq, jysxIssueSeq, '', '') + '</div>';
 
+    // 单双
     heatHtml += '<div style="margin-bottom:4px;"><b>单双：</b>';
     const dsList = [
       { name: '单', cnt: danCount },
@@ -2615,6 +2634,7 @@ function renderSmartDecision() {
     });
     heatHtml += '</div><div style="margin-bottom:6px;font-size:10px;color:#666;">' + analyzeStreak(dsSeq, dsIssueSeq, '', '') + '</div>';
 
+    // 大小
     heatHtml += '<div style="margin-bottom:4px;"><b>大小：</b>';
     const dxList = [
       { name: '小', cnt: xiaoCount },
@@ -2796,8 +2816,8 @@ function renderSmartDecision() {
     surgeHtml = '<div style="font-size:11px;">';
     surgeHtml += `<div style="margin-bottom:4px;">
       <b>⏱ 暴增监控</b>
-      <span style="margin-left:8px;">条数阈值：<input type="number" value="${surgeThreshold}" min="10" max="100" style="width:50px;font-size:11px;" onchange="surgeThreshold=parseInt(this.value);localStorage.setItem('surgeThreshold', surgeThreshold); computeSurge().then(()=>renderSmartDecision());">%</span>
-      <span style="margin-left:8px;">金额阈值：<input type="number" value="${surgeAmountThreshold}" min="1" max="100" style="width:50px;font-size:11px;" onchange="surgeAmountThreshold=parseInt(this.value);localStorage.setItem('surgeAmountThreshold', surgeAmountThreshold); computeSurge().then(()=>renderSmartDecision());">%</span>
+      <span style="margin-left:8px;">条数阈值：<input type="number" value="${surgeThreshold}" min="10" max="100" style="width:50px;font-size:11px;text-align:center;" onchange="surgeThreshold=parseInt(this.value);localStorage.setItem('surgeThreshold', surgeThreshold); computeSurge().then(()=>renderSmartDecision());">%</span>
+      <span style="margin-left:8px;">金额阈值：<input type="number" value="${surgeAmountThreshold}" min="0" max="100" step="0.1" style="width:55px;font-size:11px;text-align:center;" onchange="surgeAmountThreshold=parseFloat(this.value);localStorage.setItem('surgeAmountThreshold', surgeAmountThreshold); computeSurge().then(()=>renderSmartDecision());">%</span>
       <span style="margin-left:8px;">最少${surgeMinOrders}条订单</span>
     </div>`;
     if (window._surgeResult && window._surgeResult.length > 0) {
@@ -2810,7 +2830,7 @@ function renderSmartDecision() {
         if (countItems.length > 0) {
           surgeHtml += '(条) ';
           countItems.forEach(item => {
-            const tag = (item.ratio === user.maxRatioCount) ? '🔥' : '';
+            const tag = getTagForRatio(item.ratio, user.countTopRatios);
             surgeHtml += `${tag ? tag + ' ' : ''}<span class="${getNumCls(item.num)}">${item.num}</span> `;
           });
         }
@@ -2818,7 +2838,7 @@ function renderSmartDecision() {
         if (amountItems.length > 0) {
           surgeHtml += '(金) ';
           amountItems.forEach(item => {
-            const tag = (item.ratio === user.maxRatioAmount) ? '🔥' : '';
+            const tag = getTagForRatio(item.ratio, user.amountTopRatios);
             surgeHtml += `${tag ? tag + ' ' : ''}<span class="${getNumCls(item.num)}">${item.num}</span> `;
           });
         }
@@ -2835,7 +2855,7 @@ function renderSmartDecision() {
   // ========== 最终组装 ==========
   let finalHtml = '';
   finalHtml += `<div style="display:flex; align-items:center; gap:6px; margin-bottom:6px; flex-wrap:wrap;">`;
-  finalHtml += `<span style="font-size:12px;">期数：</span><input type="number" id="smartPeriodInput" class="range-input" value="${period}" placeholder="10" min="1" style="width:50px;" onchange="renderSmartDecision()">`;
+  finalHtml += `<span style="font-size:12px;">期数：</span><input type="number" id="smartPeriodInput" class="range-input" value="${period}" placeholder="10" min="1" style="width:50px;text-align:center;" onchange="renderSmartDecision()">`;
   finalHtml += `<button class="btn-copy" style="padding:2px 8px; font-size:11px; min-height:auto; border-radius:20px; background:${heatVisible?'#2ecc71':'#95a5a6'}; color:#fff; border:none; cursor:pointer;" onclick="toggleHeat()">开奖热度分析</button>`;
   finalHtml += `<button class="btn-copy" style="padding:2px 8px; font-size:11px; min-height:auto; border-radius:20px; background:${adviceVisible?'#2ecc71':'#95a5a6'}; color:#fff; border:none; cursor:pointer;" onclick="toggleAdvice()">智能建议</button>`;
   finalHtml += `<button class="btn-copy" style="padding:2px 8px; font-size:11px; min-height:auto; border-radius:20px; background:${surgeVisible?'#2ecc71':'#95a5a6'}; color:#fff; border:none; cursor:pointer;" onclick="toggleSurge()">暴增监控</button>`;
