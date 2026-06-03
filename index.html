@@ -300,11 +300,6 @@ tr.selected-row{background-color:#dceeff!important;font-weight:bold;box-shadow:i
     word-break: break-word;
     white-space: normal;
 }
-
-/* 智能决策中心所有输入框文字居中 */
-#smartDecisionContent input {
-    text-align: center;
-}
 </style>
 </head>
 <body>
@@ -451,7 +446,8 @@ tr.selected-row{background-color:#dceeff!important;font-weight:bold;box-shadow:i
         </div>
       </div>
     </div>
-        <!-- 右侧风险报告区域 -->
+
+    <!-- 右侧风险报告区域 -->
     <div class="risk-report-area">
         <div class="card">
           <div class="card-title">
@@ -463,7 +459,7 @@ tr.selected-row{background-color:#dceeff!important;font-weight:bold;box-shadow:i
                 <option value="user">用户</option>
                 <option value="report">上报</option>
               </select>
-              <select id="viewUserSelect" style="padding:4px 8px;border-radius:4px;border:1px solid #ccc;font-size:14px;display:none;" onchange="updateTableFromRecords()"></select>
+              <select id="viewUserSelect" style="padding:4px 8px;border-radius:4px;border:1px solid #ccc;font-size:14px;display:none;" onchange="generateRiskTable()"></select>
             </div>
             <div class="year-zodiac-area">
               <span>本年生肖：</span>
@@ -935,26 +931,9 @@ const RECYCLE_RETENTION_DAYS = 30;
 function getTodayCST() { const now = new Date(); const offset = 8*60; const localTime = now.getTime() + (now.getTimezoneOffset() + offset) * 60000; const cstDate = new Date(localTime); return `${cstDate.getFullYear()}-${String(cstDate.getMonth()+1).padStart(2,'0')}-${String(cstDate.getDate()).padStart(2,'0')}`; }
 function buildZodiacMap(startZodiac) { const map = {}; const startIndex = zodiacOrder.indexOf(startZodiac); const idx = startIndex !== -1 ? startIndex : 0; for (let i=1; i<=49; i++) map[i.toString().padStart(2,'0')] = zodiacOrder[(idx+i-1)%12]; return map; }
 async function changeStartZodiac() { const select = document.getElementById('startZodiacSelect'); const newZodiac = select.value; const savedZodiac = localStorage.getItem('selectedStartZodiac') || '马'; if (newZodiac === savedZodiac) return; const inputPwd = await prompt("请输入本年生肖切换密码：", ""); if (inputPwd !== YEAR_ZODIAC_PASSWORD) { await alert("密码错误"); select.value = savedZodiac; return; } localStorage.setItem('selectedStartZodiac', newZodiac); currentZodiacMap = buildZodiacMap(newZodiac); refreshAll(); }
-// 修改后的 switchRiskReport，切换用户时刷新全部统计卡片
-async function switchRiskReport() {
-  const val = document.getElementById('riskReportSwitcher').value;
-  document.querySelectorAll('#riskTable .selected-row, #reportTable .selected-row').forEach(el => el.classList.remove('selected-row'));
-  if (val === 'total') {
-    document.getElementById('riskSection').style.display = '';
-    document.getElementById('reportSection').style.display = 'none';
-    document.getElementById('viewUserSelect').style.display = 'none';
-  } else if (val === 'user') {
-    document.getElementById('riskSection').style.display = '';
-    document.getElementById('reportSection').style.display = 'none';
-    document.getElementById('viewUserSelect').style.display = 'inline-block';
-  } else if (val === 'report') {
-    document.getElementById('riskSection').style.display = 'none';
-    document.getElementById('reportSection').style.display = '';
-  }
-  // 等待数据完全刷新（内部会根据当前选择的用户过滤并生成表格）
-  await updateTableFromRecords();
-}
-    function initIndexedDB() { return new Promise((resolve) => { const request = indexedDB.open(DB_NAME, DB_VERSION); request.onerror = () => { resolve(false); }; request.onsuccess = (event) => { db = event.target.result; resolve(true); }; request.onupgradeneeded = (event) => { db = event.target.result; if (!db.objectStoreNames.contains(STORE_NAME)) { db.createObjectStore(STORE_NAME, { keyPath: 'id' }); } if (!db.objectStoreNames.contains(REPORT_STORE_NAME)) { db.createObjectStore(REPORT_STORE_NAME, { keyPath: 'id' }); } if (!db.objectStoreNames.contains(RECYCLE_STORE_NAME)) { db.createObjectStore(RECYCLE_STORE_NAME, { keyPath: 'id' }); } const tx = event.target.transaction; const orderStore = tx.objectStore(STORE_NAME); const reportStore = tx.objectStore(REPORT_STORE_NAME); const addRegion = (store) => { const allReq = store.getAll(); allReq.onsuccess = () => { const records = allReq.result; records.forEach(r => { if (!r.region) { r.region = 'macau'; store.put(r); } }); }; }; addRegion(orderStore); addRegion(reportStore); }; }); }
+function switchRiskReport() { const val = document.getElementById('riskReportSwitcher').value; document.querySelectorAll('#riskTable .selected-row, #reportTable .selected-row').forEach(el => el.classList.remove('selected-row')); if (val === 'total') { document.getElementById('riskSection').style.display = ''; document.getElementById('reportSection').style.display = 'none'; document.getElementById('viewUserSelect').style.display = 'none'; generateRiskTable(); } else if (val === 'user') { document.getElementById('riskSection').style.display = ''; document.getElementById('reportSection').style.display = 'none'; document.getElementById('viewUserSelect').style.display = 'inline-block'; generateRiskTable(); } else if (val === 'report') { document.getElementById('riskSection').style.display = 'none'; document.getElementById('reportSection').style.display = ''; generateReportTable(); } }
+
+function initIndexedDB() { return new Promise((resolve) => { const request = indexedDB.open(DB_NAME, DB_VERSION); request.onerror = () => { resolve(false); }; request.onsuccess = (event) => { db = event.target.result; resolve(true); }; request.onupgradeneeded = (event) => { db = event.target.result; if (!db.objectStoreNames.contains(STORE_NAME)) { db.createObjectStore(STORE_NAME, { keyPath: 'id' }); } if (!db.objectStoreNames.contains(REPORT_STORE_NAME)) { db.createObjectStore(REPORT_STORE_NAME, { keyPath: 'id' }); } if (!db.objectStoreNames.contains(RECYCLE_STORE_NAME)) { db.createObjectStore(RECYCLE_STORE_NAME, { keyPath: 'id' }); } const tx = event.target.transaction; const orderStore = tx.objectStore(STORE_NAME); const reportStore = tx.objectStore(REPORT_STORE_NAME); const addRegion = (store) => { const allReq = store.getAll(); allReq.onsuccess = () => { const records = allReq.result; records.forEach(r => { if (!r.region) { r.region = 'macau'; store.put(r); } }); }; }; addRegion(orderStore); addRegion(reportStore); }; }); }
 async function getAllOrdersUnfiltered() { return new Promise((resolve) => { if (!db) resolve([]); const tx = db.transaction([STORE_NAME],'readonly'); const store = tx.objectStore(STORE_NAME); const req = store.getAll(); req.onsuccess = (e) => resolve(e.target.result || []); }); }
 async function getAllReportsUnfiltered() { return new Promise((resolve) => { if (!db) resolve([]); const tx = db.transaction([REPORT_STORE_NAME],'readonly'); const store = tx.objectStore(REPORT_STORE_NAME); const req = store.getAll(); req.onsuccess = (e) => resolve(e.target.result || []); }); }
 async function getOrderRecords() { const all = await getAllOrdersUnfiltered(); return all.filter(r => r.region === currentRegion); }
@@ -1047,7 +1026,7 @@ async function resetPresetsToDefault(){
   localStorage.setItem('categoryAliases',JSON.stringify(defaultAliases));
   renderPresetList(); showToast('已恢复默认替换预设和分类缩写');
 }
-    function applyCategoryAliases(text) { const a=getCategoryAliases(); if(!a.length)return text; const s=[...a].sort((x,y)=>y.alias.length-x.alias.length); let r=text; s.forEach(x=>{ if(x.alias&&x.target)r=r.split(x.alias).join(x.target); }); return r; }
+function applyCategoryAliases(text) { const a=getCategoryAliases(); if(!a.length)return text; const s=[...a].sort((x,y)=>y.alias.length-x.alias.length); let r=text; s.forEach(x=>{ if(x.alias&&x.target)r=r.split(x.alias).join(x.target); }); return r; }
 
 // ===== 修正后的替换预设（已去掉后边界限制） =====
 function applyReplacePresets(text) { const p = getReplacePresets(); let r = text; p.forEach(x => { if (x.old && x.new) { const escapedOld = x.old.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); const regex = new RegExp(escapedOld, 'g'); r = r.replace(regex, x.new); } }); return r; }
@@ -1064,7 +1043,6 @@ async function saveReportOrder(){ const user=document.getElementById('orderUserS
 function countItemsInLine(line,cfg,keys){ const m=line.match(/([\u4e00-\u9fa5\d\-]+)\s+各数\s+(\d+)/); if(!m)return{numbers:[],zodiacs:[],amount:0}; let cont=m[1]; const amt=parseInt(m[2])||0; const items=cont.split('-').map(i=>i.trim()).filter(i=>i); const nums=[],zods=[]; items.forEach(item=>{ if(/^\d+$/.test(item))nums.push(item.padStart(2,'0')); else if(cfg.shengxiaoAttr[item]){ const zs=cfg.shengxiaoAttr[item]||[]; zs.forEach(z=>zods.push(z)); } else if(cfg.zodiac[item])zods.push(item); else if(cfg.toushuDanshuang&&cfg.toushuDanshuang[item]){ (cfg.toushuDanshuang[item]||[]).forEach(n=>nums.push(n.padStart(2,'0'))); } else { const nl=getNumberListForCategory(item,cfg); if(nl&&nl.length>0)nl.forEach(n=>nums.push(n.padStart(2,'0'))); } }); return{numbers:nums,zodiacs:zods,amount:amt}; }
 function processCurrentOrder(input,user,isNormal,date=null){ const cfg=getAllConfigData(); const keys=getAllValidCategories(cfg); const lines=input.split('\n').filter(l=>l.trim()); if(!userBetData[user])userBetData[user]={}; const curZod=localStorage.getItem('selectedStartZodiac')||'马'; lines.forEach(line=>{ const{numbers,zodiacs,amount}=countItemsInLine(line,cfg,keys); const nMin=parseInt(document.getElementById('numAmountMin')?.value)||1,nMax=parseInt(document.getElementById('numAmountMax')?.value)||50000; const zMin=parseInt(document.getElementById('zodiacAmountMin')?.value)||1,zMax=parseInt(document.getElementById('zodiacAmountMax')?.value)||50000; if(isNormal){ if(zodiacs.length>0){ zodiacs.forEach(z=>{ const w=z===curZod?5:4; zodiacWeightedTotal+=amount*w; }); }else if(numbers.length>0){ numberOrderTotal+=numbers.length*amount; } } numbers.forEach(num=>{ if(isNormal){ userBetData[user][num]=(userBetData[user][num]||0)+amount; tableBetData[num]=(tableBetData[num]||0)+amount; reportBetData[num]=(reportBetData[num]||0)+amount; numberCount[num]=(numberCount[num]||0)+1; if(amount>=nMin&&amount<=nMax)numberAmountCount[num]=(numberAmountCount[num]||0)+1; originalOrderAmount[num]=(originalOrderAmount[num]||0)+amount; if(zodiacs.length === 0) directOrderAmount[num] = (directOrderAmount[num]||0) + amount; } else { userBetData[user][num]=(userBetData[user][num]||0)-amount; reportBetData[num]=(reportBetData[num]||0)-amount; reportAmountData[num]=(reportAmountData[num]||0)+amount; if(zodiacs.length === 0) directReportAmount[num] = (directReportAmount[num]||0) + amount; } }); if(isNormal){ zodiacs.forEach(z=>{ zodiacCount[z]=(zodiacCount[z]||0)+1; zodiacDirectAmount[z]=(zodiacDirectAmount[z]||0)+amount*(cfg.zodiac[z]?.length||0); if(amount>=zMin&&amount<=zMax){zodiacAmountCount[z]=(zodiacAmountCount[z]||0)+1; zodiacFilteredAmount[z]=(zodiacFilteredAmount[z]||0)+amount*(cfg.zodiac[z]?.length||0);} (cfg.zodiac[z]||[]).forEach(n=>{ const num=n.padStart(2,'0'); userBetData[user][num]=(userBetData[user][num]||0)+amount; tableBetData[num]=(tableBetData[num]||0)+amount; reportBetData[num]=(reportBetData[num]||0)+amount; originalOrderAmount[num]=(originalOrderAmount[num]||0)+amount; }); }); } else { zodiacs.forEach(z=>{ zodiacReportAmount[z]=(zodiacReportAmount[z]||0)+amount*(cfg.zodiac[z]?.length||0); if(amount>=zMin&&amount<=zMax){ zodiacFilteredReportAmount[z]=(zodiacFilteredReportAmount[z]||0)+amount*(cfg.zodiac[z]?.length||0);} (cfg.zodiac[z]||[]).forEach(n=>{ const num=n.padStart(2,'0'); userBetData[user][num]=(userBetData[user][num]||0)-amount; reportBetData[num]=(reportBetData[num]||0)-amount; reportAmountData[num]=(reportAmountData[num]||0)+amount; }); }); } }); generateRiskTable(); generateReportTable(); renderFrequencyCards(); renderAmountFrequencyCards(); renderReportAmountTable(); renderOriginalAmountTable(); updateReportAmountTotal(); updateAmountDisplays(); }
     
-// 修改后的 updateTableFromRecords，根据风险报表用户选择过滤统计卡片
 async function updateTableFromRecords(){
   try{
     const fd=document.getElementById('filterDate')?.value;
@@ -1087,17 +1065,7 @@ async function updateTableFromRecords(){
     const fRecs=fd?recs.filter(r=>r.date===fd):recs;
     const fReps=fd?reps.filter(r=>r.date===fd):reps;
 
-    // 根据风险报表的用户选择过滤
-    const riskSwitcher = document.getElementById('riskReportSwitcher')?.value || 'total';
-    const viewUser = document.getElementById('viewUserSelect')?.value;
-    let filterUser = null;
-    if (riskSwitcher === 'user' && viewUser) {
-      filterUser = viewUser;
-    }
-    const fRecsFiltered = filterUser ? fRecs.filter(r => r.user === filterUser) : fRecs;
-    const fRepsFiltered = filterUser ? fReps.filter(r => r.user === filterUser) : fReps;
-
-    fRecsFiltered.forEach(rec=>{
+    fRecs.forEach(rec=>{
       try{
         if(!userBetData[rec.user])userBetData[rec.user]={};
         rec.content.split('\n').filter(l=>l.trim()).forEach(line=>{
@@ -1129,7 +1097,7 @@ async function updateTableFromRecords(){
       }catch(e){}
     });
 
-    fRepsFiltered.forEach(rec=>{
+    fReps.forEach(rec=>{
       try{
         const user=rec.user;
         rec.content.split('\n').filter(l=>l.trim()).forEach(line=>{
@@ -1218,7 +1186,8 @@ function orderContainsTarget(content,targetNum,cfg){ if(!targetNum)return true; 
 function getSpecialAmountFromOrder(content, prizeNum, cfg) { if (!prizeNum) return 0; const targetNum = prizeNum.padStart(2, '0'); const lines = content.split('\n'); let total = 0; for (const line of lines) { const match = line.match(/^(.+?)\s+各数\s+(\d+)$/); if (!match) continue; const tokensPart = match[1]; const amount = parseInt(match[2]) || 0; const tokens = tokensPart.split('-').map(t => t.trim()).filter(t => t); let hit = false; for (const token of tokens) { if (isTokenMatching(token, targetNum, cfg)) { hit = true; break; } } if (hit) { total += amount; } } return total; }
 function formatTimestampToCST(iso){ const d=new Date(iso); return new Intl.DateTimeFormat('zh-CN',{year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false,timeZone:'Asia/Shanghai'}).format(d); }
 function getUserColor(u){ let h=0; for(let i=0;i<u.length;i++)h=u.charCodeAt(i)+((h<<5)-h); const hue=(h%360+360)%360; return`hsl(${hue},70%,45%)`; }
-    function renderOrderStats(allOrders, allReports, filterUser, prizeNum) { const container = document.getElementById('orderStatsContainer'); if (!container) return; const mul = parseFloat(document.getElementById('multipleVal')?.value) || 1; const rr = parseFloat(document.getElementById('rebateRate')?.value) || 0; const cfg = getAllConfigData(); let totalAmountSum = 0; allOrders.forEach(it => { totalAmountSum += it.totalAmount || 0; }); let reportTotalAmount = 0; allReports.forEach(it => { reportTotalAmount += it.totalAmount || 0; }); let totalSpecial = 0, reportSpecial = 0, hitCount = 0; if (prizeNum) { const num = prizeNum.padStart(2, '0'); if (filterUser === 'all' || !filterUser) { totalSpecial = tableBetData[num] || 0; } else { const userData = userBetData[filterUser] || {}; totalSpecial = userData[num] || 0; } allOrders.forEach(it => { if (orderContainsTarget(it.content, prizeNum, cfg)) hitCount++; }); allReports.forEach(it => { reportSpecial += getSpecialAmountFromOrder(it.content, prizeNum, cfg); }); } const totalProfit = totalAmountSum - totalSpecial * mul - totalAmountSum * (rr / 100); const reportProfit = reportTotalAmount - reportSpecial * mul - reportTotalAmount * (rr / 100); const netProfit = totalProfit - reportProfit; const showStats = prizeNum && prizeNum.trim() !== ''; let html = '<div class="stats-block">'; html += '<div class="stats-row">'; if (totalAmountSum > 0) { html += `<span class="stat-col"><span class="slabel">总额:</span><span class="stat-val-amount">${totalAmountSum}</span></span>`; } if (showStats) { html += `<span class="stat-col"><span class="slabel">总特:</span><span class="stat-val-special">${totalSpecial}</span></span>`; const tp = Math.round(totalProfit); const tlabel = tp >= 0 ? '总盈' : '总亏'; const tcls = tp >= 0 ? 'stat-val-profit' : 'stat-val-loss'; html += `<span class="stat-col"><span class="slabel">${tlabel}:</span><span class="${tcls}">${tp}</span></span>`; html += `<span class="stat-col"><span class="slabel">中:</span><span class="stat-val-count">${hitCount}条</span></span>`; } html += '</div><div class="stats-row">'; if (reportTotalAmount > 0) { html += `<span class="stat-col"><span class="slabel">上报金额:</span><span class="stat-val-amount">${reportTotalAmount}</span></span>`; } if (showStats) { html += `<span class="stat-col"><span class="slabel">上报特:</span><span class="stat-val-special">${reportSpecial}</span></span>`; const rp = Math.round(reportProfit); const rlabel = rp >= 0 ? '报盈' : '报亏'; const rcls = rp >= 0 ? 'stat-val-profit' : 'stat-val-loss'; html += `<span class="stat-col"><span class="slabel">${rlabel}:</span><span class="${rcls}">${rp}</span></span>`; const np = Math.round(netProfit); const nlabel = np >= 0 ? '盈' : '亏'; const ncls = np >= 0 ? 'stat-val-profit' : 'stat-val-loss'; html += `<span class="stat-col"><span class="slabel">${nlabel}:</span><span class="${ncls}">${np}</span></span>`; } html += '</div></div>'; container.innerHTML = html; }
+
+function renderOrderStats(allOrders, allReports, filterUser, prizeNum) { const container = document.getElementById('orderStatsContainer'); if (!container) return; const mul = parseFloat(document.getElementById('multipleVal')?.value) || 1; const rr = parseFloat(document.getElementById('rebateRate')?.value) || 0; const cfg = getAllConfigData(); let totalAmountSum = 0; allOrders.forEach(it => { totalAmountSum += it.totalAmount || 0; }); let reportTotalAmount = 0; allReports.forEach(it => { reportTotalAmount += it.totalAmount || 0; }); let totalSpecial = 0, reportSpecial = 0, hitCount = 0; if (prizeNum) { const num = prizeNum.padStart(2, '0'); if (filterUser === 'all' || !filterUser) { totalSpecial = tableBetData[num] || 0; } else { const userData = userBetData[filterUser] || {}; totalSpecial = userData[num] || 0; } allOrders.forEach(it => { if (orderContainsTarget(it.content, prizeNum, cfg)) hitCount++; }); allReports.forEach(it => { reportSpecial += getSpecialAmountFromOrder(it.content, prizeNum, cfg); }); } const totalProfit = totalAmountSum - totalSpecial * mul - totalAmountSum * (rr / 100); const reportProfit = reportTotalAmount - reportSpecial * mul - reportTotalAmount * (rr / 100); const netProfit = totalProfit - reportProfit; const showStats = prizeNum && prizeNum.trim() !== ''; let html = '<div class="stats-block">'; html += '<div class="stats-row">'; if (totalAmountSum > 0) { html += `<span class="stat-col"><span class="slabel">总额:</span><span class="stat-val-amount">${totalAmountSum}</span></span>`; } if (showStats) { html += `<span class="stat-col"><span class="slabel">总特:</span><span class="stat-val-special">${totalSpecial}</span></span>`; const tp = Math.round(totalProfit); const tlabel = tp >= 0 ? '总盈' : '总亏'; const tcls = tp >= 0 ? 'stat-val-profit' : 'stat-val-loss'; html += `<span class="stat-col"><span class="slabel">${tlabel}:</span><span class="${tcls}">${tp}</span></span>`; html += `<span class="stat-col"><span class="slabel">中:</span><span class="stat-val-count">${hitCount}条</span></span>`; } html += '</div><div class="stats-row">'; if (reportTotalAmount > 0) { html += `<span class="stat-col"><span class="slabel">上报金额:</span><span class="stat-val-amount">${reportTotalAmount}</span></span>`; } if (showStats) { html += `<span class="stat-col"><span class="slabel">上报特:</span><span class="stat-val-special">${reportSpecial}</span></span>`; const rp = Math.round(reportProfit); const rlabel = rp >= 0 ? '报盈' : '报亏'; const rcls = rp >= 0 ? 'stat-val-profit' : 'stat-val-loss'; html += `<span class="stat-col"><span class="slabel">${rlabel}:</span><span class="${rcls}">${rp}</span></span>`; const np = Math.round(netProfit); const nlabel = np >= 0 ? '盈' : '亏'; const ncls = np >= 0 ? 'stat-val-profit' : 'stat-val-loss'; html += `<span class="stat-col"><span class="slabel">${nlabel}:</span><span class="${ncls}">${np}</span></span>`; } html += '</div></div>'; container.innerHTML = html; }
 
 function updatePrizeStats(pn) {}
 
@@ -1562,7 +1531,6 @@ function switchParseMethod() { const text = document.getElementById('reportCapIn
 function copyOrderGroup() { const text = document.getElementById('parseResultArea').innerText; if (!text) { showToast('没有解析结果'); return; } navigator.clipboard.writeText(text).then(() => showToast('订单组已复制')); }
 const originalApplyReportCap = applyReportCap;
 applyReportCap = function() { originalApplyReportCap(); const info = document.getElementById('reportCapInfo').innerText; if (!info || info === '无超出的号码') { document.getElementById('parseResultArea').innerText = ''; } };
-
 // ===== 修正后的回收站窗口（按地区隔离显示） =====
 async function showRecycleBin() { const existingWin = document.getElementById('recycleWin'); if (existingWin) existingWin.remove(); const allRecords = await getRecycleBinRecords(); const records = allRecords.filter(r => r.region === currentRegion); const win = document.createElement('div'); win.className = 'floating-window'; win.id = 'recycleWin'; win.style.width = '750px'; win.style.height = '550px'; win.style.left = '50%'; win.style.top = '50%'; win.style.transform = 'translate(-50%, -50%)'; let html = `<div class="modal-header"><h3>🗑️ 回收站</h3><div class="window-controls"><button onclick="maximizeWindow('recycleWin')">🗖</button><button onclick="document.getElementById('recycleWin').remove()">×</button></div></div>`; html += `<div class="modal-body" style="display:flex; flex-direction:column; height: calc(100% - 120px);">`; html += `<div style="margin-bottom:10px;display:flex;gap:12px;flex-wrap:wrap;align-items:center;position:sticky;top:0;background:rgba(255,255,255,0.9);z-index:2;padding:5px 0;"><button onclick="checkAllRecycle()" style="padding:6px 12px;background:#007bff;color:#fff;border:none;border-radius:4px;">全选</button><button onclick="uncheckAllRecycle()" style="padding:6px 12px;background:#6c757d;color:#fff;border:none;border-radius:4px;">取消全选</button><button onclick="restoreCheckedRecycle()" style="padding:6px 12px;background:#27ae60;color:#fff;border:none;border-radius:4px;">恢复选中</button><button onclick="deleteCheckedRecycle()" style="padding:6px 12px;background:#e74c3c;color:#fff;border:none;border-radius:4px;">彻底删除</button><button onclick="emptyRecycleBin()" style="padding:6px 12px;background:#8e44ad;color:#fff;border:none;border-radius:4px;margin-left:auto;">清空回收站</button></div>`; html += `<div id="recycleListContainer" style="flex:1; overflow-y:auto;">`; if (records.length === 0) { html += `<div style="padding:20px;text-align:center;color:#666;">回收站为空</div>`; } else { records.sort((a,b) => new Date(b.deletedAt) - new Date(a.deletedAt)); records.forEach(rec => { const ts = formatTimestampToCST(rec.deletedAt); const typeLabel = rec.type === 'order' ? '下单' : '上报'; const typeColor = rec.type === 'order' ? '#3498db' : '#e67e22'; html += `<div class="order-item"><input type="checkbox" class="recycle-check" data-id="${rec.id}"><div class="order-content">${rec.content.replace(/\n/g,'<br>')}</div><div class="order-info"><span class="order-total" style="color:#000;">合计：${rec.totalAmount || 0}</span><span class="order-meta"><span style="color:${typeColor};">类型：${typeLabel}</span><span style="color:#e74c3c;">删除：${ts}</span><span>用户：${rec.user || '未知'}</span></span></div><button class="order-del" onclick="restoreRecycleRecord('${rec.id}')" style="background:#27ae60;margin-right:4px;">恢复</button><button class="order-del" onclick="permanentlyDeleteRecycleRecord('${rec.id}')">删除</button></div>`; }); } html += `</div></div><div class="modal-footer" style="justify-content:space-between;"><span style="font-size:12px;color:#666;" id="recycleStorageInfo"></span><button onclick="document.getElementById('recycleWin').remove()" style="padding:8px 16px;background:#6c757d;color:#fff;border:none;border-radius:4px;">关闭</button></div>`; win.innerHTML = html; document.body.appendChild(win); updateRecycleStorageInfo(); makeWindowDraggable('recycleWin'); highestZ += 1; win.style.zIndex = highestZ; updateRecycleCount(); }
 function updateRecycleStorageInfo() { const span = document.getElementById('recycleStorageInfo'); if (!span) return; getRecycleBinRecords().then(allRecords => { const records = allRecords.filter(r => r.region === currentRegion); let bytes = 0; records.forEach(r => bytes += JSON.stringify(r).length * 2); const usedMB = (bytes / (1024*1024)).toFixed(2); span.textContent = `回收站占用：${usedMB} MB（共${records.length}条记录）`; }); }
@@ -2287,7 +2255,7 @@ let heatVisible = false;
 let adviceVisible = false;
 let surgeVisible = false;
 let surgeThreshold = parseInt(localStorage.getItem('surgeThreshold') || '50');
-let surgeAmountThreshold = parseFloat(localStorage.getItem('surgeAmountThreshold') || '4');
+let surgeAmountThreshold = parseInt(localStorage.getItem('surgeAmountThreshold') || '50');
 let surgeMinOrders = 3;
 
 // ========== 暴增监控数据计算 ==========
@@ -2358,16 +2326,14 @@ async function computeSurge() {
     amountTriggered.sort((a, b) => b.ratio - a.ratio);
 
     if (countTriggered.length > 0 || amountTriggered.length > 0) {
-      // 计算每个维度的前三占比值（用于标签，但后续不再使用标签）
-      const countRatios = [...new Set(countTriggered.map(item => item.ratio))].sort((a,b) => b-a);
-      const amountRatios = [...new Set(amountTriggered.map(item => item.ratio))].sort((a,b) => b-a);
-
+      let globalMaxRatio = 0;
+      const allTriggered = [...countTriggered, ...amountTriggered];
+      allTriggered.forEach(item => { if (item.ratio > globalMaxRatio) globalMaxRatio = item.ratio; });
       result.push({
         user,
         countItems: countTriggered,
         amountItems: amountTriggered,
-        countTopRatios: countRatios.slice(0, 3),
-        amountTopRatios: amountRatios.slice(0, 3),
+        globalMaxRatio,
         totalOrders,
         totalAmount
       });
@@ -2418,12 +2384,6 @@ function copyAllSurgeNums() {
   navigator.clipboard.writeText(arr.join(' ')).then(() => {
     showToast('已复制全部号码');
   }).catch(() => showToast('复制失败'));
-}
-
-// ========== 获取标签函数（不再使用） ==========
-function getTagForRatio(ratio, topRatios) {
-  // 保留函数但不再使用，以免其他代码报错
-  return '';
 }
 
 // ========== 智能决策中心核心函数 ==========
@@ -2577,7 +2537,6 @@ function renderSmartDecision() {
     heatHtml = '<div style="font-size:11px;">';
     heatHtml += `<div style="margin-bottom:4px;color:#666;">📊 开奖热度分析（最近${actualPeriod}期，共${drawList.length}条记录）</div>`;
 
-    // 生肖
     heatHtml += '<div style="margin-bottom:4px;"><b>生肖：</b>';
     const zodiacAll = ['鼠','牛','虎','兔','龙','蛇','马','羊','猴','鸡','狗','猪'];
     const zodiacItems = zodiacAll.map(z => ({ name: z, cnt: zodiacCountLocal[z] || 0 }));
@@ -2591,7 +2550,6 @@ function renderSmartDecision() {
     });
     heatHtml += '</div><div style="margin-bottom:6px;font-size:10px;color:#666;">' + analyzeStreak(zodiacSeq, zodiacIssueSeq, '生肖', getZodiacCls) + '</div>';
 
-    // 波色
     heatHtml += '<div style="margin-bottom:4px;"><b>波色：</b>';
     const boseList = ['红波','蓝波','绿波'].map(b => ({ name: b, cnt: boseCount[b] || 0 }));
     boseList.sort((a, b) => b.cnt - a.cnt);
@@ -2603,7 +2561,6 @@ function renderSmartDecision() {
     });
     heatHtml += '</div><div style="margin-bottom:6px;font-size:10px;color:#666;">' + analyzeStreak(boseSeq, boseIssueSeq, '波色', getBoseCls) + '</div>';
 
-    // 尾数
     heatHtml += '<div style="margin-bottom:4px;"><b>尾数：</b>';
     const weishuList = [];
     for (let i = 0; i <= 9; i++) weishuList.push({ name: i + '尾', cnt: weishuCount[i + '尾'] || 0 });
@@ -2616,7 +2573,6 @@ function renderSmartDecision() {
     });
     heatHtml += '</div><div style="margin-bottom:6px;font-size:10px;color:#666;">' + analyzeStreak(weishuSeq, weishuIssueSeq, '尾数', '') + '</div>';
 
-    // 头数
     heatHtml += '<div style="margin-bottom:4px;"><b>头数：</b>';
     const toushuList = [];
     for (let i = 0; i <= 4; i++) toushuList.push({ name: i + '头', cnt: toushuCount[i + '头'] || 0 });
@@ -2629,7 +2585,6 @@ function renderSmartDecision() {
     });
     heatHtml += '</div><div style="margin-bottom:6px;font-size:10px;color:#666;">' + analyzeStreak(toushuSeq, toushuIssueSeq, '头数', '') + '</div>';
 
-    // 家禽/野兽
     heatHtml += '<div style="margin-bottom:4px;"><b>家禽/野兽：</b>';
     const jysxList = [
       { name: '家禽', cnt: jiaqinCount },
@@ -2644,7 +2599,6 @@ function renderSmartDecision() {
     });
     heatHtml += '</div><div style="margin-bottom:6px;font-size:10px;color:#666;">' + analyzeStreak(jysxSeq, jysxIssueSeq, '', '') + '</div>';
 
-    // 单双
     heatHtml += '<div style="margin-bottom:4px;"><b>单双：</b>';
     const dsList = [
       { name: '单', cnt: danCount },
@@ -2659,7 +2613,6 @@ function renderSmartDecision() {
     });
     heatHtml += '</div><div style="margin-bottom:6px;font-size:10px;color:#666;">' + analyzeStreak(dsSeq, dsIssueSeq, '', '') + '</div>';
 
-    // 大小
     heatHtml += '<div style="margin-bottom:4px;"><b>大小：</b>';
     const dxList = [
       { name: '小', cnt: xiaoCount },
@@ -2835,14 +2788,14 @@ function renderSmartDecision() {
     adviceHtml += '</td></tr></table></div>';
   }
 
-  // ========== 暴增监控 HTML（已修改：去掉标签，按占比排序） ==========
+  // ========== 暴增监控 HTML ==========
   let surgeHtml = '';
   if (surgeVisible) {
     surgeHtml = '<div style="font-size:11px;">';
     surgeHtml += `<div style="margin-bottom:4px;">
       <b>⏱ 暴增监控</b>
-      <span style="margin-left:8px;">条数阈值：<input type="number" value="${surgeThreshold}" min="10" max="100" style="width:50px;font-size:11px;text-align:center;" onchange="surgeThreshold=parseInt(this.value);localStorage.setItem('surgeThreshold', surgeThreshold); computeSurge().then(()=>renderSmartDecision());">%</span>
-      <span style="margin-left:8px;">金额阈值：<input type="number" value="${surgeAmountThreshold}" min="0" max="100" step="0.1" style="width:55px;font-size:11px;text-align:center;" onchange="surgeAmountThreshold=parseFloat(this.value);localStorage.setItem('surgeAmountThreshold', surgeAmountThreshold); computeSurge().then(()=>renderSmartDecision());">%</span>
+      <span style="margin-left:8px;">条数阈值：<input type="number" value="${surgeThreshold}" min="10" max="100" style="width:50px;font-size:11px;" onchange="surgeThreshold=parseInt(this.value);localStorage.setItem('surgeThreshold', surgeThreshold); computeSurge().then(()=>renderSmartDecision());">%</span>
+      <span style="margin-left:8px;">金额阈值：<input type="number" value="${surgeAmountThreshold}" min="10" max="100" style="width:50px;font-size:11px;" onchange="surgeAmountThreshold=parseInt(this.value);localStorage.setItem('surgeAmountThreshold', surgeAmountThreshold); computeSurge().then(()=>renderSmartDecision());">%</span>
       <span style="margin-left:8px;">最少${surgeMinOrders}条订单</span>
     </div>`;
     if (window._surgeResult && window._surgeResult.length > 0) {
@@ -2851,20 +2804,18 @@ function renderSmartDecision() {
         surgeHtml += `<div style="margin-bottom:4px;"><b>${username}:</b> `;
         const countItems = user.countItems || [];
         const amountItems = user.amountItems || [];
-        // 条数部分（已按占比降序）
         if (countItems.length > 0) {
           surgeHtml += '(条) ';
-          countItems.sort((a, b) => b.ratio - a.ratio);
           countItems.forEach(item => {
-            surgeHtml += `<span class="${getNumCls(item.num)}">${item.num}</span> `;
+            const tag = (item.ratio === user.globalMaxRatio) ? '🔥' : '';
+            surgeHtml += `${tag ? tag + ' ' : ''}<span class="${getNumCls(item.num)}">${item.num}</span> `;
           });
         }
-        // 金额部分（已按占比降序）
         if (amountItems.length > 0) {
           surgeHtml += '(金) ';
-          amountItems.sort((a, b) => b.ratio - a.ratio);
           amountItems.forEach(item => {
-            surgeHtml += `<span class="${getNumCls(item.num)}">${item.num}</span> `;
+            const tag = (item.ratio === user.globalMaxRatio) ? '🔥' : '';
+            surgeHtml += `${tag ? tag + ' ' : ''}<span class="${getNumCls(item.num)}">${item.num}</span> `;
           });
         }
         surgeHtml += `<button class="copy-advice-btn" onclick="copyUserSurgeNums('${username}')" style="margin-left:4px;">📋复制</button>`;
@@ -2880,7 +2831,7 @@ function renderSmartDecision() {
   // ========== 最终组装 ==========
   let finalHtml = '';
   finalHtml += `<div style="display:flex; align-items:center; gap:6px; margin-bottom:6px; flex-wrap:wrap;">`;
-  finalHtml += `<span style="font-size:12px;">期数：</span><input type="number" id="smartPeriodInput" class="range-input" value="${period}" placeholder="10" min="1" style="width:50px;text-align:center;" onchange="renderSmartDecision()">`;
+  finalHtml += `<span style="font-size:12px;">期数：</span><input type="number" id="smartPeriodInput" class="range-input" value="${period}" placeholder="10" min="1" style="width:50px;" onchange="renderSmartDecision()">`;
   finalHtml += `<button class="btn-copy" style="padding:2px 8px; font-size:11px; min-height:auto; border-radius:20px; background:${heatVisible?'#2ecc71':'#95a5a6'}; color:#fff; border:none; cursor:pointer;" onclick="toggleHeat()">开奖热度分析</button>`;
   finalHtml += `<button class="btn-copy" style="padding:2px 8px; font-size:11px; min-height:auto; border-radius:20px; background:${adviceVisible?'#2ecc71':'#95a5a6'}; color:#fff; border:none; cursor:pointer;" onclick="toggleAdvice()">智能建议</button>`;
   finalHtml += `<button class="btn-copy" style="padding:2px 8px; font-size:11px; min-height:auto; border-radius:20px; background:${surgeVisible?'#2ecc71':'#95a5a6'}; color:#fff; border:none; cursor:pointer;" onclick="toggleSurge()">暴增监控</button>`;
