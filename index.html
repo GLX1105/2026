@@ -55,7 +55,6 @@ body {background:#f5f7fa;font-size:14px;line-height:1.4;overflow-x:hidden;positi
     .database-modal-body {padding:10px!important;max-height:70vh!important;}
     .freq-container {flex-direction:column!important;gap:10px!important;}
     .freq-card {width:100%!important;}
-    /* 移动端恢复等分 */
     .number-amount-card {flex: 1 !important;}
     #originalAmountTable {min-width:100%!important;font-size:11px!important;}
     #originalAmountTable th,#originalAmountTable td {padding:4px 2px!important;font-size:11px!important;white-space:nowrap!important;}
@@ -64,7 +63,6 @@ body {background:#f5f7fa;font-size:14px;line-height:1.4;overflow-x:hidden;positi
     #originalAmountTable th:nth-child(3),#originalAmountTable td:nth-child(3){width:44px!important;}
     #originalAmountTable th:nth-child(4),#originalAmountTable td:nth-child(4){width:44px!important;}
     .number-stats-scroll{overflow-x:auto!important;-webkit-overflow-scrolling:touch!important;}
-    /* 移动端最大化弹窗修正 */
     .floating-window[data-maximized="true"] {width:100vw!important;left:0!important;right:0!important;}
 }
 
@@ -210,7 +208,6 @@ tr.selected-row{background-color:#dceeff!important;font-weight:bold;box-shadow:i
 /* 其他原有卡片内部并列样式 */
 .freq-container{display:flex;gap:15px;flex-wrap:wrap;}
 .freq-card{flex:1;min-width:220px;background:#fafafa;border:1px solid #eee;border-radius:6px;padding:10px;}
-/* 号码金额卡片桌面端宽度加大 */
 .number-amount-card {flex: 2;}
 .freq-title{font-size:13px;font-weight:bold;color:#1a1a2e;margin-bottom:8px;text-align:center;padding-bottom:4px;border-bottom:1px solid #eee;}
 .freq-table{width:100%;border-collapse:collapse;font-size:12px;}
@@ -301,10 +298,19 @@ tr.selected-row{background-color:#dceeff!important;font-weight:bold;box-shadow:i
     white-space: normal;
 }
 
-/* 智能决策中心所有输入框文字居中 */
 #smartDecisionContent input {
     text-align: center;
 }
+
+/* 操作日志样式 */
+.log-type-tag{display:inline-block;padding:1px 6px;border-radius:10px;font-size:10px;font-weight:bold;margin-right:4px;white-space:nowrap;}
+.log-type-save{background:#d4edda;color:#155724;}
+.log-type-delete{background:#f8d7da;color:#721c24;}
+.log-type-export{background:#d1ecf1;color:#0c5460;}
+.log-type-reset{background:#fff3cd;color:#856404;}
+.log-type-login{background:#e2e3e5;color:#383d41;}
+.log-type-restore{background:#d4edda;color:#155724;}
+.log-type-switch{background:#e8daef;color:#6c3483;}
 </style>
 </head>
 <body>
@@ -354,8 +360,7 @@ tr.selected-row{background-color:#dceeff!important;font-weight:bold;box-shadow:i
           </div>
         </div>
       </div>
-
-      <!-- 金额次数统计大卡片：号码金额次数 + 生肖金额次数 + 平特肖 -->
+            <!-- 金额次数统计大卡片：号码金额次数 + 生肖金额次数 + 平特肖 -->
       <div class="card" style="margin-top:0;">
         <div class="card-title">金额次数统计</div>
         <div class="freq-container">
@@ -513,6 +518,9 @@ tr.selected-row{background-color:#dceeff!important;font-weight:bold;box-shadow:i
       <p><span class="label">订单数量：</span><span class="value" id="orderCount">0</span></p>
       <p><span class="label">已用空间：</span><span class="value" id="usedSpace">0 MB</span></p>
       <p><span class="label">剩余空间：</span><span class="value" id="freeSpace">50 MB</span></p>
+      <hr style="margin:8px 0;border-color:#eee;">
+      <p style="cursor:pointer;" onclick="showOperationLog()"><span class="label">📋 操作日志：</span><span class="value" id="logCount">0</span></p>
+      <p style="cursor:pointer;color:#e74c3c;" onclick="clearOperationLog()"><span class="label">🧹 清除日志</span></p>
     </div>
   </div>
 </div>
@@ -571,8 +579,7 @@ tr.selected-row{background-color:#dceeff!important;font-weight:bold;box-shadow:i
           <div class="config-item"><div class="config-label">秋肖</div><div class="config-colon">：</div><input type="text" class="config-input" id="config_sx_qiuxiao" value="鸡 猴 狗"></div>
           <div class="config-item"><div class="config-label">冬肖</div><div class="config-colon">：</div><input type="text" class="config-input" id="config_sx_dongxiao" value="鼠 猪 牛"></div>
         </div>
-
-        <div class="config-section"><div class="config-section-title">五行配置</div>
+                <div class="config-section"><div class="config-section-title">五行配置</div>
           <div class="config-item"><div class="config-label">金</div><div class="config-colon">：</div><input type="text" class="config-input" id="config_jin" value="04 05 12 13 26 27 34 35 42 43"></div>
           <div class="config-item"><div class="config-label">木</div><div class="config-colon">：</div><input type="text" class="config-input" id="config_mu" value="08 09 16 17 24 25 38 39 46 47"></div>
           <div class="config-item"><div class="config-label">水</div><div class="config-colon">：</div><input type="text" class="config-input" id="config_shui" value="01 14 15 22 23 30 31 44 45"></div>
@@ -787,12 +794,14 @@ function toggleStorageDrawer() {
     if (storageDrawerTimer) { clearTimeout(storageDrawerTimer); storageDrawerTimer = null; }
   } else {
     panel.classList.add('show');
+    updateLogCount();
   }
 }
 function showStorageDrawerTemporary(duration = 5000) {
   const panel = document.getElementById('storagePanel');
   if (!panel) return;
   panel.classList.add('show');
+  updateLogCount();
   if (storageDrawerTimer) clearTimeout(storageDrawerTimer);
   storageDrawerTimer = setTimeout(() => {
     panel.classList.remove('show');
@@ -829,6 +838,7 @@ async function switchRegion(region) {
   const orderWin = document.getElementById('orderWin'); if (orderWin) orderWin.remove();
   const reportWin = document.getElementById('reportWin'); if (reportWin) reportWin.remove();
   setCurrentRegion(region); clearMemoryData(); await updateTableFromRecords(); updateSelects(); updateRecycleCount(); updateRecentDrawTexts(); renderSmartDecision();
+  addOperationLog('switch', `切换至${region === 'macau' ? '澳门' : region === 'hongkong' ? '香港' : '粤港'}`, region);
   showToast(`已切换至${region === 'macau' ? '澳门' : region === 'hongkong' ? '香港' : '粤港'}`);
 }
 
@@ -923,7 +933,7 @@ let directOrderAmount = {};
 let directReportAmount = {};
 
 const YEAR_ZODIAC_PASSWORD_ENC = "MTUwNDA4"; const YEAR_ZODIAC_PASSWORD = decodePassword(YEAR_ZODIAC_PASSWORD_ENC);
-const DB_NAME = 'OrderDatabase', DB_VERSION = 5, STORE_NAME = 'orders', REPORT_STORE_NAME = 'report_orders', RECYCLE_STORE_NAME = 'recycle_bin';
+const DB_NAME = 'OrderDatabase', DB_VERSION = 6, STORE_NAME = 'orders', REPORT_STORE_NAME = 'report_orders', RECYCLE_STORE_NAME = 'recycle_bin', LOG_STORE_NAME = 'operation_log';
 let db = null;
 const zodiacOrder = ['马','蛇','龙','兔','虎','牛','鼠','猪','狗','鸡','猴','羊'];
 let currentZodiacMap = {};
@@ -932,10 +942,14 @@ const blueNumbers = ['03','04','09','10','14','15','20','25','26','31','36','37'
 const greenNumbers = ['05','06','11','16','17','21','22','27','28','32','33','38','39','43','44','49'];
 const RECYCLE_RETENTION_DAYS = 30;
 
+// ===== 分层缓存 =====
+const statsCache = new Map();
+function getCacheKey(region, date, filterUser) { return `${region}|${date}|${filterUser || 'all'}`; }
+function clearStatsCache() { statsCache.clear(); }
+
 function getTodayCST() { const now = new Date(); const offset = 8*60; const localTime = now.getTime() + (now.getTimezoneOffset() + offset) * 60000; const cstDate = new Date(localTime); return `${cstDate.getFullYear()}-${String(cstDate.getMonth()+1).padStart(2,'0')}-${String(cstDate.getDate()).padStart(2,'0')}`; }
 function buildZodiacMap(startZodiac) { const map = {}; const startIndex = zodiacOrder.indexOf(startZodiac); const idx = startIndex !== -1 ? startIndex : 0; for (let i=1; i<=49; i++) map[i.toString().padStart(2,'0')] = zodiacOrder[(idx+i-1)%12]; return map; }
 async function changeStartZodiac() { const select = document.getElementById('startZodiacSelect'); const newZodiac = select.value; const savedZodiac = localStorage.getItem('selectedStartZodiac') || '马'; if (newZodiac === savedZodiac) return; const inputPwd = await prompt("请输入本年生肖切换密码：", ""); if (inputPwd !== YEAR_ZODIAC_PASSWORD) { await alert("密码错误"); select.value = savedZodiac; return; } localStorage.setItem('selectedStartZodiac', newZodiac); currentZodiacMap = buildZodiacMap(newZodiac); refreshAll(); }
-// 修改后的 switchRiskReport，切换用户时刷新全部统计卡片
 async function switchRiskReport() {
   const val = document.getElementById('riskReportSwitcher').value;
   document.querySelectorAll('#riskTable .selected-row, #reportTable .selected-row').forEach(el => el.classList.remove('selected-row'));
@@ -951,18 +965,235 @@ async function switchRiskReport() {
     document.getElementById('riskSection').style.display = 'none';
     document.getElementById('reportSection').style.display = '';
   }
-  // 等待数据完全刷新（内部会根据当前选择的用户过滤并生成表格）
   await updateTableFromRecords();
 }
-    function initIndexedDB() { return new Promise((resolve) => { const request = indexedDB.open(DB_NAME, DB_VERSION); request.onerror = () => { resolve(false); }; request.onsuccess = (event) => { db = event.target.result; resolve(true); }; request.onupgradeneeded = (event) => { db = event.target.result; if (!db.objectStoreNames.contains(STORE_NAME)) { db.createObjectStore(STORE_NAME, { keyPath: 'id' }); } if (!db.objectStoreNames.contains(REPORT_STORE_NAME)) { db.createObjectStore(REPORT_STORE_NAME, { keyPath: 'id' }); } if (!db.objectStoreNames.contains(RECYCLE_STORE_NAME)) { db.createObjectStore(RECYCLE_STORE_NAME, { keyPath: 'id' }); } const tx = event.target.transaction; const orderStore = tx.objectStore(STORE_NAME); const reportStore = tx.objectStore(REPORT_STORE_NAME); const addRegion = (store) => { const allReq = store.getAll(); allReq.onsuccess = () => { const records = allReq.result; records.forEach(r => { if (!r.region) { r.region = 'macau'; store.put(r); } }); }; }; addRegion(orderStore); addRegion(reportStore); }; }); }
+  function initIndexedDB() { return new Promise((resolve) => { const request = indexedDB.open(DB_NAME, DB_VERSION); request.onerror = () => { resolve(false); }; request.onsuccess = (event) => { db = event.target.result; resolve(true); }; request.onupgradeneeded = (event) => { db = event.target.result; if (!db.objectStoreNames.contains(STORE_NAME)) { db.createObjectStore(STORE_NAME, { keyPath: 'id' }); } if (!db.objectStoreNames.contains(REPORT_STORE_NAME)) { db.createObjectStore(REPORT_STORE_NAME, { keyPath: 'id' }); } if (!db.objectStoreNames.contains(RECYCLE_STORE_NAME)) { db.createObjectStore(RECYCLE_STORE_NAME, { keyPath: 'id' }); } if (!db.objectStoreNames.contains(LOG_STORE_NAME)) { db.createObjectStore(LOG_STORE_NAME, { keyPath: 'id' }); } const tx = event.target.transaction; const orderStore = tx.objectStore(STORE_NAME); const reportStore = tx.objectStore(REPORT_STORE_NAME); const addRegion = (store) => { const allReq = store.getAll(); allReq.onsuccess = () => { const records = allReq.result; records.forEach(r => { if (!r.region) { r.region = 'macau'; store.put(r); } }); }; }; addRegion(orderStore); addRegion(reportStore); }; }); }
 async function getAllOrdersUnfiltered() { return new Promise((resolve) => { if (!db) resolve([]); const tx = db.transaction([STORE_NAME],'readonly'); const store = tx.objectStore(STORE_NAME); const req = store.getAll(); req.onsuccess = (e) => resolve(e.target.result || []); }); }
 async function getAllReportsUnfiltered() { return new Promise((resolve) => { if (!db) resolve([]); const tx = db.transaction([REPORT_STORE_NAME],'readonly'); const store = tx.objectStore(REPORT_STORE_NAME); const req = store.getAll(); req.onsuccess = (e) => resolve(e.target.result || []); }); }
 async function getOrderRecords() { const all = await getAllOrdersUnfiltered(); return all.filter(r => r.region === currentRegion); }
 async function getReportOrderRecords() { const all = await getAllReportsUnfiltered(); return all.filter(r => r.region === currentRegion); }
-async function saveOrderRecordToIDB(content, user, date, totalAmount = 0, ts = null, regionOverride = null) { return new Promise((resolve) => { if (!db) resolve(false); const tx = db.transaction([STORE_NAME],'readwrite'); const store = tx.objectStore(STORE_NAME); const record = { id: Date.now() + '-' + Math.random().toString(36).substr(2, 9), content, user, date, totalAmount, region: regionOverride || currentRegion, timestamp: ts || new Date().toISOString() }; const req = store.add(record); req.onsuccess = () => resolve(true); }); }
-async function saveReportOrderRecordToIDB(content, user, date, totalAmount = 0, ts = null, regionOverride = null) { return new Promise((resolve) => { if (!db) resolve(false); const tx = db.transaction([REPORT_STORE_NAME],'readwrite'); const store = tx.objectStore(REPORT_STORE_NAME); const record = { id: Date.now() + '-' + Math.random().toString(36).substr(2, 9), content, user, date, totalAmount, region: regionOverride || currentRegion, timestamp: ts || new Date().toISOString() }; const req = store.add(record); req.onsuccess = () => resolve(true); }); }
 
-// ===== 回收站数据操作 =====
+// ===== 写入失败重试机制 =====
+async function saveOrderRecordToIDB(content, user, date, totalAmount = 0, ts = null, regionOverride = null) {
+  if (!db) return false;
+  const record = { id: Date.now() + '-' + Math.random().toString(36).substr(2, 9), content, user, date, totalAmount, region: regionOverride || currentRegion, timestamp: ts || new Date().toISOString() };
+  let success = false;
+  for (let attempt = 0; attempt < 3; attempt++) {
+    try {
+      await new Promise((resolve, reject) => {
+        const tx = db.transaction([STORE_NAME], 'readwrite');
+        const store = tx.objectStore(STORE_NAME);
+        const req = store.add(record);
+        req.onsuccess = () => resolve(true);
+        req.onerror = () => reject(req.error);
+        tx.oncomplete = () => resolve(true);
+        tx.onerror = () => reject(tx.error);
+      });
+      success = true;
+      break;
+    } catch (e) {
+      if (attempt < 2) await new Promise(r => setTimeout(r, 300));
+    }
+  }
+  if (!success) { showToast('保存失败，请重试'); return false; }
+  return true;
+}
+async function saveReportOrderRecordToIDB(content, user, date, totalAmount = 0, ts = null, regionOverride = null) {
+  if (!db) return false;
+  const record = { id: Date.now() + '-' + Math.random().toString(36).substr(2, 9), content, user, date, totalAmount, region: regionOverride || currentRegion, timestamp: ts || new Date().toISOString() };
+  let success = false;
+  for (let attempt = 0; attempt < 3; attempt++) {
+    try {
+      await new Promise((resolve, reject) => {
+        const tx = db.transaction([REPORT_STORE_NAME], 'readwrite');
+        const store = tx.objectStore(REPORT_STORE_NAME);
+        const req = store.add(record);
+        req.onsuccess = () => resolve(true);
+        req.onerror = () => reject(req.error);
+        tx.oncomplete = () => resolve(true);
+        tx.onerror = () => reject(tx.error);
+      });
+      success = true;
+      break;
+    } catch (e) {
+      if (attempt < 2) await new Promise(r => setTimeout(r, 300));
+    }
+  }
+  if (!success) { showToast('保存失败，请重试'); return false; }
+  return true;
+}
+  // ===== 操作日志函数（扩展签名：action, detail, regionOverride, orderUser, orderTotal） =====
+async function addOperationLog(action, detail, regionOverride = null, orderUser = null, orderTotal = 0) {
+  if (!db) return;
+  const session = getAuthSession();
+  const username = session ? (session.role === 'admin' ? '管理员' : '卡密用户') : '未知';
+  const record = {
+    id: Date.now() + '-' + Math.random().toString(36).substr(2, 9),
+    timestamp: new Date().toISOString(),
+    user: username,
+    action: action,
+    detail: detail,
+    orderUser: orderUser,
+    orderTotal: orderTotal,
+    region: regionOverride || currentRegion
+  };
+  try {
+    const tx = db.transaction([LOG_STORE_NAME], 'readwrite');
+    const store = tx.objectStore(LOG_STORE_NAME);
+    store.add(record);
+    const allReq = store.getAll();
+    allReq.onsuccess = () => {
+      const allLogs = allReq.result;
+      if (allLogs.length > 1000) {
+        const sorted = allLogs.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+        const earliestDate = sorted[0].timestamp.slice(0, 10);
+        sorted.forEach(log => {
+          if (log.timestamp.slice(0, 10) === earliestDate) {
+            store.delete(log.id);
+          }
+        });
+      }
+    };
+  } catch (e) {}
+}
+
+async function getAllLogs() {
+  return new Promise((resolve) => {
+    if (!db) resolve([]);
+    const tx = db.transaction([LOG_STORE_NAME], 'readonly');
+    const store = tx.objectStore(LOG_STORE_NAME);
+    const req = store.getAll();
+    req.onsuccess = (e) => resolve(e.target.result || []);
+  });
+}
+
+async function clearAllLogs() {
+  return new Promise((resolve) => {
+    if (!db) { resolve(false); return; }
+    const tx = db.transaction([LOG_STORE_NAME], 'readwrite');
+    const store = tx.objectStore(LOG_STORE_NAME);
+    const req = store.clear();
+    req.onsuccess = () => resolve(true);
+    req.onerror = () => resolve(false);
+  });
+}
+
+async function updateLogCount() {
+  const span = document.getElementById('logCount');
+  if (!span) return;
+  try {
+    const logs = await getAllLogs();
+    span.textContent = logs.length;
+  } catch (e) {
+    span.textContent = '0';
+  }
+}
+  async function showOperationLog() {
+  if (document.getElementById('operationLogWin')) return;
+  const logs = await getAllLogs();
+  logs.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+
+  const win = document.createElement('div');
+  win.className = 'floating-window';
+  win.id = 'operationLogWin';
+  win.style.width = '800px';
+  win.style.height = '600px';
+  win.style.left = '50%';
+  win.style.top = '50%';
+  win.style.transform = 'translate(-50%, -50%)';
+
+  const actionLabels = {
+    'save_order': '保存订单', 'save_report': '保存上报', 'delete_order': '删除订单',
+    'delete_report': '删除上报', 'restore': '恢复记录', 'permanent_delete': '彻底删除',
+    'reset': '清空数据', 'export': '导出数据', 'import': '导入数据',
+    'switch': '切换地区', 'login': '登录', 'logout': '退出登录'
+  };
+  const actionColors = {
+    'save_order': 'log-type-save', 'save_report': 'log-type-save', 'delete_order': 'log-type-delete',
+    'delete_report': 'log-type-delete', 'restore': 'log-type-restore', 'permanent_delete': 'log-type-delete',
+    'reset': 'log-type-reset', 'export': 'log-type-export', 'import': 'log-type-export',
+    'switch': 'log-type-switch', 'login': 'log-type-login', 'logout': 'log-type-login'
+  };
+
+  let html = `<div class="modal-header"><h3>📋 操作日志</h3><div class="window-controls"><button onclick="maximizeWindow('operationLogWin')">🗖</button><button onclick="document.getElementById('operationLogWin').remove()">×</button></div></div>`;
+  html += `<div class="modal-body" style="display:flex; flex-direction:column; height: calc(100% - 60px);">`;
+  html += `<div style="margin-bottom:10px;display:flex;gap:12px;align-items:center;position:sticky;top:0;background:rgba(255,255,255,0.9);z-index:2;padding:5px 0;">
+    <select id="logTypeFilter" onchange="filterOperationLog()" style="padding:4px 8px;border-radius:4px;border:1px solid #ccc;">
+      <option value="all">全部操作</option>
+      <option value="save_order">保存订单</option>
+      <option value="save_report">保存上报</option>
+      <option value="delete_order">删除订单</option>
+      <option value="delete_report">删除上报</option>
+      <option value="restore">恢复记录</option>
+      <option value="permanent_delete">彻底删除</option>
+      <option value="reset">清空数据</option>
+      <option value="export">导出数据</option>
+      <option value="import">导入数据</option>
+      <option value="switch">切换地区</option>
+      <option value="login">登录</option>
+    </select>
+    <input type="date" id="logDateFilter" onchange="filterOperationLog()" style="padding:4px 8px;border-radius:4px;border:1px solid #ccc;" value="${getTodayCST()}">
+    <button onclick="filterOperationLog()" style="padding:4px 12px;background:#007bff;color:#fff;border:none;border-radius:4px;">筛选</button>
+    <button onclick="clearOperationLog()" style="padding:6px 12px;background:#e74c3c;color:#fff;border:none;border-radius:4px;margin-left:auto;">清除全部日志</button>
+  </div>`;
+  html += `<div id="operationLogList" style="flex:1; overflow-y:auto;">`;
+
+  if (logs.length === 0) {
+    html += '<div style="padding:20px;text-align:center;color:#666;">暂无操作日志</div>';
+  } else {
+    logs.forEach(log => {
+      const ts = formatTimestampToCST(log.timestamp);
+      const actionLabel = actionLabels[log.action] || log.action;
+      const colorClass = actionColors[log.action] || 'log-type-login';
+      const logDate = log.timestamp.slice(0, 10);
+      const orderContent = log.detail || '';
+      const orderUser = log.orderUser || '';
+      const orderTotal = log.orderTotal || 0;
+
+      html += `<div class="order-item log-item" data-date="${logDate}" data-action="${log.action}">
+        <div class="order-content">${orderContent.replace(/\n/g, '<br>')}</div>
+        <div class="order-info">
+          <span class="order-total" style="color:#000;">${orderTotal > 0 ? '合计：' + orderTotal : ''}</span>
+          <span class="order-meta"><span style="color:#2980b9;">${orderUser ? '用户：' + orderUser : ''}</span> &nbsp; <span class="log-type-tag ${colorClass}">${actionLabel}</span> &nbsp; ${ts}</span>
+        </div>
+      </div>`;
+    });
+  }
+
+  html += `</div></div>`;
+  win.innerHTML = html;
+  document.body.appendChild(win);
+  makeWindowDraggable('operationLogWin');
+  highestZ += 1;
+  win.style.zIndex = highestZ;
+  updateLogCount();
+}
+
+function filterOperationLog() {
+  const filter = document.getElementById('logTypeFilter')?.value || 'all';
+  const dateFilter = document.getElementById('logDateFilter')?.value || '';
+  const container = document.getElementById('operationLogList');
+  if (!container) return;
+  const items = container.querySelectorAll('.log-item');
+  items.forEach(item => {
+    const action = item.dataset.action;
+    const date = item.dataset.date;
+    let show = true;
+    if (filter !== 'all' && action !== filter) show = false;
+    if (dateFilter && date !== dateFilter) show = false;
+    item.style.display = show ? 'flex' : 'none';
+  });
+}
+
+async function clearOperationLog() {
+  if (!(await confirm('确定清除全部操作日志吗？'))) return;
+  await clearAllLogs();
+  await updateLogCount();
+  const win = document.getElementById('operationLogWin');
+  if (win) win.remove();
+  showToast('操作日志已清除');
+}
+  // ===== 回收站数据操作 =====
 async function getRecycleBinRecords() { return new Promise((resolve) => { if (!db) resolve([]); const tx = db.transaction([RECYCLE_STORE_NAME],'readonly'); const store = tx.objectStore(RECYCLE_STORE_NAME); const req = store.getAll(); req.onsuccess = (e) => resolve(e.target.result || []); }); }
 async function moveToRecycleBin(record, type) { return new Promise((resolve) => { if (!db) { resolve(false); return; } const tx = db.transaction([RECYCLE_STORE_NAME],'readwrite'); const store = tx.objectStore(RECYCLE_STORE_NAME); const recycleRecord = { id: record.id, type: type, content: record.content, user: record.user, date: record.date, totalAmount: record.totalAmount || 0, region: record.region || currentRegion, timestamp: record.timestamp, deletedAt: new Date().toISOString() }; const req = store.add(recycleRecord); req.onsuccess = () => resolve(true); req.onerror = () => resolve(false); }); }
 async function deleteFromRecycleBin(id) { return new Promise((resolve) => { if (!db) { resolve(false); return; } const tx = db.transaction([RECYCLE_STORE_NAME],'readwrite'); const store = tx.objectStore(RECYCLE_STORE_NAME); const req = store.delete(id); req.onsuccess = () => resolve(true); req.onerror = () => resolve(false); }); }
@@ -981,7 +1212,7 @@ async function batchDeleteReportOrderRecordFromIDB(ids) { if (!db) return false;
 async function clearAllOrderRecordsFromIDB(region = null) { return new Promise((resolve) => { if (!db) resolve(false); const tx = db.transaction([STORE_NAME],'readwrite'); const store = tx.objectStore(STORE_NAME); if (region) { const allReq = store.getAll(); allReq.onsuccess = () => { const records = allReq.result.filter(r => r.region === region); records.forEach(r => store.delete(r.id)); resolve(true); }; } else { const req = store.clear(); req.onsuccess = () => resolve(true); } }); }
 async function clearAllReportOrderRecordsFromIDB(region = null) { return new Promise((resolve) => { if (!db) resolve(false); const tx = db.transaction([REPORT_STORE_NAME],'readwrite'); const store = tx.objectStore(REPORT_STORE_NAME); if (region) { const allReq = store.getAll(); allReq.onsuccess = () => { const records = allReq.result.filter(r => r.region === region); records.forEach(r => store.delete(r.id)); resolve(true); }; } else { const req = store.clear(); req.onsuccess = () => resolve(true); } }); }
 
-async function calculateStorageUsage() { const records = await getOrderRecords(); const reportRecords = await getReportOrderRecords(); const orderCount = records.length + reportRecords.length; let usedBytes = 0; records.forEach(r => usedBytes += JSON.stringify(r).length * 2); reportRecords.forEach(r => usedBytes += JSON.stringify(r).length * 2); usedBytes += JSON.stringify(getAllConfigData()).length * 2; const usedMB = (usedBytes / (1024*1024)).toFixed(2); const maxStorage = 50*1024*1024; const freeMB = ((maxStorage - usedBytes) / (1024*1024)).toFixed(2); document.getElementById('orderCount').textContent = orderCount; document.getElementById('usedSpace').textContent = `${usedMB} MB`; document.getElementById('freeSpace').textContent = `${freeMB} MB`; const filterDate = document.getElementById('filterDate')?.value || getTodayCST(); const todayRecords = records.filter(r => r.date === filterDate); document.getElementById('todayOrderCount').textContent = todayRecords.length; }
+async function calculateStorageUsage() { const records = await getOrderRecords(); const reportRecords = await getReportOrderRecords(); const orderCount = records.length + reportRecords.length; let usedBytes = 0; records.forEach(r => usedBytes += JSON.stringify(r).length * 2); reportRecords.forEach(r => usedBytes += JSON.stringify(r).length * 2); usedBytes += JSON.stringify(getAllConfigData()).length * 2; const usedMB = (usedBytes / (1024*1024)).toFixed(2); const maxStorage = 50*1024*1024; const freeMB = ((maxStorage - usedBytes) / (1024*1024)).toFixed(2); document.getElementById('orderCount').textContent = orderCount; document.getElementById('usedSpace').textContent = `${usedMB} MB`; document.getElementById('freeSpace').textContent = `${freeMB} MB`; const filterDate = document.getElementById('filterDate')?.value || getTodayCST(); const todayRecords = records.filter(r => r.date === filterDate); document.getElementById('todayOrderCount').textContent = todayRecords.length; updateLogCount(); }
 
 function getUsers() { const key = `users_${currentRegion}`; return JSON.parse(localStorage.getItem(key) || '[]'); }
 function saveUsers(users) { const key = `users_${currentRegion}`; localStorage.setItem(key, JSON.stringify(users)); }
@@ -990,8 +1221,7 @@ async function deleteUser(name) { let users = getUsers(); users = users.filter(u
 function rebuildTotal() { tableBetData = {}; for (const u in userBetData) for (const n in userBetData[u]) tableBetData[n] = (tableBetData[n]||0) + userBetData[u][n]; }
 function refreshAll() { updateSelects(); updateTableFromRecords(); }
 function updateSelects() { const users = getUsers(); const orderSel = document.getElementById('orderUserSelect'); if (orderSel) { orderSel.innerHTML = ''; users.forEach(u => { const o = document.createElement('option'); o.value = u; o.textContent = u; orderSel.appendChild(o); }); } const viewSel = document.getElementById('viewUserSelect'); if (viewSel) { viewSel.innerHTML = ''; users.forEach(u => { const o = document.createElement('option'); o.value = u; o.textContent = u; viewSel.appendChild(o); }); } }
-
-// ===== 快捷添加与分词 =====
+  // ===== 快捷添加与分词 =====
 function quickAddWithAmount(text, button) { const input = document.querySelector('.source-order-input'); if (!input) return; const lines = input.value.trim().split('\n').filter(l=>l.trim()); const idx = lines.findIndex(l=> l.includes(text) && (l.includes('各数')||l.includes('各号'))); if (idx !== -1) { lines.splice(idx,1); button.classList.remove('active'); } else { lines.push(`${text} 各数 `); button.classList.add('active'); } input.value = lines.join('\n'); convertOrderText(); const lastIndex = input.value.lastIndexOf('各数'); if (lastIndex !== -1) { const pos = lastIndex + 2; input.focus(); input.setSelectionRange(pos, pos); } }
 function getReplacePresets() { try { return JSON.parse(localStorage.getItem('replacePresets') || '[]'); } catch (e) { return []; } }
 function getCategoryAliases() { try { return JSON.parse(localStorage.getItem('categoryAliases') || '[]'); } catch (e) { return []; } }
@@ -1047,7 +1277,7 @@ async function resetPresetsToDefault(){
   localStorage.setItem('categoryAliases',JSON.stringify(defaultAliases));
   renderPresetList(); showToast('已恢复默认替换预设和分类缩写');
 }
-    function applyCategoryAliases(text) { const a=getCategoryAliases(); if(!a.length)return text; const s=[...a].sort((x,y)=>y.alias.length-x.alias.length); let r=text; s.forEach(x=>{ if(x.alias&&x.target)r=r.split(x.alias).join(x.target); }); return r; }
+  function applyCategoryAliases(text) { const a=getCategoryAliases(); if(!a.length)return text; const s=[...a].sort((x,y)=>y.alias.length-x.alias.length); let r=text; s.forEach(x=>{ if(x.alias&&x.target)r=r.split(x.alias).join(x.target); }); return r; }
 
 // ===== 修正后的替换预设（已去掉后边界限制） =====
 function applyReplacePresets(text) { const p = getReplacePresets(); let r = text; p.forEach(x => { if (x.old && x.new) { const escapedOld = x.old.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); const regex = new RegExp(escapedOld, 'g'); r = r.replace(regex, x.new); } }); return r; }
@@ -1058,9 +1288,8 @@ function tokenizeAndJoin(content) { const cfg = getAllConfigData(); const vc = g
 function convertOrderText() { const inputEl = document.querySelector('.source-order-input'); const resultEl = document.getElementById('orderResult'); const invalidSpan = document.getElementById('invalidTokensDisplay'); if (!inputEl || !resultEl) return; let text = applyCategoryAliases(applyReplacePresets(inputEl.value.trim())); if (!text) { resultEl.innerHTML = ''; if (invalidSpan) { invalidSpan.textContent = ''; invalidSpan.style.display = 'none'; } updateOrderTotalDisplay(); return; } const lines = text.split('\n'); const resultLines = []; const originalContents = []; const skipInvalidCheck = new Set(); const HARD_AMP_LIST = ['每个号','各号码','各数','每数','每号','个号','各号','各码','号','个','=','各']; const cusAmp = getCustomAmountPrefixes(); const allAmpList = [...HARD_AMP_LIST, ...cusAmp]; allAmpList.sort((a, b) => b.length - a.length); const AMP_ORIGINAL = '(?:' + allAmpList.map(s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|') + ')'; const IGN = ['奥特','特码','澳门特码','特','奥','澳','澳门','澳門','澳門特碼','澳门特码','澳門特码',':','。','.','新',',','新','新奥','门','，','新澳','新特','新澳特','特碼']; const cusPre = getCustomPrefixes(); const allPre = [...IGN, ...cusPre]; const baseSuf = '元块咪米斤#،。\\s'; const cusAmtSuf = getCustomAmountSuffixes(); const allAmtChars = [...new Set([...baseSuf.split(''), ...cusAmtSuf])].join(''); const AMTS = `[${allAmtChars}]*`; function cn2n(s) { const m = {'零':0,'一':1,'二':2,'三':3,'四':4,'五':5,'六':6,'七':7,'八':8,'九':9,'十':10,'百':100,'千':1000}; let sum = 0, tmp = 0; for (let c of s) { const v = m[c]; if (v === 10 || v === 100 || v === 1000) { if (tmp === 0) tmp = 1; tmp *= v; sum += tmp; tmp = 0; } else if (v !== undefined) { if (tmp > 0) { sum += tmp; tmp = 0; } tmp = v; } } sum += tmp; return sum; } const SIMPLE_PAIR = /^(\d{1,2})[^\d\s]+(\d+)$/; const cfg = getAllConfigData(); const vc = getAllValidCategories(cfg); const allCatNames = new Set(); Object.keys(cfg.zodiac).forEach(z => allCatNames.add(z)); vc.forEach(c => allCatNames.add(c)); const ZODIAC_SET = new Set(Object.keys(cfg.zodiac)); function startsWithCategory(str) { for (let cat of allCatNames) { if (str.startsWith(cat)) return true; } return false; } function isValidNumber(token) { return /^(0[1-9]|[1-4][0-9]|49?|[1-9])$/.test(token); } const PUNCT_REGEX = /[\s,，.。、+\-*＊\/\\|!@#$%^&*()=+_{}\[\]:;"'<>,.?\/~！@#￥%…&*（）—+【】{}|："；"''《》，。？、]/g; function isValidToken(token) { const clean = token.replace(PUNCT_REGEX, ''); if (clean === '') return false; if (isValidNumber(clean)) return true; if (/^\d+尾$/.test(clean) || /^\d+头$/.test(clean)) return true; if (allCatNames.has(clean)) return true; if (/^[\u4e00-\u9fa5]+$/.test(clean) && clean.length > 1) { const chars = clean.split(''); if (chars.every(ch => allCatNames.has(ch))) return true; } return false; } lines.forEach(line => { line = line.trim(); if (!line) return; const rangeFullMatch = line.match(new RegExp(`^([\\u4e00-\\u9fa5\\-]*?)(\\d{1,2})到(\\d{1,2})\\s*${AMP_ORIGINAL}\\s*(\\d+)\\s*${AMTS}$`)); if (rangeFullMatch) { const prefix = rangeFullMatch[1].replace(/-$/, '').trim(); const startNum = parseInt(rangeFullMatch[2]); const endNum = parseInt(rangeFullMatch[3]); const amt = rangeFullMatch[4]; if (startNum >= 1 && startNum <= 49 && endNum >= 1 && endNum <= 49 && startNum <= endNum) { const numList = []; for (let i = startNum; i <= endNum; i++) { numList.push(i.toString().padStart(2, '0')); } const expanded = numList.join('-'); const finalLine = prefix ? `${prefix}-${expanded}` : expanded; resultLines.push(`${finalLine} 各数 ${amt}`); originalContents.push(finalLine); skipInvalidCheck.add(resultLines.length - 1); return; } } const pairMatch = line.match(SIMPLE_PAIR); if (pairMatch) { let num = pairMatch[1]; const amount = pairMatch[2]; if (num.length === 1) num = '0' + num; resultLines.push(`${num} 各数 ${amount}`); originalContents.push(pairMatch[1]); return; } let cl = line; allPre.forEach(p => { if (cl.startsWith(p)) cl = cl.substring(p.length).trim(); }); cl = cl.replace(/[^\u4e00-\u9fa5\d]+$/, ''); cl = cl.replace(/([一二三四五六七八九十百千]+)/g, (m) => cn2n(m)); while (cl && !/^[\d\u4e00-\u9fa5]/.test(cl)) { cl = cl.substring(1).trim(); } while (cl && !/^\d/.test(cl) && !startsWithCategory(cl)) { cl = cl.substring(1).trim(); } if (!cl) return; const shxMatch = cl.match(new RegExp(`^(.+?)(各肖|各)\\s*(\\d+)${AMTS}$`)); if (shxMatch) { const rawContent = shxMatch[1]; const amtRaw = parseInt(shxMatch[3]) || 0; if (!/\d/.test(rawContent)) { const zodiacs = []; for (const ch of rawContent) { if (ZODIAC_SET.has(ch)) zodiacs.push(ch); } if (zodiacs.length > 0) { const curBenming = document.getElementById('startZodiacSelect')?.value || '马'; const benmingList = [], otherList = []; zodiacs.forEach(z => { if (z === curBenming) benmingList.push(z); else otherList.push(z); }); const amtPerBen = Math.round(amtRaw / 5); const amtPerOther = Math.round(amtRaw / 4); if (benmingList.length > 0) { resultLines.push(`${benmingList.join('-')} 各数 ${amtPerBen}`); originalContents.push(benmingList.join('-')); } if (otherList.length > 0) { resultLines.push(`${otherList.join('-')} 各数 ${amtPerOther}`); originalContents.push(otherList.join('-')); } return; } } } const op = new RegExp(`(${AMP_ORIGINAL}\\s*\\d+${AMTS})`, 'g'); const om = cl.match(op); if (om && om.length > 0) { let rl = cl; om.forEach(om => { const oi = rl.indexOf(om); if (oi !== -1) { const cont = rl.substring(0, oi).trim(); const am = om.match(/(\d+)/); if (am) { const amt = am[1]; if (cont) { const jo = tokenizeAndJoin(cont); if (jo) { resultLines.push(`${jo} 各数 ${amt}`); originalContents.push(cont); } } rl = rl.substring(oi + om.length); } } }); if (rl.trim()) { const jo = tokenizeAndJoin(rl.trim()); if (jo) { resultLines.push(`${jo} 各数 0`); originalContents.push(rl.trim()); } } } else { const pat = new RegExp(`^(.+?)${AMP_ORIGINAL}\\s*(\\d+)$`); const m = cl.match(pat); if (m) { const jo = tokenizeAndJoin(m[1].trim()); if (jo) { resultLines.push(`${jo} 各数 ${m[2]}`); originalContents.push(m[1].trim()); } } else { const sp = new RegExp(`(\\d+)(?:号|${AMP_ORIGINAL})\\s*(\\d+)$`); const sm = cl.match(sp); if (sm) { let num = sm[1].trim(); if (parseInt(num) >= 1 && parseInt(num) <= 49) { num = num.length === 1 ? `0${num}` : num; resultLines.push(`${num} 各数 ${sm[2]}`); originalContents.push(num); } } else { const jo = tokenizeAndJoin(cl); if (jo) { resultLines.push(`${jo} 各数 0`); originalContents.push(cl); } } } } }); const lineInvalidTokens = []; resultLines.forEach((line, idx) => { if (skipInvalidCheck.has(idx)) { lineInvalidTokens.push([]); return; } const originalContent = originalContents[idx] || ''; const rawTokens = originalContent.split(/[\s,，.。、+\-*＊\/\\|]+/).filter(t => t.trim()); const invalidInLine = []; rawTokens.forEach(token => { if (!isValidToken(token)) { const clean = token.replace(PUNCT_REGEX, ''); if (clean) { if (/^[\u4e00-\u9fa5]+$/.test(clean) && clean.length > 1) { const chars = clean.split(''); chars.forEach(ch => { if (!allCatNames.has(ch)) invalidInLine.push(ch); }); } else { invalidInLine.push(clean); } } } }); lineInvalidTokens.push(invalidInLine); }); let html = ''; resultLines.forEach((line, idx) => { const m = line.match(/^(.+?)\s+各数\s+(\d+)$/); if (!m) { html += `<div style="color:red;">${line}</div>`; return; } const content = m[1]; const amt = parseInt(m[2]) || 0; const hasInvalidInSource = lineInvalidTokens[idx].length > 0; const isSkipped = skipInvalidCheck.has(idx); const { numbers, zodiacs } = countItemsInLine(line, cfg, vc); const totalItems = numbers.length + zodiacs.length; const isInvalid = !isSkipped && (totalItems === 0 || amt <= 0 || hasInvalidInSource); if (isInvalid) { html += `<div style="color:red;">${line}</div>`; } else { html += `<div>${line}</div>`; } }); resultEl.innerHTML = html; if (invalidSpan) { const displayLines = []; lineInvalidTokens.forEach(arr => { if (arr.length > 0) { displayLines.push('无效: ' + arr.join(', ')); } }); if (displayLines.length > 0) { invalidSpan.innerHTML = displayLines.join('<br>'); invalidSpan.style.display = 'inline'; } else { invalidSpan.innerHTML = ''; invalidSpan.style.display = 'none'; } } updateOrderTotalDisplay(); }
 
 function getAllValidCategories(cfg) { const s=new Set(); Object.keys(cfg.zodiac).forEach(k=>s.add(k)); Object.keys(cfg.shengxiaoAttr).forEach(k=>s.add(k)); Object.keys(cfg.wuxing).forEach(k=>s.add(k)); Object.keys(cfg.bose).forEach(k=>s.add(k)); Object.keys(cfg.banbo).forEach(k=>s.add(k)); Object.keys(cfg.danshuang).forEach(k=>s.add(k)); Object.keys(cfg.weishu).forEach(k=>s.add(k)); Object.keys(cfg.daxiaodanshuang).forEach(k=>s.add(k)); Object.keys(cfg.daxiao).forEach(k=>s.add(k)); Object.keys(cfg.heshu).forEach(k=>s.add(k)); Object.keys(cfg.toushu).forEach(k=>s.add(k)); Object.keys(cfg.menshu).forEach(k=>s.add(k)); Object.keys(cfg.duanwei).forEach(k=>s.add(k)); Object.keys(cfg.hedahexiao).forEach(k=>s.add(k)); Object.keys(cfg.weidaweixiao).forEach(k=>s.add(k)); Object.keys(cfg.hewei).forEach(k=>s.add(k)); Object.keys(cfg.heshudanshuang).forEach(k=>s.add(k)); Object.keys(cfg.toushuDanshuang).forEach(k=>s.add(k)); s.add('蓝大'); s.add('蓝小'); s.add('红大'); s.add('红小'); s.add('绿大'); s.add('绿小'); s.add('蓝波大'); s.add('蓝波小'); s.add('红波大'); s.add('红波小'); s.add('绿波大'); s.add('绿波小'); return s; }
-
-async function saveOrder(){ const user=document.getElementById('orderUserSelect')?.value; if(!user){showToast('请选择用户');return;} const resultEl=document.getElementById('orderResult'); const rawText=resultEl?resultEl.innerText:''; const inputText=document.querySelector('.source-order-input')?.value.trim(); const textToUse=rawText||inputText; if(!textToUse)return; const vl=textToUse.split('\n').filter(l=>{const m=l.match(/各数\s+(\d+)/);return m&&parseInt(m[1])>0;}); if(!vl.length){showToast('订单无效');return;} const content=vl.join('\n'); const date=document.getElementById('filterDate')?.value||getTodayCST(); const total=computeCurrentOrderTotal(); await saveOrderRecordToIDB(content,user,date,total); processCurrentOrder(content,user,true,date); const si=document.querySelector('.source-order-input'); if(si)si.value=''; if(resultEl)resultEl.innerHTML=''; updateOrderTotalDisplay(); document.querySelectorAll('.category-btn').forEach(b=>b.classList.remove('active')); calculateStorageUsage(); showStorageDrawerTemporary(5000); renderSmartDecision(); updateSingleBetDisplay(); }
-async function saveReportOrder(){ const user=document.getElementById('orderUserSelect')?.value; if(!user){showToast('请选择用户');return;} const resultEl=document.getElementById('orderResult'); const rawText=resultEl?resultEl.innerText:''; const inputText=document.querySelector('.source-order-input')?.value.trim(); const textToUse=rawText||inputText; if(!textToUse)return; const vl=textToUse.split('\n').filter(l=>{const m=l.match(/各数\s+(\d+)/);return m&&parseInt(m[1])>0;}); if(!vl.length){showToast('订单无效');return;} const content=vl.join('\n'); const date=document.getElementById('filterDate')?.value||getTodayCST(); const total=computeCurrentOrderTotal(); await saveReportOrderRecordToIDB(content,user,date,total); processCurrentOrder(content,user,false,date); const si=document.querySelector('.source-order-input'); if(si)si.value=''; if(resultEl)resultEl.innerHTML=''; updateOrderTotalDisplay(); document.querySelectorAll('.category-btn').forEach(b=>b.classList.remove('active')); calculateStorageUsage(); showStorageDrawerTemporary(5000); renderSmartDecision(); }
+  async function saveOrder(){ const user=document.getElementById('orderUserSelect')?.value; if(!user){showToast('请选择用户');return;} const resultEl=document.getElementById('orderResult'); const rawText=resultEl?resultEl.innerText:''; const inputText=document.querySelector('.source-order-input')?.value.trim(); const textToUse=rawText||inputText; if(!textToUse)return; const vl=textToUse.split('\n').filter(l=>{const m=l.match(/各数\s+(\d+)/);return m&&parseInt(m[1])>0;}); if(!vl.length){showToast('订单无效');return;} const content=vl.join('\n'); const date=document.getElementById('filterDate')?.value||getTodayCST(); const total=computeCurrentOrderTotal(); await saveOrderRecordToIDB(content,user,date,total); processCurrentOrder(content,user,true,date); addOperationLog('save_order', content, currentRegion, user, total); const si=document.querySelector('.source-order-input'); if(si)si.value=''; if(resultEl)resultEl.innerHTML=''; updateOrderTotalDisplay(); document.querySelectorAll('.category-btn').forEach(b=>b.classList.remove('active')); calculateStorageUsage(); showStorageDrawerTemporary(5000); renderSmartDecision(); updateSingleBetDisplay(); clearStatsCache(); }
+async function saveReportOrder(){ const user=document.getElementById('orderUserSelect')?.value; if(!user){showToast('请选择用户');return;} const resultEl=document.getElementById('orderResult'); const rawText=resultEl?resultEl.innerText:''; const inputText=document.querySelector('.source-order-input')?.value.trim(); const textToUse=rawText||inputText; if(!textToUse)return; const vl=textToUse.split('\n').filter(l=>{const m=l.match(/各数\s+(\d+)/);return m&&parseInt(m[1])>0;}); if(!vl.length){showToast('订单无效');return;} const content=vl.join('\n'); const date=document.getElementById('filterDate')?.value||getTodayCST(); const total=computeCurrentOrderTotal(); await saveReportOrderRecordToIDB(content,user,date,total); processCurrentOrder(content,user,false,date); addOperationLog('save_report', content, currentRegion, user, total); const si=document.querySelector('.source-order-input'); if(si)si.value=''; if(resultEl)resultEl.innerHTML=''; updateOrderTotalDisplay(); document.querySelectorAll('.category-btn').forEach(b=>b.classList.remove('active')); calculateStorageUsage(); showStorageDrawerTemporary(5000); renderSmartDecision(); clearStatsCache(); }
 function countItemsInLine(line,cfg,keys){ const m=line.match(/([\u4e00-\u9fa5\d\-]+)\s+各数\s+(\d+)/); if(!m)return{numbers:[],zodiacs:[],amount:0}; let cont=m[1]; const amt=parseInt(m[2])||0; const items=cont.split('-').map(i=>i.trim()).filter(i=>i); const nums=[],zods=[]; items.forEach(item=>{ if(/^\d+$/.test(item))nums.push(item.padStart(2,'0')); else if(cfg.shengxiaoAttr[item]){ const zs=cfg.shengxiaoAttr[item]||[]; zs.forEach(z=>zods.push(z)); } else if(cfg.zodiac[item])zods.push(item); else if(cfg.toushuDanshuang&&cfg.toushuDanshuang[item]){ (cfg.toushuDanshuang[item]||[]).forEach(n=>nums.push(n.padStart(2,'0'))); } else { const nl=getNumberListForCategory(item,cfg); if(nl&&nl.length>0)nl.forEach(n=>nums.push(n.padStart(2,'0'))); } }); return{numbers:nums,zodiacs:zods,amount:amt}; }
 function processCurrentOrder(input,user,isNormal,date=null){ const cfg=getAllConfigData(); const keys=getAllValidCategories(cfg); const lines=input.split('\n').filter(l=>l.trim()); if(!userBetData[user])userBetData[user]={}; const curZod=localStorage.getItem('selectedStartZodiac')||'马'; lines.forEach(line=>{ const{numbers,zodiacs,amount}=countItemsInLine(line,cfg,keys); const nMin=parseInt(document.getElementById('numAmountMin')?.value)||1,nMax=parseInt(document.getElementById('numAmountMax')?.value)||50000; const zMin=parseInt(document.getElementById('zodiacAmountMin')?.value)||1,zMax=parseInt(document.getElementById('zodiacAmountMax')?.value)||50000; if(isNormal){ if(zodiacs.length>0){ zodiacs.forEach(z=>{ const w=z===curZod?5:4; zodiacWeightedTotal+=amount*w; }); }else if(numbers.length>0){ numberOrderTotal+=numbers.length*amount; } } numbers.forEach(num=>{ if(isNormal){ userBetData[user][num]=(userBetData[user][num]||0)+amount; tableBetData[num]=(tableBetData[num]||0)+amount; reportBetData[num]=(reportBetData[num]||0)+amount; numberCount[num]=(numberCount[num]||0)+1; if(amount>=nMin&&amount<=nMax)numberAmountCount[num]=(numberAmountCount[num]||0)+1; originalOrderAmount[num]=(originalOrderAmount[num]||0)+amount; if(zodiacs.length === 0) directOrderAmount[num] = (directOrderAmount[num]||0) + amount; } else { userBetData[user][num]=(userBetData[user][num]||0)-amount; reportBetData[num]=(reportBetData[num]||0)-amount; reportAmountData[num]=(reportAmountData[num]||0)+amount; if(zodiacs.length === 0) directReportAmount[num] = (directReportAmount[num]||0) + amount; } }); if(isNormal){ zodiacs.forEach(z=>{ zodiacCount[z]=(zodiacCount[z]||0)+1; zodiacDirectAmount[z]=(zodiacDirectAmount[z]||0)+amount*(cfg.zodiac[z]?.length||0); if(amount>=zMin&&amount<=zMax){zodiacAmountCount[z]=(zodiacAmountCount[z]||0)+1; zodiacFilteredAmount[z]=(zodiacFilteredAmount[z]||0)+amount*(cfg.zodiac[z]?.length||0);} (cfg.zodiac[z]||[]).forEach(n=>{ const num=n.padStart(2,'0'); userBetData[user][num]=(userBetData[user][num]||0)+amount; tableBetData[num]=(tableBetData[num]||0)+amount; reportBetData[num]=(reportBetData[num]||0)+amount; originalOrderAmount[num]=(originalOrderAmount[num]||0)+amount; }); }); } else { zodiacs.forEach(z=>{ zodiacReportAmount[z]=(zodiacReportAmount[z]||0)+amount*(cfg.zodiac[z]?.length||0); if(amount>=zMin&&amount<=zMax){ zodiacFilteredReportAmount[z]=(zodiacFilteredReportAmount[z]||0)+amount*(cfg.zodiac[z]?.length||0);} (cfg.zodiac[z]||[]).forEach(n=>{ const num=n.padStart(2,'0'); userBetData[user][num]=(userBetData[user][num]||0)-amount; reportBetData[num]=(reportBetData[num]||0)-amount; reportAmountData[num]=(reportAmountData[num]||0)+amount; }); }); } }); generateRiskTable(); generateReportTable(); renderFrequencyCards(); renderAmountFrequencyCards(); renderReportAmountTable(); renderOriginalAmountTable(); updateReportAmountTotal(); updateAmountDisplays(); }
     
@@ -1070,6 +1299,42 @@ async function updateTableFromRecords(){
     const fd=document.getElementById('filterDate')?.value;
     const recs=await getOrderRecords();
     const reps=await getReportOrderRecords();
+    
+    const riskSwitcher = document.getElementById('riskReportSwitcher')?.value || 'total';
+    const viewUser = document.getElementById('viewUserSelect')?.value;
+    let filterUser = null;
+    if (riskSwitcher === 'user' && viewUser) {
+      filterUser = viewUser;
+    }
+    
+    const cacheKey = getCacheKey(currentRegion, fd || 'all', filterUser || 'all');
+    const cached = statsCache.get(cacheKey);
+    if (cached) {
+      tableBetData = cached.tableBetData;
+      userBetData = cached.userBetData;
+      reportBetData = cached.reportBetData;
+      reportAmountData = cached.reportAmountData;
+      reportRiskData = cached.reportRiskData;
+      numberCount = cached.numberCount;
+      zodiacCount = cached.zodiacCount;
+      numberAmountCount = cached.numberAmountCount;
+      zodiacAmountCount = cached.zodiacAmountCount;
+      zodiacDirectAmount = cached.zodiacDirectAmount;
+      zodiacFilteredAmount = cached.zodiacFilteredAmount;
+      zodiacReportAmount = cached.zodiacReportAmount;
+      zodiacFilteredReportAmount = cached.zodiacFilteredReportAmount;
+      numberOrderTotal = cached.numberOrderTotal;
+      zodiacWeightedTotal = cached.zodiacWeightedTotal;
+      originalOrderAmount = cached.originalOrderAmount;
+      directOrderAmount = cached.directOrderAmount;
+      directReportAmount = cached.directReportAmount;
+      
+      generateRiskTable(); generateReportTable(); renderFrequencyCards(); renderAmountFrequencyCards();
+      renderReportAmountTable(); renderOriginalAmountTable(); updateReportAmountTotal(); updateAmountDisplays();
+      calculateStorageUsage(); renderSmartDecision(); updateSingleBetDisplay();
+      return;
+    }
+
     tableBetData={};userBetData={};reportBetData={};reportAmountData={};reportRiskData={};
     numberCount={};zodiacCount={};numberAmountCount={};zodiacAmountCount={};
     zodiacDirectAmount={};zodiacFilteredAmount={};
@@ -1087,13 +1352,6 @@ async function updateTableFromRecords(){
     const fRecs=fd?recs.filter(r=>r.date===fd):recs;
     const fReps=fd?reps.filter(r=>r.date===fd):reps;
 
-    // 根据风险报表的用户选择过滤
-    const riskSwitcher = document.getElementById('riskReportSwitcher')?.value || 'total';
-    const viewUser = document.getElementById('viewUserSelect')?.value;
-    let filterUser = null;
-    if (riskSwitcher === 'user' && viewUser) {
-      filterUser = viewUser;
-    }
     const fRecsFiltered = filterUser ? fRecs.filter(r => r.user === filterUser) : fRecs;
     const fRepsFiltered = filterUser ? fReps.filter(r => r.user === filterUser) : fReps;
 
@@ -1154,13 +1412,25 @@ async function updateTableFromRecords(){
       }catch(e){}
     });
 
+    // 存入缓存
+    statsCache.set(cacheKey, {
+      tableBetData: {...tableBetData}, userBetData: {...userBetData}, reportBetData: {...reportBetData},
+      reportAmountData: {...reportAmountData}, reportRiskData: {...reportRiskData},
+      numberCount: {...numberCount}, zodiacCount: {...zodiacCount},
+      numberAmountCount: {...numberAmountCount}, zodiacAmountCount: {...zodiacAmountCount},
+      zodiacDirectAmount: {...zodiacDirectAmount}, zodiacFilteredAmount: {...zodiacFilteredAmount},
+      zodiacReportAmount: {...zodiacReportAmount}, zodiacFilteredReportAmount: {...zodiacFilteredReportAmount},
+      numberOrderTotal, zodiacWeightedTotal,
+      originalOrderAmount: {...originalOrderAmount},
+      directOrderAmount: {...directOrderAmount}, directReportAmount: {...directReportAmount}
+    });
+
     generateRiskTable(); generateReportTable(); renderFrequencyCards(); renderAmountFrequencyCards();
     renderReportAmountTable(); renderOriginalAmountTable(); updateReportAmountTotal(); updateAmountDisplays();
     calculateStorageUsage(); renderSmartDecision(); updateSingleBetDisplay();
   }catch(e){}
 }
-
-function updateDirectAmountTotals() {
+  function updateDirectAmountTotals() {
   let orderTotal = 0; let reportTotal = 0;
   for (let n in directOrderAmount) { orderTotal += directOrderAmount[n] || 0; }
   for (let n in directReportAmount) { reportTotal += directReportAmount[n] || 0; }
@@ -1218,7 +1488,7 @@ function orderContainsTarget(content,targetNum,cfg){ if(!targetNum)return true; 
 function getSpecialAmountFromOrder(content, prizeNum, cfg) { if (!prizeNum) return 0; const targetNum = prizeNum.padStart(2, '0'); const lines = content.split('\n'); let total = 0; for (const line of lines) { const match = line.match(/^(.+?)\s+各数\s+(\d+)$/); if (!match) continue; const tokensPart = match[1]; const amount = parseInt(match[2]) || 0; const tokens = tokensPart.split('-').map(t => t.trim()).filter(t => t); let hit = false; for (const token of tokens) { if (isTokenMatching(token, targetNum, cfg)) { hit = true; break; } } if (hit) { total += amount; } } return total; }
 function formatTimestampToCST(iso){ const d=new Date(iso); return new Intl.DateTimeFormat('zh-CN',{year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false,timeZone:'Asia/Shanghai'}).format(d); }
 function getUserColor(u){ let h=0; for(let i=0;i<u.length;i++)h=u.charCodeAt(i)+((h<<5)-h); const hue=(h%360+360)%360; return`hsl(${hue},70%,45%)`; }
-    function renderOrderStats(allOrders, allReports, filterUser, prizeNum) { const container = document.getElementById('orderStatsContainer'); if (!container) return; const mul = parseFloat(document.getElementById('multipleVal')?.value) || 1; const rr = parseFloat(document.getElementById('rebateRate')?.value) || 0; const cfg = getAllConfigData(); let totalAmountSum = 0; allOrders.forEach(it => { totalAmountSum += it.totalAmount || 0; }); let reportTotalAmount = 0; allReports.forEach(it => { reportTotalAmount += it.totalAmount || 0; }); let totalSpecial = 0, reportSpecial = 0, hitCount = 0; if (prizeNum) { const num = prizeNum.padStart(2, '0'); if (filterUser === 'all' || !filterUser) { totalSpecial = tableBetData[num] || 0; } else { const userData = userBetData[filterUser] || {}; totalSpecial = userData[num] || 0; } allOrders.forEach(it => { if (orderContainsTarget(it.content, prizeNum, cfg)) hitCount++; }); allReports.forEach(it => { reportSpecial += getSpecialAmountFromOrder(it.content, prizeNum, cfg); }); } const totalProfit = totalAmountSum - totalSpecial * mul - totalAmountSum * (rr / 100); const reportProfit = reportTotalAmount - reportSpecial * mul - reportTotalAmount * (rr / 100); const netProfit = totalProfit - reportProfit; const showStats = prizeNum && prizeNum.trim() !== ''; let html = '<div class="stats-block">'; html += '<div class="stats-row">'; if (totalAmountSum > 0) { html += `<span class="stat-col"><span class="slabel">总额:</span><span class="stat-val-amount">${totalAmountSum}</span></span>`; } if (showStats) { html += `<span class="stat-col"><span class="slabel">总特:</span><span class="stat-val-special">${totalSpecial}</span></span>`; const tp = Math.round(totalProfit); const tlabel = tp >= 0 ? '总盈' : '总亏'; const tcls = tp >= 0 ? 'stat-val-profit' : 'stat-val-loss'; html += `<span class="stat-col"><span class="slabel">${tlabel}:</span><span class="${tcls}">${tp}</span></span>`; html += `<span class="stat-col"><span class="slabel">中:</span><span class="stat-val-count">${hitCount}条</span></span>`; } html += '</div><div class="stats-row">'; if (reportTotalAmount > 0) { html += `<span class="stat-col"><span class="slabel">上报金额:</span><span class="stat-val-amount">${reportTotalAmount}</span></span>`; } if (showStats) { html += `<span class="stat-col"><span class="slabel">上报特:</span><span class="stat-val-special">${reportSpecial}</span></span>`; const rp = Math.round(reportProfit); const rlabel = rp >= 0 ? '报盈' : '报亏'; const rcls = rp >= 0 ? 'stat-val-profit' : 'stat-val-loss'; html += `<span class="stat-col"><span class="slabel">${rlabel}:</span><span class="${rcls}">${rp}</span></span>`; const np = Math.round(netProfit); const nlabel = np >= 0 ? '盈' : '亏'; const ncls = np >= 0 ? 'stat-val-profit' : 'stat-val-loss'; html += `<span class="stat-col"><span class="slabel">${nlabel}:</span><span class="${ncls}">${np}</span></span>`; } html += '</div></div>'; container.innerHTML = html; }
+  function renderOrderStats(allOrders, allReports, filterUser, prizeNum) { const container = document.getElementById('orderStatsContainer'); if (!container) return; const mul = parseFloat(document.getElementById('multipleVal')?.value) || 1; const rr = parseFloat(document.getElementById('rebateRate')?.value) || 0; const cfg = getAllConfigData(); let totalAmountSum = 0; allOrders.forEach(it => { totalAmountSum += it.totalAmount || 0; }); let reportTotalAmount = 0; allReports.forEach(it => { reportTotalAmount += it.totalAmount || 0; }); let totalSpecial = 0, reportSpecial = 0, hitCount = 0; if (prizeNum) { const num = prizeNum.padStart(2, '0'); if (filterUser === 'all' || !filterUser) { totalSpecial = tableBetData[num] || 0; } else { const userData = userBetData[filterUser] || {}; totalSpecial = userData[num] || 0; } allOrders.forEach(it => { if (orderContainsTarget(it.content, prizeNum, cfg)) hitCount++; }); allReports.forEach(it => { reportSpecial += getSpecialAmountFromOrder(it.content, prizeNum, cfg); }); } const totalProfit = totalAmountSum - totalSpecial * mul - totalAmountSum * (rr / 100); const reportProfit = reportTotalAmount - reportSpecial * mul - reportTotalAmount * (rr / 100); const netProfit = totalProfit - reportProfit; const showStats = prizeNum && prizeNum.trim() !== ''; let html = '<div class="stats-block">'; html += '<div class="stats-row">'; if (totalAmountSum > 0) { html += `<span class="stat-col"><span class="slabel">总额:</span><span class="stat-val-amount">${totalAmountSum}</span></span>`; } if (showStats) { html += `<span class="stat-col"><span class="slabel">总特:</span><span class="stat-val-special">${totalSpecial}</span></span>`; const tp = Math.round(totalProfit); const tlabel = tp >= 0 ? '总盈' : '总亏'; const tcls = tp >= 0 ? 'stat-val-profit' : 'stat-val-loss'; html += `<span class="stat-col"><span class="slabel">${tlabel}:</span><span class="${tcls}">${tp}</span></span>`; html += `<span class="stat-col"><span class="slabel">中:</span><span class="stat-val-count">${hitCount}条</span></span>`; } html += '</div><div class="stats-row">'; if (reportTotalAmount > 0) { html += `<span class="stat-col"><span class="slabel">上报金额:</span><span class="stat-val-amount">${reportTotalAmount}</span></span>`; } if (showStats) { html += `<span class="stat-col"><span class="slabel">上报特:</span><span class="stat-val-special">${reportSpecial}</span></span>`; const rp = Math.round(reportProfit); const rlabel = rp >= 0 ? '报盈' : '报亏'; const rcls = rp >= 0 ? 'stat-val-profit' : 'stat-val-loss'; html += `<span class="stat-col"><span class="slabel">${rlabel}:</span><span class="${rcls}">${rp}</span></span>`; const np = Math.round(netProfit); const nlabel = np >= 0 ? '盈' : '亏'; const ncls = np >= 0 ? 'stat-val-profit' : 'stat-val-loss'; html += `<span class="stat-col"><span class="slabel">${nlabel}:</span><span class="${ncls}">${np}</span></span>`; } html += '</div></div>'; container.innerHTML = html; }
 
 function updatePrizeStats(pn) {}
 
@@ -1226,19 +1496,19 @@ async function applyPrizeFilter(){ const pi=document.getElementById('prizeNumber
 
 async function showOrderRecord(filter='all'){ try{ const recs=await getOrderRecords(),users=getUsers(),today=getTodayCST(); const reports=await getReportOrderRecords(); const fd=document.getElementById('filterDate')?.value; const fRecs=fd?recs.filter(r=>r.date===fd):recs; const fReps=fd?reports.filter(r=>r.date===fd):reports; if(document.getElementById('orderWin'))document.getElementById('orderWin').remove(); const w=document.createElement('div'); w.className='floating-window'; w.id='orderWin'; w.style.width='750px'; w.style.height='600px'; w.style.left='50%'; w.style.top='50%'; w.style.transform='translate(-50%,-50%)'; let html=`<div class="modal-header"><h3>下单记录</h3><div class="window-controls"><button onclick="maximizeWindow('orderWin')">🗖</button><button onclick="document.getElementById('orderWin').remove()">×</button></div></div><div class="modal-body" style="display:flex; flex-direction:column; height: calc(100% - 120px);">`; html+=`<div style="margin-bottom:6px;display:flex;gap:12px;flex-wrap:wrap;align-items:center;position:sticky;top:0;background:rgba(255,255,255,0.9);z-index:2;padding:5px 0;"><select id="recordUserFilter" onchange="applyPrizeFilter()" style="padding:4px 8px;border-radius:4px;border:1px solid #ccc;"><option value="all" ${filter==='all'?'selected':''}>全部用户</option>`; users.forEach(u=>html+=`<option value="${u}" ${u===filter?'selected':''}>${u}</option>`); html+=`</select><button onclick="checkAll()" style="padding:6px 12px;background:#007bff;color:#fff;border:none;border-radius:4px;">全选</button><button onclick="uncheckAll()" style="padding:6px 12px;background:#6c757d;color:#fff;border:none;border-radius:4px;">取消全选</button><button onclick="deleteChecked()" style="padding:6px 12px;background:#e74c3c;color:#fff;border:none;border-radius:4px;">批量删除</button> <span style="display:flex;align-items:center;gap:3px;margin-left:auto;"><span id="orderStatsContainer" style="margin-right:4px;"></span><span style="display:flex;align-items:center;gap:2px;"><span>对奖:</span><input type="text" id="prizeNumberInput" maxlength="2" oninput="applyPrizeFilter()" style="padding:4px;border-radius:4px;border:1px solid #ccc;width:50px;text-align:center;"></span></span></div>`; html+=`<div id="orderListContainer" style="flex:1; overflow-y:auto;">`; const filterDateVal = fd || today; const df=fRecs; const fin=(filter==='all')?df:df.filter(r=>r.user===filter); if(fin.length===0)html+=`<div style="padding:20px;text-align:center;color:#666;">暂无订单记录</div>`; else{ fin.forEach(it=>{ const ts=formatTimestampToCST(it.timestamp),ud=it.user||'未知',col=getUserColor(ud),ta=it.totalAmount||0; html+=`<div class="order-item"><input type="checkbox" class="order-check" data-id="${it.id}"><div class="order-content">${it.content.replace(/\n/g,'<br>')}</div><div class="order-info"><span class="order-total" style="color:#000;">合计：${ta}</span><span class="order-meta"><span style="color:${col};">用户：${ud}</span> &nbsp; ${ts}</span></div><button class="order-del" onclick="deleteOrderRecord('${it.id}')">删除</button></div>`; }); } html+=`</div></div><div class="modal-footer"><button onclick="document.getElementById('orderWin').remove()" style="padding:8px 16px;background:#6c757d;color:#fff;border:none;border-radius:4px;">关闭</button></div>`; w.innerHTML=html; document.body.appendChild(w); makeWindowDraggable('orderWin'); highestZ+=1; w.style.zIndex=highestZ; const uv = filter || 'all'; const userOrders = uv==='all' ? fRecs : fRecs.filter(r=>r.user===uv); const userReports = uv==='all' ? fReps : fReps.filter(r=>r.user===uv); renderOrderStats(userOrders, userReports, uv, ''); }catch(e){showToast('加载失败');} }
 
-async function deleteOrderRecord(id) { if (!(await confirm('确定删除？（可到回收站恢复）'))) return; try { const result = await deleteOrderRecordFromIDB(id); if (result) { showToast('已移入回收站'); await updateTableFromRecords(); calculateStorageUsage(); showOrderRecord(); updateRecycleCount(); } else { showToast('删除失败，记录可能已不存在'); } } catch(e) { console.error('删除订单异常', e); showToast('删除异常'); } }
+async function deleteOrderRecord(id) { if (!(await confirm('确定删除？（可到回收站恢复）'))) return; try { const record = await new Promise((resolve) => { const tx = db.transaction([STORE_NAME], 'readonly'); const store = tx.objectStore(STORE_NAME); const req = store.get(id); req.onsuccess = () => resolve(req.result); req.onerror = () => resolve(null); }); const result = await deleteOrderRecordFromIDB(id); if (result) { if (record) addOperationLog('delete_order', record.content, currentRegion, record.user, record.totalAmount || 0); clearStatsCache(); showToast('已移入回收站'); await updateTableFromRecords(); calculateStorageUsage(); showOrderRecord(); updateRecycleCount(); } else { showToast('删除失败，记录可能已不存在'); } } catch(e) { console.error('删除订单异常', e); showToast('删除异常'); } }
 
 async function showReportOrderRecord(filter='all'){ try{ const recs=await getReportOrderRecords(),users=getUsers(); if(document.getElementById('reportWin'))document.getElementById('reportWin').remove(); const fd=document.getElementById('filterDate')?.value; const df=fd?recs.filter(r=>r.date===fd):recs; const fin=(filter==='all')?df:df.filter(r=>r.user===filter); const w=document.createElement('div'); w.className='floating-window'; w.id='reportWin'; w.style.width='700px'; w.style.height='500px'; w.style.left='50%'; w.style.top='50%'; w.style.transform='translate(-50%,-50%)'; let html=`<div class="modal-header"><h3>上报数据</h3><div class="window-controls"><button onclick="maximizeWindow('reportWin')">🗖</button><button onclick="document.getElementById('reportWin').remove()">×</button></div></div><div class="modal-body" style="display:flex; flex-direction:column; height: calc(100% - 120px);">`; html+=`<div style="margin-bottom:10px;display:flex;gap:12px;flex-wrap:wrap;align-items:center;position:sticky;top:0;background:rgba(255,255,255,0.9);z-index:2;padding:5px 0;"><select id="reportRecordUserFilter" onchange="showReportOrderRecord(this.value)" style="padding:4px 8px;border-radius:4px;border:1px solid #ccc;"><option value="all" ${filter==='all'?'selected':''}>全部用户</option>`; users.forEach(u=>html+=`<option value="${u}" ${u===filter?'selected':''}>${u}</option>`); html+=`</select><button onclick="checkAllReport()" style="padding:6px 12px;background:#007bff;color:#fff;border:none;border-radius:4px;">全选</button><button onclick="uncheckAllReport()" style="padding:6px 12px;background:#6c757d;color:#fff;border:none;border-radius:4px;">取消全选</button><button onclick="deleteCheckedReport()" style="padding:6px 12px;background:#e74c3c;color:#fff;border:none;border-radius:4px;">批量删除</button></div>`; html+=`<div id="reportOrderListContainer" style="flex:1; overflow-y:auto;">`; if(fin.length===0)html+=`<div style="padding:20px;text-align:center;color:#666;">暂无上报记录</div>`; else{ fin.forEach(it=>{ const ts=formatTimestampToCST(it.timestamp),ud=it.user||'未知',ta=it.totalAmount||0; html+=`<div class="order-item"><input type="checkbox" class="report-order-check" data-id="${it.id}"><div class="order-content">${it.content.replace(/\n/g,'<br>')}</div><div class="order-info"><span class="order-total" style="color:#000;">合计：${ta}</span><span class="order-meta"><span style="color:red;">用户：${ud}</span> &nbsp; ${ts}</span></div><button class="order-del" onclick="deleteReportOrderRecord('${it.id}')">删除</button></div>`; }); } html+=`</div></div><div class="modal-footer"><button onclick="document.getElementById('reportWin').remove()" style="padding:8px 16px;background:#6c757d;color:#fff;border:none;border-radius:4px;">关闭</button></div>`; w.innerHTML=html; document.body.appendChild(w); makeWindowDraggable('reportWin'); highestZ+=1; w.style.zIndex=highestZ; }catch(e){showToast('加载失败');} }
 
-async function deleteReportOrderRecord(id) { if (!(await confirm('确定删除？（可到回收站恢复）'))) return; try { const result = await deleteReportOrderRecordFromIDB(id); if (result) { showToast('已移入回收站'); await updateTableFromRecords(); calculateStorageUsage(); showReportOrderRecord(); updateRecycleCount(); } else { showToast('删除失败，记录可能已不存在'); } } catch(e) { console.error('删除上报异常', e); showToast('删除异常'); } }
+async function deleteReportOrderRecord(id) { if (!(await confirm('确定删除？（可到回收站恢复）'))) return; try { const record = await new Promise((resolve) => { const tx = db.transaction([REPORT_STORE_NAME], 'readonly'); const store = tx.objectStore(REPORT_STORE_NAME); const req = store.get(id); req.onsuccess = () => resolve(req.result); req.onerror = () => resolve(null); }); const result = await deleteReportOrderRecordFromIDB(id); if (result) { if (record) addOperationLog('delete_report', record.content, currentRegion, record.user, record.totalAmount || 0); clearStatsCache(); showToast('已移入回收站'); await updateTableFromRecords(); calculateStorageUsage(); showReportOrderRecord(); updateRecycleCount(); } else { showToast('删除失败，记录可能已不存在'); } } catch(e) { console.error('删除上报异常', e); showToast('删除异常'); } }
 
 function checkAll(){ document.querySelectorAll('.order-check').forEach(cb=>cb.checked=true); }
 function uncheckAll(){ document.querySelectorAll('.order-check').forEach(cb=>cb.checked=false); }
 function checkAllReport(){ document.querySelectorAll('.report-order-check').forEach(cb=>cb.checked=true); }
 function uncheckAllReport(){ document.querySelectorAll('.report-order-check').forEach(cb=>cb.checked=false); }
 
-async function deleteChecked(){ const ids=[]; document.querySelectorAll('.order-check:checked').forEach(cb=>ids.push(String(cb.dataset.id))); if(ids.length===0){showToast('请选择');return;} if(!(await confirm(`确定要删除选中的 ${ids.length} 条订单记录吗？（可到回收站恢复）`))) return; try { await batchDeleteOrderRecordFromIDB(ids); showToast(`已将 ${ids.length} 条移入回收站`); await updateTableFromRecords(); calculateStorageUsage(); const userFilter = document.getElementById('recordUserFilter')?.value || 'all'; await showOrderRecord(userFilter); updateRecycleCount(); } catch(e) { console.error('批量删除异常', e); showToast('批量删除异常'); } }
-async function deleteCheckedReport(){ const ids=[]; document.querySelectorAll('.report-order-check:checked').forEach(cb=>ids.push(String(cb.dataset.id))); if(ids.length===0){showToast('请选择');return;} if(!(await confirm(`确定要删除选中的 ${ids.length} 条上报记录吗？（可到回收站恢复）`))) return; try { await batchDeleteReportOrderRecordFromIDB(ids); showToast(`已将 ${ids.length} 条移入回收站`); await updateTableFromRecords(); calculateStorageUsage(); const userFilter = document.getElementById('reportRecordUserFilter')?.value || 'all'; await showReportOrderRecord(userFilter); updateRecycleCount(); } catch(e) { console.error('批量删除异常', e); showToast('批量删除异常'); } }
+async function deleteChecked(){ const ids=[]; document.querySelectorAll('.order-check:checked').forEach(cb=>ids.push(String(cb.dataset.id))); if(ids.length===0){showToast('请选择');return;} if(!(await confirm(`确定要删除选中的 ${ids.length} 条订单记录吗？（可到回收站恢复）`))) return; try { const details = []; for (const id of ids) { const record = await new Promise((resolve) => { const tx = db.transaction([STORE_NAME], 'readonly'); const store = tx.objectStore(STORE_NAME); const req = store.get(id); req.onsuccess = () => resolve(req.result); req.onerror = () => resolve(null); }); if (record) details.push(record); } await batchDeleteOrderRecordFromIDB(ids); details.forEach(rec => addOperationLog('delete_order', rec.content, currentRegion, rec.user, rec.totalAmount || 0)); clearStatsCache(); showToast(`已将 ${ids.length} 条移入回收站`); await updateTableFromRecords(); calculateStorageUsage(); const userFilter = document.getElementById('recordUserFilter')?.value || 'all'; await showOrderRecord(userFilter); updateRecycleCount(); } catch(e) { console.error('批量删除异常', e); showToast('批量删除异常'); } }
+async function deleteCheckedReport(){ const ids=[]; document.querySelectorAll('.report-order-check:checked').forEach(cb=>ids.push(String(cb.dataset.id))); if(ids.length===0){showToast('请选择');return;} if(!(await confirm(`确定要删除选中的 ${ids.length} 条上报记录吗？（可到回收站恢复）`))) return; try { const details = []; for (const id of ids) { const record = await new Promise((resolve) => { const tx = db.transaction([REPORT_STORE_NAME], 'readonly'); const store = tx.objectStore(REPORT_STORE_NAME); const req = store.get(id); req.onsuccess = () => resolve(req.result); req.onerror = () => resolve(null); }); if (record) details.push(record); } await batchDeleteReportOrderRecordFromIDB(ids); details.forEach(rec => addOperationLog('delete_report', rec.content, currentRegion, rec.user, rec.totalAmount || 0)); clearStatsCache(); showToast(`已将 ${ids.length} 条移入回收站`); await updateTableFromRecords(); calculateStorageUsage(); const userFilter = document.getElementById('reportRecordUserFilter')?.value || 'all'; await showReportOrderRecord(userFilter); updateRecycleCount(); } catch(e) { console.error('批量删除异常', e); showToast('批量删除异常'); } }
 
 // ===== 清空功能（修复移动端） =====
 let resetLock = false;
@@ -1258,6 +1528,7 @@ if (resetBtn) {
       renderAllTablesPlaceholder();
       calculateStorageUsage();
       updateAmountDisplays();
+      addOperationLog('reset', '清空全部数据（长按）');
       showToast('已清空香港和澳门全部数据');
     }, 3000);
   });
@@ -1280,6 +1551,7 @@ if (resetBtn) {
       renderAllTablesPlaceholder();
       calculateStorageUsage();
       updateAmountDisplays();
+      addOperationLog('reset', '清空全部数据（长按）');
       showToast('已清空香港和澳门全部数据');
     }, 3000);
     e.preventDefault();
@@ -1315,6 +1587,7 @@ async function resetTable(){
       if (key && key.startsWith(`ptHighlight_${currentRegion}_`)) localStorage.removeItem(key);
     }
     renderAllTablesPlaceholder(); calculateStorageUsage(); updateAmountDisplays(); renderPingtexiaoTable();
+    addOperationLog('reset', `清空${regionName}所有订单和上报记录`);
     showToast(`已清空${regionName}的所有订单和上报记录`);
   } catch(e) {} finally { resetLock = false; }
 }
@@ -1325,6 +1598,7 @@ async function pasteOrder(){ try{ const text=await navigator.clipboard.readText(
 async function exportData(){
   try{
     const orders=await getAllOrdersUnfiltered(); const reports=await getAllReportsUnfiltered();
+    const logs = await getAllLogs();
     const drawRecords = {}; for (let i = 0; i < localStorage.length; i++) { const key = localStorage.key(i); if (key && key.startsWith('drawRecord_')) { drawRecords[key] = localStorage.getItem(key); } }
     const pingtexiao = {};
     for (let i = 0; i < localStorage.length; i++) { const key = localStorage.key(i); if (key && key.startsWith('pingtexiao_')) { pingtexiao[key] = localStorage.getItem(key); } }
@@ -1332,9 +1606,10 @@ async function exportData(){
     for (let i = 0; i < localStorage.length; i++) { const key = localStorage.key(i); if (key && key.startsWith('ptHighlight_')) { pingtexiaoHighlights[key] = localStorage.getItem(key); } }
     const presets = localStorage.getItem('replacePresets') || '[]';
     const aliases = localStorage.getItem('categoryAliases') || '[]';
-    const data={orders,reports,drawRecords,pingtexiao,pingtexiaoHighlights,replacePresets:JSON.parse(presets),categoryAliases:JSON.parse(aliases),exportTime:new Date().toISOString()};
+    const data={orders,reports,logs,drawRecords,pingtexiao,pingtexiaoHighlights,replacePresets:JSON.parse(presets),categoryAliases:JSON.parse(aliases),exportTime:new Date().toISOString()};
     const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
     const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download=`港澳识别数据_全部_${getTodayCST()}.json`; a.click(); URL.revokeObjectURL(url);
+    addOperationLog('export', '导出全部数据（含日志）');
     showStorageDrawerTemporary(5000);
   }catch(e){showToast('导出失败');}
 }
@@ -1351,7 +1626,7 @@ async function importData(){
         const highlightCount = data.pingtexiaoHighlights ? Object.keys(data.pingtexiaoHighlights).length : 0;
         const totalToImport = data.orders.length + data.reports.length + (data.drawRecords ? Object.keys(data.drawRecords).length : 0) + pingtexiaoCount + highlightCount + (data.replacePresets ? data.replacePresets.length : 0) + (data.categoryAliases ? data.categoryAliases.length : 0);
         if(totalToImport === 0){ showToast('文件中没有数据'); document.body.removeChild(inp); return; }
-        let confirmMsg = `文件包含 ${data.orders.length} 条订单，${data.reports.length} 条上报，${data.drawRecords ? Object.keys(data.drawRecords).length : 0} 组开奖记录，${pingtexiaoCount} 组平特肖数据，${highlightCount} 组高亮标记，${data.replacePresets ? data.replacePresets.length : 0} 条替换预设，${data.categoryAliases ? data.categoryAliases.length : 0} 条分类缩写。是否导入？`;
+        let confirmMsg = `文件包含 ${data.orders.length} 条订单，${data.reports.length} 条上报，${data.logs ? data.logs.length : 0} 条日志。是否导入？`;
         const cf = await confirm(confirmMsg);
         if(!cf){document.body.removeChild(inp);return;}
 
@@ -1360,6 +1635,21 @@ async function importData(){
         for(const r of data.orders){ const region = r.region || currentRegion; const dup = eo.find(o => o.content === r.content && o.user === r.user && o.timestamp === r.timestamp && o.region === region); if(dup){ so++; continue; } try{ await saveOrderRecordToIDB(r.content, r.user, r.date, r.totalAmount || 0, r.timestamp, region); no++; } catch(e){ console.error('导入订单失败', e); } }
         let sr=0,nr=0;
         for(const r of data.reports){ const region = r.region || currentRegion; const dup = er.find(o => o.content === r.content && o.user === r.user && o.timestamp === r.timestamp && o.region === region); if(dup){ sr++; continue; } try{ await saveReportOrderRecordToIDB(r.content, r.user, r.date, r.totalAmount || 0, r.timestamp, region); nr++; } catch(e){ console.error('导入上报失败', e); } }
+
+        if (data.logs && Array.isArray(data.logs)) {
+          const existingLogs = await getAllLogs();
+          const existingIds = new Set(existingLogs.map(l => l.id));
+          for (const log of data.logs) {
+            if (!existingIds.has(log.id)) {
+              await new Promise((resolve) => {
+                const tx = db.transaction([LOG_STORE_NAME], 'readwrite');
+                const store = tx.objectStore(LOG_STORE_NAME);
+                store.add(log);
+                tx.oncomplete = () => resolve();
+              });
+            }
+          }
+        }
 
         let dcImported = 0;
         if (data.drawRecords) {
@@ -1397,6 +1687,7 @@ async function importData(){
         if (data.categoryAliases && Array.isArray(data.categoryAliases)) { const currentAliases = getCategoryAliases(); data.categoryAliases.forEach(a => { if (!currentAliases.some(x => x.alias === a.alias)) { currentAliases.push(a); aliasImported++; } }); localStorage.setItem('categoryAliases', JSON.stringify(currentAliases)); }
 
         await updateTableFromRecords(); calculateStorageUsage(); renderPingtexiaoTable(); updateCardA(); renderSmartDecision();
+        addOperationLog('import', `导入${no+nr}条订单/上报记录`);
         let msg = `成功导入 ${no+nr} 条订单/上报记录，${dcImported} 组开奖记录。`;
         if (ptImported > 0) msg += `\n导入平特肖数据 ${ptImported} 组。`;
         if (ptSkipped > 0) msg += `\n跳过平特肖数据 ${ptSkipped} 组（已存在）。`;
@@ -1548,10 +1839,6 @@ document.getElementById('multipleVal')?.addEventListener('input', generateRiskTa
 document.getElementById('reportRebateRate')?.addEventListener('input', generateReportTable);
 document.getElementById('reportMultipleVal')?.addEventListener('input', generateReportTable);
 document.getElementById('startZodiacSelect')?.addEventListener('change', changeStartZodiac);
-document.getElementById('numAmountMin')?.addEventListener('input', updateTableFromRecords);
-document.getElementById('numAmountMax')?.addEventListener('input', updateTableFromRecords);
-document.getElementById('zodiacAmountMin')?.addEventListener('input', updateTableFromRecords);
-document.getElementById('zodiacAmountMax')?.addEventListener('input', updateTableFromRecords);
 
 const filterDateEl = document.getElementById('filterDate');
 if (filterDateEl) { filterDateEl.addEventListener('change', () => { updateTableFromRecords(); if (document.getElementById('orderWin')) { applyPrizeFilter(); } applyReportCap(); updateRecentDrawTexts(); renderPingtexiaoTable(); updateCardA(); }); filterDateEl.addEventListener('input', updateTableFromRecords); }
@@ -1562,19 +1849,76 @@ function switchParseMethod() { const text = document.getElementById('reportCapIn
 function copyOrderGroup() { const text = document.getElementById('parseResultArea').innerText; if (!text) { showToast('没有解析结果'); return; } navigator.clipboard.writeText(text).then(() => showToast('订单组已复制')); }
 const originalApplyReportCap = applyReportCap;
 applyReportCap = function() { originalApplyReportCap(); const info = document.getElementById('reportCapInfo').innerText; if (!info || info === '无超出的号码') { document.getElementById('parseResultArea').innerText = ''; } };
-
-// ===== 修正后的回收站窗口（按地区隔离显示） =====
+  // ===== 修正后的回收站窗口（按地区隔离显示） =====
 async function showRecycleBin() { const existingWin = document.getElementById('recycleWin'); if (existingWin) existingWin.remove(); const allRecords = await getRecycleBinRecords(); const records = allRecords.filter(r => r.region === currentRegion); const win = document.createElement('div'); win.className = 'floating-window'; win.id = 'recycleWin'; win.style.width = '750px'; win.style.height = '550px'; win.style.left = '50%'; win.style.top = '50%'; win.style.transform = 'translate(-50%, -50%)'; let html = `<div class="modal-header"><h3>🗑️ 回收站</h3><div class="window-controls"><button onclick="maximizeWindow('recycleWin')">🗖</button><button onclick="document.getElementById('recycleWin').remove()">×</button></div></div>`; html += `<div class="modal-body" style="display:flex; flex-direction:column; height: calc(100% - 120px);">`; html += `<div style="margin-bottom:10px;display:flex;gap:12px;flex-wrap:wrap;align-items:center;position:sticky;top:0;background:rgba(255,255,255,0.9);z-index:2;padding:5px 0;"><button onclick="checkAllRecycle()" style="padding:6px 12px;background:#007bff;color:#fff;border:none;border-radius:4px;">全选</button><button onclick="uncheckAllRecycle()" style="padding:6px 12px;background:#6c757d;color:#fff;border:none;border-radius:4px;">取消全选</button><button onclick="restoreCheckedRecycle()" style="padding:6px 12px;background:#27ae60;color:#fff;border:none;border-radius:4px;">恢复选中</button><button onclick="deleteCheckedRecycle()" style="padding:6px 12px;background:#e74c3c;color:#fff;border:none;border-radius:4px;">彻底删除</button><button onclick="emptyRecycleBin()" style="padding:6px 12px;background:#8e44ad;color:#fff;border:none;border-radius:4px;margin-left:auto;">清空回收站</button></div>`; html += `<div id="recycleListContainer" style="flex:1; overflow-y:auto;">`; if (records.length === 0) { html += `<div style="padding:20px;text-align:center;color:#666;">回收站为空</div>`; } else { records.sort((a,b) => new Date(b.deletedAt) - new Date(a.deletedAt)); records.forEach(rec => { const ts = formatTimestampToCST(rec.deletedAt); const typeLabel = rec.type === 'order' ? '下单' : '上报'; const typeColor = rec.type === 'order' ? '#3498db' : '#e67e22'; html += `<div class="order-item"><input type="checkbox" class="recycle-check" data-id="${rec.id}"><div class="order-content">${rec.content.replace(/\n/g,'<br>')}</div><div class="order-info"><span class="order-total" style="color:#000;">合计：${rec.totalAmount || 0}</span><span class="order-meta"><span style="color:${typeColor};">类型：${typeLabel}</span><span style="color:#e74c3c;">删除：${ts}</span><span>用户：${rec.user || '未知'}</span></span></div><button class="order-del" onclick="restoreRecycleRecord('${rec.id}')" style="background:#27ae60;margin-right:4px;">恢复</button><button class="order-del" onclick="permanentlyDeleteRecycleRecord('${rec.id}')">删除</button></div>`; }); } html += `</div></div><div class="modal-footer" style="justify-content:space-between;"><span style="font-size:12px;color:#666;" id="recycleStorageInfo"></span><button onclick="document.getElementById('recycleWin').remove()" style="padding:8px 16px;background:#6c757d;color:#fff;border:none;border-radius:4px;">关闭</button></div>`; win.innerHTML = html; document.body.appendChild(win); updateRecycleStorageInfo(); makeWindowDraggable('recycleWin'); highestZ += 1; win.style.zIndex = highestZ; updateRecycleCount(); }
 function updateRecycleStorageInfo() { const span = document.getElementById('recycleStorageInfo'); if (!span) return; getRecycleBinRecords().then(allRecords => { const records = allRecords.filter(r => r.region === currentRegion); let bytes = 0; records.forEach(r => bytes += JSON.stringify(r).length * 2); const usedMB = (bytes / (1024*1024)).toFixed(2); span.textContent = `回收站占用：${usedMB} MB（共${records.length}条记录）`; }); }
 async function updateRecycleCount() { const span = document.getElementById('recycleCount'); if (!span) return; try { const allRecords = await getRecycleBinRecords(); const count = allRecords.filter(r => r.region === currentRegion).length; if (count > 0) { span.textContent = count; span.style.display = 'inline-block'; } else { span.style.display = 'none'; } } catch(e) { span.style.display = 'none'; } }
 function checkAllRecycle() { document.querySelectorAll('.recycle-check').forEach(cb => cb.checked = true); }
 function uncheckAllRecycle() { document.querySelectorAll('.recycle-check').forEach(cb => cb.checked = false); }
-async function restoreRecycleRecord(id) { if (!(await confirm('确定恢复该记录吗？'))) return; try { const records = await getRecycleBinRecords(); const record = records.find(r => r.id === id); if (!record) { showToast('记录不存在'); return; } if (record.type === 'order') { await saveOrderRecordToIDB(record.content, record.user, record.date, record.totalAmount || 0, record.timestamp, record.region); } else { await saveReportOrderRecordToIDB(record.content, record.user, record.date, record.totalAmount || 0, record.timestamp, record.region); } await deleteFromRecycleBin(id); showToast('已恢复'); await updateTableFromRecords(); calculateStorageUsage(); showRecycleBin(); updateRecycleCount(); } catch(e) { showToast('恢复失败'); } }
-async function permanentlyDeleteRecycleRecord(id) { if (!(await confirm('确定彻底删除吗？此操作不可恢复！'))) return; await deleteFromRecycleBin(id); showToast('已彻底删除'); updateRecycleStorageInfo(); showRecycleBin(); updateRecycleCount(); }
-async function restoreCheckedRecycle() { const ids = []; document.querySelectorAll('.recycle-check:checked').forEach(cb => ids.push(String(cb.dataset.id))); if (ids.length === 0) { showToast('请选择'); return; } if (!(await confirm(`确定恢复选中的 ${ids.length} 条记录吗？`))) return; const records = await getRecycleBinRecords(); let count = 0; for (const id of ids) { const record = records.find(r => r.id === id); if (!record) continue; if (record.type === 'order') { await saveOrderRecordToIDB(record.content, record.user, record.date, record.totalAmount || 0, record.timestamp, record.region); } else { await saveReportOrderRecordToIDB(record.content, record.user, record.date, record.totalAmount || 0, record.timestamp, record.region); } await deleteFromRecycleBin(id); count++; } showToast(`已恢复 ${count} 条`); await updateTableFromRecords(); calculateStorageUsage(); showRecycleBin(); updateRecycleCount(); }
-async function deleteCheckedRecycle() { const ids = []; document.querySelectorAll('.recycle-check:checked').forEach(cb => ids.push(String(cb.dataset.id))); if (ids.length === 0) { showToast('请选择'); return; } if (!(await confirm(`确定彻底删除选中的 ${ids.length} 条记录吗？此操作不可恢复！`))) return; await batchDeleteFromRecycleBin(ids); showToast(`已彻底删除 ${ids.length} 条`); updateRecycleStorageInfo(); showRecycleBin(); updateRecycleCount(); }
-async function emptyRecycleBin() { if (!(await confirm('确定清空整个回收站吗？此操作不可恢复！'))) return; const pwd = await prompt("输入清空密码：",""); if (pwd !== PASSWORD) { await alert("密码错误"); return; } await clearRecycleBin(currentRegion); showToast('回收站已清空'); showRecycleBin(); updateRecycleCount(); }
+async function restoreRecycleRecord(id) { if (!(await confirm('确定恢复该记录吗？'))) return; try { const records = await getRecycleBinRecords(); const record = records.find(r => r.id === id); if (!record) { showToast('记录不存在'); return; } if (record.type === 'order') { await saveOrderRecordToIDB(record.content, record.user, record.date, record.totalAmount || 0, record.timestamp, record.region); } else { await saveReportOrderRecordToIDB(record.content, record.user, record.date, record.totalAmount || 0, record.timestamp, record.region); } await deleteFromRecycleBin(id); addOperationLog('restore', record.content, record.region, record.user, record.totalAmount || 0); showToast('已恢复'); await updateTableFromRecords(); calculateStorageUsage(); showRecycleBin(); updateRecycleCount(); clearStatsCache(); } catch(e) { showToast('恢复失败'); } }
+async function permanentlyDeleteRecycleRecord(id) { if (!(await confirm('确定彻底删除吗？此操作不可恢复！'))) return; const record = await new Promise((resolve) => { const tx = db.transaction([RECYCLE_STORE_NAME], 'readonly'); const store = tx.objectStore(RECYCLE_STORE_NAME); const req = store.get(id); req.onsuccess = () => resolve(req.result); req.onerror = () => resolve(null); }); await deleteFromRecycleBin(id); if (record) addOperationLog('permanent_delete', record.content, record.region, record.user, record.totalAmount || 0); else addOperationLog('permanent_delete', '记录详情未知'); showToast('已彻底删除'); updateRecycleStorageInfo(); showRecycleBin(); updateRecycleCount(); }
+async function restoreCheckedRecycle() { const ids = []; document.querySelectorAll('.recycle-check:checked').forEach(cb => ids.push(String(cb.dataset.id))); if (ids.length === 0) { showToast('请选择'); return; } if (!(await confirm(`确定恢复选中的 ${ids.length} 条记录吗？`))) return; const records = await getRecycleBinRecords(); let count = 0; for (const id of ids) { const record = records.find(r => r.id === id); if (!record) continue; if (record.type === 'order') { await saveOrderRecordToIDB(record.content, record.user, record.date, record.totalAmount || 0, record.timestamp, record.region); } else { await saveReportOrderRecordToIDB(record.content, record.user, record.date, record.totalAmount || 0, record.timestamp, record.region); } addOperationLog('restore', record.content, record.region, record.user, record.totalAmount || 0); await deleteFromRecycleBin(id); count++; } showToast(`已恢复 ${count} 条`); await updateTableFromRecords(); calculateStorageUsage(); showRecycleBin(); updateRecycleCount(); clearStatsCache(); }
+async function deleteCheckedRecycle() { const ids = []; document.querySelectorAll('.recycle-check:checked').forEach(cb => ids.push(String(cb.dataset.id))); if (ids.length === 0) { showToast('请选择'); return; } if (!(await confirm(`确定彻底删除选中的 ${ids.length} 条记录吗？此操作不可恢复！`))) return; const records = await getRecycleBinRecords(); for (const id of ids) { const record = records.find(r => r.id === id); if (record) addOperationLog('permanent_delete', record.content, record.region, record.user, record.totalAmount || 0); } await batchDeleteFromRecycleBin(ids); showToast(`已彻底删除 ${ids.length} 条`); updateRecycleStorageInfo(); showRecycleBin(); updateRecycleCount(); }
+async function emptyRecycleBin() { if (!(await confirm('确定清空整个回收站吗？此操作不可恢复！'))) return; const pwd = await prompt("输入清空密码：",""); if (pwd !== PASSWORD) { await alert("密码错误"); return; } await clearRecycleBin(currentRegion); addOperationLog('reset', '清空回收站'); showToast('回收站已清空'); showRecycleBin(); updateRecycleCount(); }
 async function autoCleanRecycleBin() { try { const records = await getRecycleBinRecords(); const now = Date.now(); const expireMs = RECYCLE_RETENTION_DAYS * 24 * 60 * 60 * 1000; for (const record of records) { const deletedTime = new Date(record.deletedAt).getTime(); if (now - deletedTime > expireMs) { await deleteFromRecycleBin(record.id); } } updateRecycleCount(); } catch(e) {} }
+
+// ===== 自动备份函数 =====
+function checkAutoBackup() {
+  const today = getTodayCST();
+  const lastBackupDate = localStorage.getItem('lastAutoBackupDate');
+  if (lastBackupDate === today) return;
+  try {
+    autoBackupExport();
+    localStorage.setItem('lastAutoBackupDate', today);
+  } catch (e) {
+    console.error('自动备份失败', e);
+  }
+}
+
+async function autoBackupExport() {
+  try {
+    const orders = await getAllOrdersUnfiltered();
+    const reports = await getAllReportsUnfiltered();
+    const logs = await getAllLogs();
+    const drawRecords = {};
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key && key.startsWith('drawRecord_')) { drawRecords[key] = localStorage.getItem(key); }
+    }
+    const pingtexiao = {};
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key && key.startsWith('pingtexiao_')) { pingtexiao[key] = localStorage.getItem(key); }
+    }
+    const pingtexiaoHighlights = {};
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key && key.startsWith('ptHighlight_')) { pingtexiaoHighlights[key] = localStorage.getItem(key); }
+    }
+    const presets = localStorage.getItem('replacePresets') || '[]';
+    const aliases = localStorage.getItem('categoryAliases') || '[]';
+    const data = {
+      orders, reports, logs,
+      drawRecords, pingtexiao, pingtexiaoHighlights,
+      replacePresets: JSON.parse(presets),
+      categoryAliases: JSON.parse(aliases),
+      exportTime: new Date().toISOString(),
+      autoBackup: true
+    };
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = '港澳识别数据_自动备份.json';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    showToast('自动备份已完成');
+  } catch (e) {
+    console.error('自动备份失败', e);
+  }
+}
 
 // ===== 格式化日期 M/D（仅用于期号计算，表格不再显示日期列） =====
 function formatDateMD(dateStr) { const d = new Date(dateStr + 'T00:00:00'); return `${d.getMonth()+1}/${d.getDate()}`; }
@@ -2162,21 +2506,18 @@ function updateCardA() {
   const topNInput = document.getElementById('topNInput');
   const nVal = topNInput ? parseInt(topNInput.value) : NaN;
   if (!isNaN(nVal) && nVal > 0) {
-    // 构建完整的49个号码条目
     const entries = Object.entries(numberAmountCount).map(([num, cnt]) => ({ num, cnt: cnt || 0 }));
     for (let i = 1; i <= 49; i++) {
       const n = i.toString().padStart(2, '0');
       if (!numberAmountCount[n]) entries.push({ num: n, cnt: 0 });
     }
 
-    // 活跃次数（高频）：取前N名的次数作为门槛，包含所有并列
     const sortedDesc = [...entries].sort((a, b) => b.cnt - a.cnt || parseInt(a.num) - parseInt(b.num));
     const idxDesc = Math.min(nVal - 1, sortedDesc.length - 1);
     const cutoffDesc = sortedDesc[idxDesc]?.cnt ?? 0;
     const activeNums = sortedDesc.filter(e => e.cnt >= cutoffDesc && e.cnt > 0);
     activeNums.sort((a, b) => b.cnt - a.cnt || parseInt(a.num) - parseInt(b.num));
 
-    // 不活跃次数（低频）：取后N名的次数作为门槛，包含所有并列
     const sortedAsc = [...entries].sort((a, b) => a.cnt - b.cnt || parseInt(a.num) - parseInt(b.num));
     const idxAsc = Math.min(nVal - 1, sortedAsc.length - 1);
     const cutoffAsc = sortedAsc[idxAsc]?.cnt ?? 0;
@@ -2358,16 +2699,10 @@ async function computeSurge() {
     amountTriggered.sort((a, b) => b.ratio - a.ratio);
 
     if (countTriggered.length > 0 || amountTriggered.length > 0) {
-      // 计算每个维度的前三占比值（用于标签，但后续不再使用标签）
-      const countRatios = [...new Set(countTriggered.map(item => item.ratio))].sort((a,b) => b-a);
-      const amountRatios = [...new Set(amountTriggered.map(item => item.ratio))].sort((a,b) => b-a);
-
       result.push({
         user,
         countItems: countTriggered,
         amountItems: amountTriggered,
-        countTopRatios: countRatios.slice(0, 3),
-        amountTopRatios: amountRatios.slice(0, 3),
         totalOrders,
         totalAmount
       });
@@ -2422,7 +2757,6 @@ function copyAllSurgeNums() {
 
 // ========== 获取标签函数（不再使用） ==========
 function getTagForRatio(ratio, topRatios) {
-  // 保留函数但不再使用，以免其他代码报错
   return '';
 }
 
@@ -2577,59 +2911,53 @@ function renderSmartDecision() {
     heatHtml = '<div style="font-size:11px;">';
     heatHtml += `<div style="margin-bottom:4px;color:#666;">📊 开奖热度分析（最近${actualPeriod}期，共${drawList.length}条记录）</div>`;
 
-    // 生肖
     heatHtml += '<div style="margin-bottom:4px;"><b>生肖：</b>';
     const zodiacAll = ['鼠','牛','虎','兔','龙','蛇','马','羊','猴','鸡','狗','猪'];
     const zodiacItems = zodiacAll.map(z => ({ name: z, cnt: zodiacCountLocal[z] || 0 }));
     zodiacItems.sort((a, b) => b.cnt - a.cnt);
-    const zodiacAvg = drawList.length / 12;
     zodiacItems.forEach(item => {
-      const tag = item.cnt >= Math.max(zodiacAvg * 1.5, 3) ? 'hot' : (item.cnt === 0 ? 'cold' : '');
+      const tag = item.cnt >= Math.max(drawList.length / 12 * 1.5, 3) ? 'hot' : (item.cnt === 0 ? 'cold' : '');
       const tagClass = tag === 'hot' ? 'hot-item' : (tag === 'cold' ? 'cold-item' : 'normal-item');
       const prefix = tag === 'hot' ? '🔥' : (tag === 'cold' ? '❄️' : '');
       heatHtml += `<span class="${tagClass} ${getZodiacCls(item.name)}">${prefix}${item.name}(${item.cnt}次)</span> `;
     });
     heatHtml += '</div><div style="margin-bottom:6px;font-size:10px;color:#666;">' + analyzeStreak(zodiacSeq, zodiacIssueSeq, '生肖', getZodiacCls) + '</div>';
 
-    // 波色
     heatHtml += '<div style="margin-bottom:4px;"><b>波色：</b>';
     const boseList = ['红波','蓝波','绿波'].map(b => ({ name: b, cnt: boseCount[b] || 0 }));
     boseList.sort((a, b) => b.cnt - a.cnt);
     boseList.forEach(item => {
-      const tag = item.cnt >= Math.max(drawList.length/3 * 1.5, 3) ? 'hot' : (item.cnt === 0 ? 'cold' : '');
+      const tag = item.cnt >= Math.max(drawList.length / 3 * 1.5, 3) ? 'hot' : (item.cnt === 0 ? 'cold' : '');
       const tagClass = tag === 'hot' ? 'hot-item' : (tag === 'cold' ? 'cold-item' : 'normal-item');
       const prefix = tag === 'hot' ? '🔥' : (tag === 'cold' ? '❄️' : '');
       heatHtml += `<span class="${tagClass} ${getBoseCls(item.name)}">${prefix}${item.name}(${item.cnt}次)</span> `;
     });
     heatHtml += '</div><div style="margin-bottom:6px;font-size:10px;color:#666;">' + analyzeStreak(boseSeq, boseIssueSeq, '波色', getBoseCls) + '</div>';
 
-    // 尾数
     heatHtml += '<div style="margin-bottom:4px;"><b>尾数：</b>';
     const weishuList = [];
     for (let i = 0; i <= 9; i++) weishuList.push({ name: i + '尾', cnt: weishuCount[i + '尾'] || 0 });
     weishuList.sort((a, b) => b.cnt - a.cnt);
     weishuList.forEach(item => {
-      const tag = item.cnt >= Math.max(drawList.length/10 * 1.5, 3) ? 'hot' : (item.cnt === 0 ? 'cold' : '');
+      const tag = item.cnt >= Math.max(drawList.length / 10 * 1.5, 3) ? 'hot' : (item.cnt === 0 ? 'cold' : '');
       const tagClass = tag === 'hot' ? 'hot-item' : (tag === 'cold' ? 'cold-item' : 'normal-item');
       const prefix = tag === 'hot' ? '🔥' : (tag === 'cold' ? '❄️' : '');
       heatHtml += `<span class="${tagClass}">${prefix}${item.name}(${item.cnt}次)</span> `;
     });
     heatHtml += '</div><div style="margin-bottom:6px;font-size:10px;color:#666;">' + analyzeStreak(weishuSeq, weishuIssueSeq, '尾数', '') + '</div>';
 
-    // 头数
     heatHtml += '<div style="margin-bottom:4px;"><b>头数：</b>';
     const toushuList = [];
     for (let i = 0; i <= 4; i++) toushuList.push({ name: i + '头', cnt: toushuCount[i + '头'] || 0 });
     toushuList.sort((a, b) => b.cnt - a.cnt);
     toushuList.forEach(item => {
-      const tag = item.cnt >= Math.max(drawList.length/5 * 1.5, 3) ? 'hot' : (item.cnt === 0 ? 'cold' : '');
+      const tag = item.cnt >= Math.max(drawList.length / 5 * 1.5, 3) ? 'hot' : (item.cnt === 0 ? 'cold' : '');
       const tagClass = tag === 'hot' ? 'hot-item' : (tag === 'cold' ? 'cold-item' : 'normal-item');
       const prefix = tag === 'hot' ? '🔥' : (tag === 'cold' ? '❄️' : '');
       heatHtml += `<span class="${tagClass}">${prefix}${item.name}(${item.cnt}次)</span> `;
     });
     heatHtml += '</div><div style="margin-bottom:6px;font-size:10px;color:#666;">' + analyzeStreak(toushuSeq, toushuIssueSeq, '头数', '') + '</div>';
 
-    // 家禽/野兽
     heatHtml += '<div style="margin-bottom:4px;"><b>家禽/野兽：</b>';
     const jysxList = [
       { name: '家禽', cnt: jiaqinCount },
@@ -2637,14 +2965,13 @@ function renderSmartDecision() {
     ];
     jysxList.sort((a, b) => b.cnt - a.cnt);
     jysxList.forEach(item => {
-      const tag = item.cnt >= Math.max(drawList.length/2 * 1.5, 3) ? 'hot' : (item.cnt === 0 ? 'cold' : '');
+      const tag = item.cnt >= Math.max(drawList.length / 2 * 1.5, 3) ? 'hot' : (item.cnt === 0 ? 'cold' : '');
       const tagClass = tag === 'hot' ? 'hot-item' : (tag === 'cold' ? 'cold-item' : 'normal-item');
       const prefix = tag === 'hot' ? '🔥' : (tag === 'cold' ? '❄️' : '');
       heatHtml += `<span class="${tagClass}">${prefix}${item.name}(${item.cnt}次)</span> `;
     });
     heatHtml += '</div><div style="margin-bottom:6px;font-size:10px;color:#666;">' + analyzeStreak(jysxSeq, jysxIssueSeq, '', '') + '</div>';
 
-    // 单双
     heatHtml += '<div style="margin-bottom:4px;"><b>单双：</b>';
     const dsList = [
       { name: '单', cnt: danCount },
@@ -2652,14 +2979,13 @@ function renderSmartDecision() {
     ];
     dsList.sort((a, b) => b.cnt - a.cnt);
     dsList.forEach(item => {
-      const tag = item.cnt >= Math.max(drawList.length/2 * 1.5, 3) ? 'hot' : (item.cnt === 0 ? 'cold' : '');
+      const tag = item.cnt >= Math.max(drawList.length / 2 * 1.5, 3) ? 'hot' : (item.cnt === 0 ? 'cold' : '');
       const tagClass = tag === 'hot' ? 'hot-item' : (tag === 'cold' ? 'cold-item' : 'normal-item');
       const prefix = tag === 'hot' ? '🔥' : (tag === 'cold' ? '❄️' : '');
       heatHtml += `<span class="${tagClass}">${prefix}${item.name}(${item.cnt}次)</span> `;
     });
     heatHtml += '</div><div style="margin-bottom:6px;font-size:10px;color:#666;">' + analyzeStreak(dsSeq, dsIssueSeq, '', '') + '</div>';
 
-    // 大小
     heatHtml += '<div style="margin-bottom:4px;"><b>大小：</b>';
     const dxList = [
       { name: '小', cnt: xiaoCount },
@@ -2667,7 +2993,7 @@ function renderSmartDecision() {
     ];
     dxList.sort((a, b) => b.cnt - a.cnt);
     dxList.forEach(item => {
-      const tag = item.cnt >= Math.max(drawList.length/2 * 1.5, 3) ? 'hot' : (item.cnt === 0 ? 'cold' : '');
+      const tag = item.cnt >= Math.max(drawList.length / 2 * 1.5, 3) ? 'hot' : (item.cnt === 0 ? 'cold' : '');
       const tagClass = tag === 'hot' ? 'hot-item' : (tag === 'cold' ? 'cold-item' : 'normal-item');
       const prefix = tag === 'hot' ? '🔥' : (tag === 'cold' ? '❄️' : '');
       heatHtml += `<span class="${tagClass}">${prefix}${item.name}(${item.cnt}次)</span> `;
@@ -2851,7 +3177,6 @@ function renderSmartDecision() {
         surgeHtml += `<div style="margin-bottom:4px;"><b>${username}:</b> `;
         const countItems = user.countItems || [];
         const amountItems = user.amountItems || [];
-        // 条数部分（已按占比降序）
         if (countItems.length > 0) {
           surgeHtml += '(条) ';
           countItems.sort((a, b) => b.ratio - a.ratio);
@@ -2859,7 +3184,6 @@ function renderSmartDecision() {
             surgeHtml += `<span class="${getNumCls(item.num)}">${item.num}</span> `;
           });
         }
-        // 金额部分（已按占比降序）
         if (amountItems.length > 0) {
           surgeHtml += '(金) ';
           amountItems.sort((a, b) => b.ratio - a.ratio);
@@ -2954,6 +3278,89 @@ function copyNumsToClipboard(nums) {
   };
 })();
 
+// ========== 重写导出导入包含日志 ==========
+(function() {
+  const originalExport = exportData;
+  exportData = async function() {
+    try {
+      const orders = await getAllOrdersUnfiltered();
+      const reports = await getAllReportsUnfiltered();
+      const logs = await getAllLogs();
+      const drawRecords = {};
+      for (let i = 0; i < localStorage.length; i++) { const key = localStorage.key(i); if (key && key.startsWith('drawRecord_')) { drawRecords[key] = localStorage.getItem(key); } }
+      const pingtexiao = {};
+      for (let i = 0; i < localStorage.length; i++) { const key = localStorage.key(i); if (key && key.startsWith('pingtexiao_')) { pingtexiao[key] = localStorage.getItem(key); } }
+      const pingtexiaoHighlights = {};
+      for (let i = 0; i < localStorage.length; i++) { const key = localStorage.key(i); if (key && key.startsWith('ptHighlight_')) { pingtexiaoHighlights[key] = localStorage.getItem(key); } }
+      const presets = localStorage.getItem('replacePresets') || '[]';
+      const aliases = localStorage.getItem('categoryAliases') || '[]';
+      const data = { orders, reports, logs, drawRecords, pingtexiao, pingtexiaoHighlights, replacePresets: JSON.parse(presets), categoryAliases: JSON.parse(aliases), exportTime: new Date().toISOString() };
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `港澳识别数据_全部_${getTodayCST()}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+      addOperationLog('export', '导出全部数据');
+      showStorageDrawerTemporary(5000);
+    } catch (e) { showToast('导出失败'); }
+  };
+
+  const originalImport = importData;
+  importData = async function() {
+    const inp = document.createElement('input'); inp.type = 'file'; inp.accept = '.json'; inp.style.display = 'none'; document.body.appendChild(inp);
+    inp.onchange = async (e) => {
+      const file = e.target.files[0];
+      if (!file) { document.body.removeChild(inp); return; }
+      const reader = new FileReader();
+      reader.onload = async (ev) => {
+        try {
+          const data = JSON.parse(ev.target.result);
+          if (!data.orders || !data.reports) { showToast('无效格式'); document.body.removeChild(inp); return; }
+          const totalToImport = data.orders.length + data.reports.length;
+          const cf = await confirm(`文件包含 ${data.orders.length} 条订单，${data.reports.length} 条上报，${data.logs ? data.logs.length : 0} 条日志。是否导入？`);
+          if (!cf) { document.body.removeChild(inp); return; }
+
+          const eo = await getAllOrdersUnfiltered();
+          const er = await getAllReportsUnfiltered();
+          let so = 0, no = 0;
+          for (const r of data.orders) { const region = r.region || currentRegion; const dup = eo.find(o => o.content === r.content && o.user === r.user && o.timestamp === r.timestamp && o.region === region); if (dup) { so++; continue; } try { await saveOrderRecordToIDB(r.content, r.user, r.date, r.totalAmount || 0, r.timestamp, region); no++; } catch (e) {} }
+          let sr = 0, nr = 0;
+          for (const r of data.reports) { const region = r.region || currentRegion; const dup = er.find(o => o.content === r.content && o.user === r.user && o.timestamp === r.timestamp && o.region === region); if (dup) { sr++; continue; } try { await saveReportOrderRecordToIDB(r.content, r.user, r.date, r.totalAmount || 0, r.timestamp, region); nr++; } catch (e) {} }
+
+          if (data.logs && Array.isArray(data.logs)) {
+            const existingLogs = await getAllLogs();
+            const existingIds = new Set(existingLogs.map(l => l.id));
+            for (const log of data.logs) {
+              if (!existingIds.has(log.id)) {
+                await new Promise((resolve) => {
+                  const tx = db.transaction([LOG_STORE_NAME], 'readwrite');
+                  const store = tx.objectStore(LOG_STORE_NAME);
+                  store.add(log);
+                  tx.oncomplete = () => resolve();
+                });
+              }
+            }
+          }
+
+          await updateTableFromRecords();
+          calculateStorageUsage();
+          renderPingtexiaoTable();
+          updateCardA();
+          renderSmartDecision();
+          addOperationLog('import', `导入${no+nr}条订单/上报记录`);
+          showToast(`成功导入 ${no+nr} 条记录，跳过 ${so+sr} 条重复`);
+          document.body.removeChild(inp);
+        } catch (err) { showToast('导入失败'); document.body.removeChild(inp); }
+      };
+      reader.onerror = () => { showToast('读取失败'); document.body.removeChild(inp); };
+      reader.readAsText(file);
+    };
+    inp.click();
+  };
+})();
+
 // ========== 页面初始化 ==========
 window.onload = async () => {
   setCurrentRegion(currentRegion); await initIndexedDB(); initDataConfig();
@@ -2995,6 +3402,9 @@ window.onload = async () => {
   await autoCleanRecycleBin(); setInterval(autoCleanRecycleBin, 24 * 60 * 60 * 1000); updateRecycleCount();
   loadPtParams();
 
+  // 自动备份检查
+  checkAutoBackup();
+
   window._systemReady = async () => {
     await updateTableFromRecords();
     calculateStorageUsage();
@@ -3004,11 +3414,27 @@ window.onload = async () => {
     renderPingtexiaoTable();
     updateCardA();
     renderSmartDecision();
+    addOperationLog('login', '系统登录');
   };
   if (!checkCurrentAccess()) { showLoginScreen(); } else {
     if (isAdmin()) document.getElementById('cardMgrBtn').style.display = '';
     await window._systemReady();
   }
+
+  // 确保范围筛选输入框绑定事件（先清除缓存再更新）
+  const fixRangeInput = (id) => {
+    const el = document.getElementById(id);
+    if (el) {
+      el.addEventListener('input', () => {
+        clearStatsCache();
+        updateTableFromRecords();
+      });
+    }
+  };
+  fixRangeInput('numAmountMin');
+  fixRangeInput('numAmountMax');
+  fixRangeInput('zodiacAmountMin');
+  fixRangeInput('zodiacAmountMax');
 
   // ===== 全局快捷键 =====
   function closeTopWindow() {
@@ -3022,6 +3448,8 @@ window.onload = async () => {
     if (drawWin) { drawWin.remove(); return true; }
     const recycleWin = document.getElementById('recycleWin');
     if (recycleWin) { recycleWin.remove(); return true; }
+    const operationLogWin = document.getElementById('operationLogWin');
+    if (operationLogWin) { operationLogWin.remove(); return true; }
     const databaseModal = document.getElementById('databaseModal');
     if (databaseModal && databaseModal.style.display === 'flex') { hideDatabase(); return true; }
     const prefixWin = document.getElementById('prefixWin');
