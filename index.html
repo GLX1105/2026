@@ -1488,7 +1488,7 @@ function orderContainsTarget(content,targetNum,cfg){ if(!targetNum)return true; 
 function getSpecialAmountFromOrder(content, prizeNum, cfg) { if (!prizeNum) return 0; const targetNum = prizeNum.padStart(2, '0'); const lines = content.split('\n'); let total = 0; for (const line of lines) { const match = line.match(/^(.+?)\s+各数\s+(\d+)$/); if (!match) continue; const tokensPart = match[1]; const amount = parseInt(match[2]) || 0; const tokens = tokensPart.split('-').map(t => t.trim()).filter(t => t); let hit = false; for (const token of tokens) { if (isTokenMatching(token, targetNum, cfg)) { hit = true; break; } } if (hit) { total += amount; } } return total; }
 function formatTimestampToCST(iso){ const d=new Date(iso); return new Intl.DateTimeFormat('zh-CN',{year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false,timeZone:'Asia/Shanghai'}).format(d); }
 function getUserColor(u){ let h=0; for(let i=0;i<u.length;i++)h=u.charCodeAt(i)+((h<<5)-h); const hue=(h%360+360)%360; return`hsl(${hue},70%,45%)`; }
-  function renderOrderStats(allOrders, allReports, filterUser, prizeNum) { const container = document.getElementById('orderStatsContainer'); if (!container) return; const mul = parseFloat(document.getElementById('multipleVal')?.value) || 1; const rr = parseFloat(document.getElementById('rebateRate')?.value) || 0; const cfg = getAllConfigData(); let totalAmountSum = 0; allOrders.forEach(it => { totalAmountSum += it.totalAmount || 0; }); let reportTotalAmount = 0; allReports.forEach(it => { reportTotalAmount += it.totalAmount || 0; }); let totalSpecial = 0, reportSpecial = 0, hitCount = 0; if (prizeNum) { const num = prizeNum.padStart(2, '0'); if (filterUser === 'all' || !filterUser) { totalSpecial = tableBetData[num] || 0; } else { const userData = userBetData[filterUser] || {}; totalSpecial = userData[num] || 0; } allOrders.forEach(it => { if (orderContainsTarget(it.content, prizeNum, cfg)) hitCount++; }); allReports.forEach(it => { reportSpecial += getSpecialAmountFromOrder(it.content, prizeNum, cfg); }); } const totalProfit = totalAmountSum - totalSpecial * mul - totalAmountSum * (rr / 100); const reportProfit = reportTotalAmount - reportSpecial * mul - reportTotalAmount * (rr / 100); const netProfit = totalProfit - reportProfit; const showStats = prizeNum && prizeNum.trim() !== ''; let html = '<div class="stats-block">'; html += '<div class="stats-row">'; if (totalAmountSum > 0) { html += `<span class="stat-col"><span class="slabel">总额:</span><span class="stat-val-amount">${totalAmountSum}</span></span>`; } if (showStats) { html += `<span class="stat-col"><span class="slabel">总特:</span><span class="stat-val-special">${totalSpecial}</span></span>`; const tp = Math.round(totalProfit); const tlabel = tp >= 0 ? '总盈' : '总亏'; const tcls = tp >= 0 ? 'stat-val-profit' : 'stat-val-loss'; html += `<span class="stat-col"><span class="slabel">${tlabel}:</span><span class="${tcls}">${tp}</span></span>`; html += `<span class="stat-col"><span class="slabel">中:</span><span class="stat-val-count">${hitCount}条</span></span>`; } html += '</div><div class="stats-row">'; if (reportTotalAmount > 0) { html += `<span class="stat-col"><span class="slabel">上报金额:</span><span class="stat-val-amount">${reportTotalAmount}</span></span>`; } if (showStats) { html += `<span class="stat-col"><span class="slabel">上报特:</span><span class="stat-val-special">${reportSpecial}</span></span>`; const rp = Math.round(reportProfit); const rlabel = rp >= 0 ? '报盈' : '报亏'; const rcls = rp >= 0 ? 'stat-val-profit' : 'stat-val-loss'; html += `<span class="stat-col"><span class="slabel">${rlabel}:</span><span class="${rcls}">${rp}</span></span>`; const np = Math.round(netProfit); const nlabel = np >= 0 ? '盈' : '亏'; const ncls = np >= 0 ? 'stat-val-profit' : 'stat-val-loss'; html += `<span class="stat-col"><span class="slabel">${nlabel}:</span><span class="${ncls}">${np}</span></span>`; } html += '</div></div>'; container.innerHTML = html; }
+function renderOrderStats(allOrders, allReports, filterUser, prizeNum) { const container = document.getElementById('orderStatsContainer'); if (!container) return; const mul = parseFloat(document.getElementById('multipleVal')?.value) || 1; const rr = parseFloat(document.getElementById('rebateRate')?.value) || 0; const cfg = getAllConfigData(); let totalAmountSum = 0; allOrders.forEach(it => { totalAmountSum += it.totalAmount || 0; }); let reportTotalAmount = 0; allReports.forEach(it => { reportTotalAmount += it.totalAmount || 0; }); let totalSpecial = 0, reportSpecial = 0, hitCount = 0; if (prizeNum) { const num = prizeNum.padStart(2, '0'); if (filterUser === 'all' || !filterUser) { totalSpecial = tableBetData[num] || 0; } else { const userData = userBetData[filterUser] || {}; totalSpecial = userData[num] || 0; } allOrders.forEach(it => { if (orderContainsTarget(it.content, prizeNum, cfg)) hitCount++; }); allReports.forEach(it => { reportSpecial += getSpecialAmountFromOrder(it.content, prizeNum, cfg); }); } const totalProfit = totalAmountSum - totalSpecial * mul - totalAmountSum * (rr / 100); const reportProfit = reportTotalAmount - reportSpecial * mul - reportTotalAmount * (rr / 100); const netProfit = totalProfit - reportProfit; const showStats = prizeNum && prizeNum.trim() !== ''; let html = '<div class="stats-block">'; html += '<div class="stats-row">'; if (totalAmountSum > 0) { html += `<span class="stat-col"><span class="slabel">总额:</span><span class="stat-val-amount">${totalAmountSum}</span></span>`; } if (showStats) { html += `<span class="stat-col"><span class="slabel">总特:</span><span class="stat-val-special">${totalSpecial}</span></span>`; const tp = Math.round(totalProfit); const tlabel = tp >= 0 ? '总盈' : '总亏'; const tcls = tp >= 0 ? 'stat-val-profit' : 'stat-val-loss'; html += `<span class="stat-col"><span class="slabel">${tlabel}:</span><span class="${tcls}">${tp}</span></span>`; html += `<span class="stat-col"><span class="slabel">中:</span><span class="stat-val-count">${hitCount}条</span></span>`; } html += '</div><div class="stats-row">'; if (reportTotalAmount > 0) { html += `<span class="stat-col"><span class="slabel">上报金额:</span><span class="stat-val-amount">${reportTotalAmount}</span></span>`; } if (showStats) { html += `<span class="stat-col"><span class="slabel">上报特:</span><span class="stat-val-special">${reportSpecial}</span></span>`; const rp = Math.round(reportProfit); const rlabel = rp >= 0 ? '报盈' : '报亏'; const rcls = rp >= 0 ? 'stat-val-profit' : 'stat-val-loss'; html += `<span class="stat-col"><span class="slabel">${rlabel}:</span><span class="${rcls}">${rp}</span></span>`; const np = Math.round(netProfit); const nlabel = np >= 0 ? '盈' : '亏'; const ncls = np >= 0 ? 'stat-val-profit' : 'stat-val-loss'; html += `<span class="stat-col"><span class="slabel">${nlabel}:</span><span class="${ncls}">${np}</span></span>`; } html += '</div></div>'; container.innerHTML = html; }
 
 function updatePrizeStats(pn) {}
 
@@ -1594,7 +1594,7 @@ async function resetTable(){
 function clearAllInput(){ const si=document.querySelector('.source-order-input'); if(si)si.value=''; const re=document.getElementById('orderResult'); if(re)re.innerHTML=''; updateOrderTotalDisplay(); }
 async function pasteOrder(){ try{ const text=await navigator.clipboard.readText(); if(text){const si=document.querySelector('.source-order-input');if(si){si.value=text;convertOrderText();}} } catch(err){showToast('无法访问剪贴板');} }
 
-// ===== 导出导入（修复盈亏导入合并逻辑） =====
+// ===== 导出导入（含版本号，手动下载弹窗） =====
 async function exportData(){
   try{
     const orders=await getAllOrdersUnfiltered(); const reports=await getAllReportsUnfiltered();
@@ -1606,10 +1606,14 @@ async function exportData(){
     for (let i = 0; i < localStorage.length; i++) { const key = localStorage.key(i); if (key && key.startsWith('ptHighlight_')) { pingtexiaoHighlights[key] = localStorage.getItem(key); } }
     const presets = localStorage.getItem('replacePresets') || '[]';
     const aliases = localStorage.getItem('categoryAliases') || '[]';
-    const data={orders,reports,logs,drawRecords,pingtexiao,pingtexiaoHighlights,replacePresets:JSON.parse(presets),categoryAliases:JSON.parse(aliases),exportTime:new Date().toISOString()};
+    const data={version:6,orders,reports,logs,drawRecords,pingtexiao,pingtexiaoHighlights,replacePresets:JSON.parse(presets),categoryAliases:JSON.parse(aliases),exportTime:new Date().toISOString()};
     const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
-    const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download=`港澳识别数据_全部_${getTodayCST()}.json`; a.click(); URL.revokeObjectURL(url);
+    const url=URL.createObjectURL(blob);
+    const fileName = `港澳识别数据_全部_${getTodayCST()}.json`;
+    const a = document.createElement('a'); a.href = url; a.download = fileName; document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 60000);
     addOperationLog('export', '导出全部数据（含日志）');
+    showToast('导出成功：' + fileName);
     showStorageDrawerTemporary(5000);
   }catch(e){showToast('导出失败');}
 }
@@ -1622,6 +1626,10 @@ async function importData(){
       try{
         const data=JSON.parse(ev.target.result);
         if(!data.orders||!data.reports){showToast('无效格式');document.body.removeChild(inp);return;}
+        if (!data.version || data.version < 6) {
+          const cf = await confirm(`备份文件版本（${data.version || '未知'}）低于当前版本（6），导入可能导致数据异常，是否继续？`);
+          if (!cf) { document.body.removeChild(inp); return; }
+        }
         const pingtexiaoCount = data.pingtexiao ? Object.keys(data.pingtexiao).length : 0;
         const highlightCount = data.pingtexiaoHighlights ? Object.keys(data.pingtexiaoHighlights).length : 0;
         const totalToImport = data.orders.length + data.reports.length + (data.drawRecords ? Object.keys(data.drawRecords).length : 0) + pingtexiaoCount + highlightCount + (data.replacePresets ? data.replacePresets.length : 0) + (data.categoryAliases ? data.categoryAliases.length : 0);
@@ -1849,7 +1857,7 @@ function switchParseMethod() { const text = document.getElementById('reportCapIn
 function copyOrderGroup() { const text = document.getElementById('parseResultArea').innerText; if (!text) { showToast('没有解析结果'); return; } navigator.clipboard.writeText(text).then(() => showToast('订单组已复制')); }
 const originalApplyReportCap = applyReportCap;
 applyReportCap = function() { originalApplyReportCap(); const info = document.getElementById('reportCapInfo').innerText; if (!info || info === '无超出的号码') { document.getElementById('parseResultArea').innerText = ''; } };
-  // ===== 修正后的回收站窗口（按地区隔离显示） =====
+    // ===== 修正后的回收站窗口（按地区隔离显示） =====
 async function showRecycleBin() { const existingWin = document.getElementById('recycleWin'); if (existingWin) existingWin.remove(); const allRecords = await getRecycleBinRecords(); const records = allRecords.filter(r => r.region === currentRegion); const win = document.createElement('div'); win.className = 'floating-window'; win.id = 'recycleWin'; win.style.width = '750px'; win.style.height = '550px'; win.style.left = '50%'; win.style.top = '50%'; win.style.transform = 'translate(-50%, -50%)'; let html = `<div class="modal-header"><h3>🗑️ 回收站</h3><div class="window-controls"><button onclick="maximizeWindow('recycleWin')">🗖</button><button onclick="document.getElementById('recycleWin').remove()">×</button></div></div>`; html += `<div class="modal-body" style="display:flex; flex-direction:column; height: calc(100% - 120px);">`; html += `<div style="margin-bottom:10px;display:flex;gap:12px;flex-wrap:wrap;align-items:center;position:sticky;top:0;background:rgba(255,255,255,0.9);z-index:2;padding:5px 0;"><button onclick="checkAllRecycle()" style="padding:6px 12px;background:#007bff;color:#fff;border:none;border-radius:4px;">全选</button><button onclick="uncheckAllRecycle()" style="padding:6px 12px;background:#6c757d;color:#fff;border:none;border-radius:4px;">取消全选</button><button onclick="restoreCheckedRecycle()" style="padding:6px 12px;background:#27ae60;color:#fff;border:none;border-radius:4px;">恢复选中</button><button onclick="deleteCheckedRecycle()" style="padding:6px 12px;background:#e74c3c;color:#fff;border:none;border-radius:4px;">彻底删除</button><button onclick="emptyRecycleBin()" style="padding:6px 12px;background:#8e44ad;color:#fff;border:none;border-radius:4px;margin-left:auto;">清空回收站</button></div>`; html += `<div id="recycleListContainer" style="flex:1; overflow-y:auto;">`; if (records.length === 0) { html += `<div style="padding:20px;text-align:center;color:#666;">回收站为空</div>`; } else { records.sort((a,b) => new Date(b.deletedAt) - new Date(a.deletedAt)); records.forEach(rec => { const ts = formatTimestampToCST(rec.deletedAt); const typeLabel = rec.type === 'order' ? '下单' : '上报'; const typeColor = rec.type === 'order' ? '#3498db' : '#e67e22'; html += `<div class="order-item"><input type="checkbox" class="recycle-check" data-id="${rec.id}"><div class="order-content">${rec.content.replace(/\n/g,'<br>')}</div><div class="order-info"><span class="order-total" style="color:#000;">合计：${rec.totalAmount || 0}</span><span class="order-meta"><span style="color:${typeColor};">类型：${typeLabel}</span><span style="color:#e74c3c;">删除：${ts}</span><span>用户：${rec.user || '未知'}</span></span></div><button class="order-del" onclick="restoreRecycleRecord('${rec.id}')" style="background:#27ae60;margin-right:4px;">恢复</button><button class="order-del" onclick="permanentlyDeleteRecycleRecord('${rec.id}')">删除</button></div>`; }); } html += `</div></div><div class="modal-footer" style="justify-content:space-between;"><span style="font-size:12px;color:#666;" id="recycleStorageInfo"></span><button onclick="document.getElementById('recycleWin').remove()" style="padding:8px 16px;background:#6c757d;color:#fff;border:none;border-radius:4px;">关闭</button></div>`; win.innerHTML = html; document.body.appendChild(win); updateRecycleStorageInfo(); makeWindowDraggable('recycleWin'); highestZ += 1; win.style.zIndex = highestZ; updateRecycleCount(); }
 function updateRecycleStorageInfo() { const span = document.getElementById('recycleStorageInfo'); if (!span) return; getRecycleBinRecords().then(allRecords => { const records = allRecords.filter(r => r.region === currentRegion); let bytes = 0; records.forEach(r => bytes += JSON.stringify(r).length * 2); const usedMB = (bytes / (1024*1024)).toFixed(2); span.textContent = `回收站占用：${usedMB} MB（共${records.length}条记录）`; }); }
 async function updateRecycleCount() { const span = document.getElementById('recycleCount'); if (!span) return; try { const allRecords = await getRecycleBinRecords(); const count = allRecords.filter(r => r.region === currentRegion).length; if (count > 0) { span.textContent = count; span.style.display = 'inline-block'; } else { span.style.display = 'none'; } } catch(e) { span.style.display = 'none'; } }
@@ -1861,64 +1869,6 @@ async function restoreCheckedRecycle() { const ids = []; document.querySelectorA
 async function deleteCheckedRecycle() { const ids = []; document.querySelectorAll('.recycle-check:checked').forEach(cb => ids.push(String(cb.dataset.id))); if (ids.length === 0) { showToast('请选择'); return; } if (!(await confirm(`确定彻底删除选中的 ${ids.length} 条记录吗？此操作不可恢复！`))) return; const records = await getRecycleBinRecords(); for (const id of ids) { const record = records.find(r => r.id === id); if (record) addOperationLog('permanent_delete', record.content, record.region, record.user, record.totalAmount || 0); } await batchDeleteFromRecycleBin(ids); showToast(`已彻底删除 ${ids.length} 条`); updateRecycleStorageInfo(); showRecycleBin(); updateRecycleCount(); }
 async function emptyRecycleBin() { if (!(await confirm('确定清空整个回收站吗？此操作不可恢复！'))) return; const pwd = await prompt("输入清空密码：",""); if (pwd !== PASSWORD) { await alert("密码错误"); return; } await clearRecycleBin(currentRegion); addOperationLog('reset', '清空回收站'); showToast('回收站已清空'); showRecycleBin(); updateRecycleCount(); }
 async function autoCleanRecycleBin() { try { const records = await getRecycleBinRecords(); const now = Date.now(); const expireMs = RECYCLE_RETENTION_DAYS * 24 * 60 * 60 * 1000; for (const record of records) { const deletedTime = new Date(record.deletedAt).getTime(); if (now - deletedTime > expireMs) { await deleteFromRecycleBin(record.id); } } updateRecycleCount(); } catch(e) {} }
-
-// ===== 自动备份函数 =====
-function checkAutoBackup() {
-  const today = getTodayCST();
-  const lastBackupDate = localStorage.getItem('lastAutoBackupDate');
-  if (lastBackupDate === today) return;
-  try {
-    autoBackupExport();
-    localStorage.setItem('lastAutoBackupDate', today);
-  } catch (e) {
-    console.error('自动备份失败', e);
-  }
-}
-
-async function autoBackupExport() {
-  try {
-    const orders = await getAllOrdersUnfiltered();
-    const reports = await getAllReportsUnfiltered();
-    const logs = await getAllLogs();
-    const drawRecords = {};
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i);
-      if (key && key.startsWith('drawRecord_')) { drawRecords[key] = localStorage.getItem(key); }
-    }
-    const pingtexiao = {};
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i);
-      if (key && key.startsWith('pingtexiao_')) { pingtexiao[key] = localStorage.getItem(key); }
-    }
-    const pingtexiaoHighlights = {};
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i);
-      if (key && key.startsWith('ptHighlight_')) { pingtexiaoHighlights[key] = localStorage.getItem(key); }
-    }
-    const presets = localStorage.getItem('replacePresets') || '[]';
-    const aliases = localStorage.getItem('categoryAliases') || '[]';
-    const data = {
-      orders, reports, logs,
-      drawRecords, pingtexiao, pingtexiaoHighlights,
-      replacePresets: JSON.parse(presets),
-      categoryAliases: JSON.parse(aliases),
-      exportTime: new Date().toISOString(),
-      autoBackup: true
-    };
-    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = '港澳识别数据_自动备份.json';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-    showToast('自动备份已完成');
-  } catch (e) {
-    console.error('自动备份失败', e);
-  }
-}
 
 // ===== 格式化日期 M/D（仅用于期号计算，表格不再显示日期列） =====
 function formatDateMD(dateStr) { const d = new Date(dateStr + 'T00:00:00'); return `${d.getMonth()+1}/${d.getDate()}`; }
@@ -3278,92 +3228,16 @@ function copyNumsToClipboard(nums) {
   };
 })();
 
-// ========== 重写导出导入包含日志 ==========
-(function() {
-  const originalExport = exportData;
-  exportData = async function() {
-    try {
-      const orders = await getAllOrdersUnfiltered();
-      const reports = await getAllReportsUnfiltered();
-      const logs = await getAllLogs();
-      const drawRecords = {};
-      for (let i = 0; i < localStorage.length; i++) { const key = localStorage.key(i); if (key && key.startsWith('drawRecord_')) { drawRecords[key] = localStorage.getItem(key); } }
-      const pingtexiao = {};
-      for (let i = 0; i < localStorage.length; i++) { const key = localStorage.key(i); if (key && key.startsWith('pingtexiao_')) { pingtexiao[key] = localStorage.getItem(key); } }
-      const pingtexiaoHighlights = {};
-      for (let i = 0; i < localStorage.length; i++) { const key = localStorage.key(i); if (key && key.startsWith('ptHighlight_')) { pingtexiaoHighlights[key] = localStorage.getItem(key); } }
-      const presets = localStorage.getItem('replacePresets') || '[]';
-      const aliases = localStorage.getItem('categoryAliases') || '[]';
-      const data = { orders, reports, logs, drawRecords, pingtexiao, pingtexiaoHighlights, replacePresets: JSON.parse(presets), categoryAliases: JSON.parse(aliases), exportTime: new Date().toISOString() };
-      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `港澳识别数据_全部_${getTodayCST()}.json`;
-      a.click();
-      URL.revokeObjectURL(url);
-      addOperationLog('export', '导出全部数据');
-      showStorageDrawerTemporary(5000);
-    } catch (e) { showToast('导出失败'); }
-  };
-
-  const originalImport = importData;
-  importData = async function() {
-    const inp = document.createElement('input'); inp.type = 'file'; inp.accept = '.json'; inp.style.display = 'none'; document.body.appendChild(inp);
-    inp.onchange = async (e) => {
-      const file = e.target.files[0];
-      if (!file) { document.body.removeChild(inp); return; }
-      const reader = new FileReader();
-      reader.onload = async (ev) => {
-        try {
-          const data = JSON.parse(ev.target.result);
-          if (!data.orders || !data.reports) { showToast('无效格式'); document.body.removeChild(inp); return; }
-          const totalToImport = data.orders.length + data.reports.length;
-          const cf = await confirm(`文件包含 ${data.orders.length} 条订单，${data.reports.length} 条上报，${data.logs ? data.logs.length : 0} 条日志。是否导入？`);
-          if (!cf) { document.body.removeChild(inp); return; }
-
-          const eo = await getAllOrdersUnfiltered();
-          const er = await getAllReportsUnfiltered();
-          let so = 0, no = 0;
-          for (const r of data.orders) { const region = r.region || currentRegion; const dup = eo.find(o => o.content === r.content && o.user === r.user && o.timestamp === r.timestamp && o.region === region); if (dup) { so++; continue; } try { await saveOrderRecordToIDB(r.content, r.user, r.date, r.totalAmount || 0, r.timestamp, region); no++; } catch (e) {} }
-          let sr = 0, nr = 0;
-          for (const r of data.reports) { const region = r.region || currentRegion; const dup = er.find(o => o.content === r.content && o.user === r.user && o.timestamp === r.timestamp && o.region === region); if (dup) { sr++; continue; } try { await saveReportOrderRecordToIDB(r.content, r.user, r.date, r.totalAmount || 0, r.timestamp, region); nr++; } catch (e) {} }
-
-          if (data.logs && Array.isArray(data.logs)) {
-            const existingLogs = await getAllLogs();
-            const existingIds = new Set(existingLogs.map(l => l.id));
-            for (const log of data.logs) {
-              if (!existingIds.has(log.id)) {
-                await new Promise((resolve) => {
-                  const tx = db.transaction([LOG_STORE_NAME], 'readwrite');
-                  const store = tx.objectStore(LOG_STORE_NAME);
-                  store.add(log);
-                  tx.oncomplete = () => resolve();
-                });
-              }
-            }
-          }
-
-          await updateTableFromRecords();
-          calculateStorageUsage();
-          renderPingtexiaoTable();
-          updateCardA();
-          renderSmartDecision();
-          addOperationLog('import', `导入${no+nr}条订单/上报记录`);
-          showToast(`成功导入 ${no+nr} 条记录，跳过 ${so+sr} 条重复`);
-          document.body.removeChild(inp);
-        } catch (err) { showToast('导入失败'); document.body.removeChild(inp); }
-      };
-      reader.onerror = () => { showToast('读取失败'); document.body.removeChild(inp); };
-      reader.readAsText(file);
-    };
-    inp.click();
-  };
-})();
-
 // ========== 页面初始化 ==========
 window.onload = async () => {
-  setCurrentRegion(currentRegion); await initIndexedDB(); initDataConfig();
+  setCurrentRegion(currentRegion);
+  const dbInitOk = await initIndexedDB();
+  if (!dbInitOk) {
+    document.getElementById('dbWarning').style.display = 'block';
+    const dbStatusEl = document.getElementById('dbStatus');
+    if (dbStatusEl) { dbStatusEl.textContent = '异常'; dbStatusEl.style.color = '#e74c3c'; }
+  }
+  initDataConfig();
 
   if (!localStorage.getItem('replacePresets')) {
     const defaultPresets = [
@@ -3401,9 +3275,6 @@ window.onload = async () => {
   enableRowDragSelect('riskTable'); enableRowDragSelect('reportTable');
   await autoCleanRecycleBin(); setInterval(autoCleanRecycleBin, 24 * 60 * 60 * 1000); updateRecycleCount();
   loadPtParams();
-
-  // 自动备份检查
-  checkAutoBackup();
 
   window._systemReady = async () => {
     await updateTableFromRecords();
