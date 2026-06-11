@@ -470,7 +470,7 @@ tr.selected-row{background-color:#dceeff!important;font-weight:bold;box-shadow:i
               <select id="riskReportSwitcher" style="padding:4px 8px;border-radius:4px;border:1px solid #ccc;font-size:14px;" onchange="switchRiskReport()">
                 <option value="total" selected>总风险</option>
                 <option value="user">用户</option>
-                <option value="report">上报</option>
+                <option value="report">净风险</option>
               </select>
               <select id="viewUserSelect" style="padding:4px 8px;border-radius:4px;border:1px solid #ccc;font-size:14px;display:none;" onchange="updateTableFromRecords()"></select>
             </div>
@@ -888,7 +888,6 @@ function showRecognizeModal() {
       <div class="card recognize-card" style="flex:1; display:flex; flex-direction:column;">
         <div class="card-title" style="display:flex; align-items:center; gap:5px;">
           <select id="orderUserSelect" style="padding:4px 8px;border-radius:4px;border:1px solid #ccc;font-size:13px;"></select>
-          <input type="date" id="orderDate" style="padding:4px;border-radius:4px;border:1px solid #ccc;margin-left:8px;">
           <div class="amount-stat-box" id="orderTotalAmountBox" style="display:none;"><span>合计：</span><span id="orderTotalAmount">0</span><span id="orderLineCount" style="margin-left:10px;font-weight:normal;font-size:13px;display:none;"></span></div>
           <button class="btn btn-prefix" onclick="showPrefixManager()" style="margin-left:auto;">前缀</button>
           <button class="btn btn-amount-prefix" onclick="showAmountPrefixManager()">金额前缀</button>
@@ -903,7 +902,6 @@ function showRecognizeModal() {
       </div>
     </div>`;
   document.body.appendChild(win); updateSelects();
-  const today = getTodayCST(); const dateInput = win.querySelector('#orderDate'); if (dateInput) dateInput.value = today;
   const textarea = win.querySelector('.source-order-input');
   if (textarea) { const draftKey = `recognizeDraft_${currentRegion}`; const draft = localStorage.getItem(draftKey); if (draft) { textarea.value = draft; convertOrderText(); } textarea.addEventListener('dragover', (e) => { e.preventDefault(); }); textarea.addEventListener('drop', (e) => { e.preventDefault(); const data = e.dataTransfer.getData('text/plain'); if (data) { textarea.value = data; convertOrderText(); showToast('已拖入文本'); } }); }
   makeWindowDraggable('recognizeWin'); highestZ += 1; win.style.zIndex = highestZ;
@@ -1579,7 +1577,7 @@ function getNumberListForCategory(cat,cfg){
 function isTokenMatching(token,targetNum,cfg){ const t=targetNum.padStart(2,'0'); if(/^\d{1,2}$/.test(token))return token.padStart(2,'0')===t; const vc=getAllValidCategories(cfg); if(vc.has(token)){const nums=getNumberListForCategory(token,cfg);return nums.includes(t);} return false; }
 function highlightContent(content,targetNum,cfg){ if(!targetNum)return content; const t=targetNum.padStart(2,'0'); const parts=[];let tmp=''; for(const ch of content){if(ch==='-'||ch===' '){if(tmp)parts.push(tmp);parts.push(ch);tmp='';}else{tmp+=ch;}} if(tmp)parts.push(tmp); return parts.map(p=>{if(p==='-'||p===' ')return p;if(isTokenMatching(p,targetNum,cfg))return`<span class="highlight-number">${p}</span>`;return p;}).join(''); }
 function orderContainsTarget(content,targetNum,cfg){ if(!targetNum)return true; const t=targetNum.padStart(2,'0'); const lines=content.split('\n'); for(const line of lines){ const m=line.match(/^(.+?)\s+各数\s+(\d+)$/); if(!m)continue; const cont=m[1]; const parts=[];let tmp=''; for(const ch of cont){if(ch==='-'||ch===' '){if(tmp)parts.push(tmp);tmp='';}else{tmp+=ch;}} if(tmp)parts.push(tmp); for(const p of parts){if(p!=='-'&&p!==' '&&isTokenMatching(p,targetNum,cfg))return true;} } return false; }
-function getSpecialAmountFromOrder(content, prizeNum, cfg) { if (!prizeNum) return 0; const targetNum = prizeNum.padStart(2, '0'); const lines = content.split('\n'); let total = 0; for (const line of lines) { const match = line.match(/^(.+?)\s+各数\s+(\d+)$/); if (!match) continue; const tokensPart = match[1]; const amount = parseInt(match[2]) || 0; const tokens = tokensPart.split('-').map(t => t.trim()).filter(t => t); let hit = false; for (const token of tokens) { if (isTokenMatching(token, targetNum, cfg)) { hit = true; break; } } if (hit) { total += amount; } } return total; }
+function getSpecialAmountFromOrder(content, prizeNum, cfg) { if (!prizeNum) return 0; const targetNum = prizeNum.padStart(2, '0'); const lines = content.split('\n'); let total = 0; for (const line of lines) { const match = line.match(/^(.+?)\s+各数\s+(\d+)$/); if (!match) continue; const tokensPart = match[1]; const amount = parseInt(match[2]) || 0; const tokens = tokensPart.split('-').map(t => t.trim()).filter(t => t); for (const token of tokens) { if (isTokenMatching(token, targetNum, cfg)) { total += amount; } } } return total; }
 function formatTimestampToCST(iso){ const d=new Date(iso); return new Intl.DateTimeFormat('zh-CN',{year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false,timeZone:'Asia/Shanghai'}).format(d); }
 function getUserColor(u){ let h=0; for(let i=0;i<u.length;i++)h=u.charCodeAt(i)+((h<<5)-h); const hue=(h%360+360)%360; return`hsl(${hue},70%,45%)`; }
     function renderOrderStats(allOrders, allReports, filterUser, prizeNum) {
@@ -1589,14 +1587,12 @@ function getUserColor(u){ let h=0; for(let i=0;i<u.length;i++)h=u.charCodeAt(i)+
   const rr = parseFloat(document.getElementById('rebateRate')?.value) || 0;
   const cfg = getAllConfigData();
 
-  // 直接从传入的订单列表计算总特码金额，不再依赖全局 tableBetData
   let totalAmountSum = 0;
   allOrders.forEach(it => { totalAmountSum += it.totalAmount || 0; });
 
   let reportTotalAmount = 0;
   allReports.forEach(it => { reportTotalAmount += it.totalAmount || 0; });
 
-  // 从原始订单重新计算总特码金额（同一行内号码出现多次则金额累加多次）
   let totalSpecial = 0, reportSpecial = 0, hitCount = 0;
   if (prizeNum) {
     const num = prizeNum.padStart(2, '0');
@@ -1648,13 +1644,13 @@ function getUserColor(u){ let h=0; for(let i=0;i<u.length;i++)h=u.charCodeAt(i)+
 
 function updatePrizeStats(pn) {}
 
-async function applyPrizeFilter(){ const pi=document.getElementById('prizeNumberInput'),uf=document.getElementById('recordUserFilter'); if(!pi||!uf) return; const sd = document.getElementById('filterDate')?.value; const pn=pi.value.trim(),uv=uf.value; const recs=await getOrderRecords(); const reports=await getReportOrderRecords(); const fRecs = sd ? recs.filter(r=>r.date===sd) : recs; const fReps = sd ? reports.filter(r=>r.date===sd) : reports; const userOrders = uv==='all' ? fRecs : fRecs.filter(r=>r.user===uv); const userReports = uv==='all' ? fReps : fReps.filter(r=>r.user===uv); let filtered=pn ? [] : [...userOrders]; if(pn){ const cfg=getAllConfigData(); for(const it of userOrders){ if(orderContainsTarget(it.content,pn,cfg)) filtered.push(it); } } const cont=document.getElementById('orderListContainer'); if(!cont)return; if(filtered.length===0){cont.innerHTML='<div style="padding:20px;text-align:center;color:#666;">暂无匹配订单</div>';} else{ const cfg=getAllConfigData(); cont.innerHTML=filtered.map(it=>{ const ts=formatTimestampToCST(it.timestamp),ud=it.user||'未知',col=getUserColor(ud),ta=it.totalAmount||0; const lines=it.content.split('\n'); const hl=lines.map(l=>{const m=l.match(/^(.+?)\s+各数\s+(\d+)$/);if(!m)return l;const cont=m[1],amt=m[2];const hc=highlightContent(cont,pn,cfg);return`${hc} 各数 ${amt}`;}).join('<br>'); return`<div class="order-item"><input type="checkbox" class="order-check" data-id="${it.id}"><div class="order-content">${hl}</div><div class="order-info"><span class="order-total" style="color:#000;">合计：${ta}</span><span class="order-meta"><span style="color:${col};">用户：${ud}</span> &nbsp; ${ts}</span></div><button class="order-del" onclick="deleteOrderRecord('${it.id}')">删除</button></div>`; }).join(''); } renderOrderStats(userOrders, userReports, uv, pn); }
+async function applyPrizeFilter(){ const pi=document.getElementById('prizeNumberInput'),uf=document.getElementById('recordUserFilter'); if(!pi||!uf) return; const sd = document.getElementById('filterDate')?.value; const pn=pi.value.trim(),uv=uf.value; const recs=await getOrderRecords(); const reports=await getReportOrderRecords(); const fRecs = sd ? recs.filter(r=>r.date===sd) : recs; const fReps = sd ? reports.filter(r=>r.date===sd) : reports; const userOrders = uv==='all' ? fRecs : fRecs.filter(r=>r.user===uv); const userReports = uv==='all' ? fReps : fReps.filter(r=>r.user===uv); let filtered=pn ? [] : [...userOrders]; if(pn){ const cfg=getAllConfigData(); for(const it of userOrders){ if(orderContainsTarget(it.content,pn,cfg)) filtered.push(it); } } const cont=document.getElementById('orderListContainer'); if(!cont)return; if(filtered.length===0){cont.innerHTML='<div style="padding:20px;text-align:center;color:#666;">暂无匹配订单</div>';} else{ const cfg=getAllConfigData(); cont.innerHTML=filtered.map(it=>{ const ts=formatTimestampToCST(it.timestamp),ud=it.user||'未知',col=getUserColor(ud),ta=it.totalAmount||0; const lines=it.content.split('\n'); const hl=lines.map(l=>{const m=l.match(/^(.+?)\s+各数\s+(\d+)$/);if(!m)return l;const cont=m[1],amt=m[2];const hc=highlightContent(cont,pn,cfg);return`${hc} 各数 ${amt}`;}).join('<br>'); return`<div class="order-item"><input type="checkbox" class="order-check" data-id="${it.id}"><div class="order-content">${hl}</div><div class="order-info"><span class="order-total" style="color:#000;">合计：${ta}</span><span class="order-meta"><span style="color:${col};">用户：${ud}</span> &nbsp; ${ts}</span></div><button class="order-copy" onclick="copySingleOrder('${it.content.replace(/'/g,"\\'")}')">复制</button><button class="order-del" onclick="deleteOrderRecord('${it.id}')">删除</button></div>`; }).join(''); } renderOrderStats(userOrders, userReports, uv, pn); }
 
-async function showOrderRecord(filter='all'){ try{ const recs=await getOrderRecords(),users=getUsers(),today=getTodayCST(); const reports=await getReportOrderRecords(); const fd=document.getElementById('filterDate')?.value; const fRecs=fd?recs.filter(r=>r.date===fd):recs; const fReps=fd?reports.filter(r=>r.date===fd):reports; if(document.getElementById('orderWin'))document.getElementById('orderWin').remove(); const w=document.createElement('div'); w.className='floating-window'; w.id='orderWin'; w.style.width='750px'; w.style.height='600px'; w.style.left='50%'; w.style.top='50%'; w.style.transform='translate(-50%,-50%)'; let html=`<div class="modal-header"><h3>下单记录</h3><div class="window-controls"><button onclick="maximizeWindow('orderWin')">🗖</button><button onclick="document.getElementById('orderWin').remove()">×</button></div></div><div class="modal-body" style="display:flex; flex-direction:column; height: calc(100% - 120px);">`; html+=`<div style="margin-bottom:6px;display:flex;gap:12px;flex-wrap:wrap;align-items:center;position:sticky;top:0;background:rgba(255,255,255,0.9);z-index:2;padding:5px 0;"><select id="recordUserFilter" onchange="applyPrizeFilter()" style="padding:4px 8px;border-radius:4px;border:1px solid #ccc;"><option value="all" ${filter==='all'?'selected':''}>全部用户</option>`; users.forEach(u=>html+=`<option value="${u}" ${u===filter?'selected':''}>${u}</option>`); html+=`</select><button onclick="checkAll()" style="padding:6px 12px;background:#007bff;color:#fff;border:none;border-radius:4px;">全选</button><button onclick="uncheckAll()" style="padding:6px 12px;background:#6c757d;color:#fff;border:none;border-radius:4px;">取消全选</button><button onclick="deleteChecked()" style="padding:6px 12px;background:#e74c3c;color:#fff;border:none;border-radius:4px;">批量删除</button> <span style="display:flex;align-items:center;gap:3px;margin-left:auto;"><span id="orderStatsContainer" style="margin-right:4px;"></span><span style="display:flex;align-items:center;gap:2px;"><span>对奖:</span><input type="text" id="prizeNumberInput" maxlength="2" oninput="applyPrizeFilter()" style="padding:4px;border-radius:4px;border:1px solid #ccc;width:50px;text-align:center;"></span></span></div>`; html+=`<div id="orderListContainer" style="flex:1; overflow-y:auto;">`; const filterDateVal = fd || today; const df=fRecs; const fin=(filter==='all')?df:df.filter(r=>r.user===filter); if(fin.length===0)html+=`<div style="padding:20px;text-align:center;color:#666;">暂无订单记录</div>`; else{ fin.forEach(it=>{ const ts=formatTimestampToCST(it.timestamp),ud=it.user||'未知',col=getUserColor(ud),ta=it.totalAmount||0; html+=`<div class="order-item"><input type="checkbox" class="order-check" data-id="${it.id}"><div class="order-content">${it.content.replace(/\n/g,'<br>')}</div><div class="order-info"><span class="order-total" style="color:#000;">合计：${ta}</span><span class="order-meta"><span style="color:${col};">用户：${ud}</span> &nbsp; ${ts}</span></div><button class="order-del" onclick="deleteOrderRecord('${it.id}')">删除</button></div>`; }); } html+=`</div></div><div class="modal-footer"><button onclick="document.getElementById('orderWin').remove()" style="padding:8px 16px;background:#6c757d;color:#fff;border:none;border-radius:4px;">关闭</button></div>`; w.innerHTML=html; document.body.appendChild(w); makeWindowDraggable('orderWin'); highestZ+=1; w.style.zIndex=highestZ; const uv = filter || 'all'; const userOrders = uv==='all' ? fRecs : fRecs.filter(r=>r.user===uv); const userReports = uv==='all' ? fReps : fReps.filter(r=>r.user===uv); renderOrderStats(userOrders, userReports, uv, ''); }catch(e){showToast('加载失败');} }
+async function showOrderRecord(filter='all'){ try{ const recs=await getOrderRecords(),users=getUsers(),today=getTodayCST(); const reports=await getReportOrderRecords(); const fd=document.getElementById('filterDate')?.value; const fRecs=fd?recs.filter(r=>r.date===fd):recs; const fReps=fd?reports.filter(r=>r.date===fd):reports; if(document.getElementById('orderWin'))document.getElementById('orderWin').remove(); const w=document.createElement('div'); w.className='floating-window'; w.id='orderWin'; w.style.width='750px'; w.style.height='600px'; w.style.left='50%'; w.style.top='50%'; w.style.transform='translate(-50%,-50%)'; let html=`<div class="modal-header"><h3>下单记录</h3><div class="window-controls"><button onclick="maximizeWindow('orderWin')">🗖</button><button onclick="document.getElementById('orderWin').remove()">×</button></div></div><div class="modal-body" style="display:flex; flex-direction:column; height: calc(100% - 120px);">`; html+=`<div style="margin-bottom:6px;display:flex;gap:12px;flex-wrap:wrap;align-items:center;position:sticky;top:0;background:rgba(255,255,255,0.9);z-index:2;padding:5px 0;"><select id="recordUserFilter" onchange="applyPrizeFilter()" style="padding:4px 8px;border-radius:4px;border:1px solid #ccc;"><option value="all" ${filter==='all'?'selected':''}>全部用户</option>`; users.forEach(u=>html+=`<option value="${u}" ${u===filter?'selected':''}>${u}</option>`); html+=`</select><button onclick="checkAll()" style="padding:6px 12px;background:#007bff;color:#fff;border:none;border-radius:4px;">全选</button><button onclick="uncheckAll()" style="padding:6px 12px;background:#6c757d;color:#fff;border:none;border-radius:4px;">取消全选</button><button onclick="deleteChecked()" style="padding:6px 12px;background:#e74c3c;color:#fff;border:none;border-radius:4px;">批量删除</button> <span style="display:flex;align-items:center;gap:3px;margin-left:auto;"><span id="orderStatsContainer" style="margin-right:4px;"></span><span style="display:flex;align-items:center;gap:2px;"><span>对奖:</span><input type="text" id="prizeNumberInput" maxlength="2" oninput="applyPrizeFilter()" style="padding:4px;border-radius:4px;border:1px solid #ccc;width:50px;text-align:center;"></span></span></div>`; html+=`<div id="orderListContainer" style="flex:1; overflow-y:auto;">`; const filterDateVal = fd || today; const df=fRecs; const fin=(filter==='all')?df:df.filter(r=>r.user===filter); if(fin.length===0)html+=`<div style="padding:20px;text-align:center;color:#666;">暂无订单记录</div>`; else{ fin.forEach(it=>{ const ts=formatTimestampToCST(it.timestamp),ud=it.user||'未知',col=getUserColor(ud),ta=it.totalAmount||0; html+=`<div class="order-item"><input type="checkbox" class="order-check" data-id="${it.id}"><div class="order-content">${it.content.replace(/\n/g,'<br>')}</div><div class="order-info"><span class="order-total" style="color:#000;">合计：${ta}</span><span class="order-meta"><span style="color:${col};">用户：${ud}</span> &nbsp; ${ts}</span></div><button class="order-copy" onclick="copySingleOrder('${it.content.replace(/'/g,"\\'")}')">复制</button><button class="order-del" onclick="deleteOrderRecord('${it.id}')">删除</button></div>`; }); } html+=`</div></div><div class="modal-footer"><button onclick="batchCopyOrders('.order-check')" style="padding:8px 16px;background:#3498db;color:#fff;border:none;border-radius:4px;">批量复制</button><button onclick="document.getElementById('orderWin').remove()" style="padding:8px 16px;background:#6c757d;color:#fff;border:none;border-radius:4px;">关闭</button></div>`; w.innerHTML=html; document.body.appendChild(w); makeWindowDraggable('orderWin'); highestZ+=1; w.style.zIndex=highestZ; const uv = filter || 'all'; const userOrders = uv==='all' ? fRecs : fRecs.filter(r=>r.user===uv); const userReports = uv==='all' ? fReps : fReps.filter(r=>r.user===uv); renderOrderStats(userOrders, userReports, uv, ''); }catch(e){showToast('加载失败');} }
 
 async function deleteOrderRecord(id) { if (!(await confirm('确定删除？（可到回收站恢复）'))) return; try { const record = await new Promise((resolve) => { const tx = db.transaction([STORE_NAME], 'readonly'); const store = tx.objectStore(STORE_NAME); const req = store.get(id); req.onsuccess = () => resolve(req.result); req.onerror = () => resolve(null); }); const result = await deleteOrderRecordFromIDB(id); if (result) { if (record) addOperationLog('delete_order', record.content, currentRegion, record.user, record.totalAmount || 0); clearStatsCache(); showToast('已移入回收站'); await updateTableFromRecords(); calculateStorageUsage(); showOrderRecord(); updateRecycleCount(); } else { showToast('删除失败，记录可能已不存在'); } } catch(e) { console.error('删除订单异常', e); showToast('删除异常'); } }
 
-async function showReportOrderRecord(filter='all'){ try{ const recs=await getReportOrderRecords(),users=getUsers(); if(document.getElementById('reportWin'))document.getElementById('reportWin').remove(); const fd=document.getElementById('filterDate')?.value; const df=fd?recs.filter(r=>r.date===fd):recs; const fin=(filter==='all')?df:df.filter(r=>r.user===filter); const w=document.createElement('div'); w.className='floating-window'; w.id='reportWin'; w.style.width='700px'; w.style.height='500px'; w.style.left='50%'; w.style.top='50%'; w.style.transform='translate(-50%,-50%)'; let html=`<div class="modal-header"><h3>上报数据</h3><div class="window-controls"><button onclick="maximizeWindow('reportWin')">🗖</button><button onclick="document.getElementById('reportWin').remove()">×</button></div></div><div class="modal-body" style="display:flex; flex-direction:column; height: calc(100% - 120px);">`; html+=`<div style="margin-bottom:10px;display:flex;gap:12px;flex-wrap:wrap;align-items:center;position:sticky;top:0;background:rgba(255,255,255,0.9);z-index:2;padding:5px 0;"><select id="reportRecordUserFilter" onchange="showReportOrderRecord(this.value)" style="padding:4px 8px;border-radius:4px;border:1px solid #ccc;"><option value="all" ${filter==='all'?'selected':''}>全部用户</option>`; users.forEach(u=>html+=`<option value="${u}" ${u===filter?'selected':''}>${u}</option>`); html+=`</select><button onclick="checkAllReport()" style="padding:6px 12px;background:#007bff;color:#fff;border:none;border-radius:4px;">全选</button><button onclick="uncheckAllReport()" style="padding:6px 12px;background:#6c757d;color:#fff;border:none;border-radius:4px;">取消全选</button><button onclick="deleteCheckedReport()" style="padding:6px 12px;background:#e74c3c;color:#fff;border:none;border-radius:4px;">批量删除</button></div>`; html+=`<div id="reportOrderListContainer" style="flex:1; overflow-y:auto;">`; if(fin.length===0)html+=`<div style="padding:20px;text-align:center;color:#666;">暂无上报记录</div>`; else{ fin.forEach(it=>{ const ts=formatTimestampToCST(it.timestamp),ud=it.user||'未知',ta=it.totalAmount||0; html+=`<div class="order-item"><input type="checkbox" class="report-order-check" data-id="${it.id}"><div class="order-content">${it.content.replace(/\n/g,'<br>')}</div><div class="order-info"><span class="order-total" style="color:#000;">合计：${ta}</span><span class="order-meta"><span style="color:red;">用户：${ud}</span> &nbsp; ${ts}</span></div><button class="order-del" onclick="deleteReportOrderRecord('${it.id}')">删除</button></div>`; }); } html+=`</div></div><div class="modal-footer"><button onclick="document.getElementById('reportWin').remove()" style="padding:8px 16px;background:#6c757d;color:#fff;border:none;border-radius:4px;">关闭</button></div>`; w.innerHTML=html; document.body.appendChild(w); makeWindowDraggable('reportWin'); highestZ+=1; w.style.zIndex=highestZ; }catch(e){showToast('加载失败');} }
+async function showReportOrderRecord(filter='all'){ try{ const recs=await getReportOrderRecords(),users=getUsers(); if(document.getElementById('reportWin'))document.getElementById('reportWin').remove(); const fd=document.getElementById('filterDate')?.value; const df=fd?recs.filter(r=>r.date===fd):recs; const fin=(filter==='all')?df:df.filter(r=>r.user===filter); const w=document.createElement('div'); w.className='floating-window'; w.id='reportWin'; w.style.width='700px'; w.style.height='500px'; w.style.left='50%'; w.style.top='50%'; w.style.transform='translate(-50%,-50%)'; let html=`<div class="modal-header"><h3>上报数据</h3><div class="window-controls"><button onclick="maximizeWindow('reportWin')">🗖</button><button onclick="document.getElementById('reportWin').remove()">×</button></div></div><div class="modal-body" style="display:flex; flex-direction:column; height: calc(100% - 120px);">`; html+=`<div style="margin-bottom:10px;display:flex;gap:12px;flex-wrap:wrap;align-items:center;position:sticky;top:0;background:rgba(255,255,255,0.9);z-index:2;padding:5px 0;"><select id="reportRecordUserFilter" onchange="showReportOrderRecord(this.value)" style="padding:4px 8px;border-radius:4px;border:1px solid #ccc;"><option value="all" ${filter==='all'?'selected':''}>全部用户</option>`; users.forEach(u=>html+=`<option value="${u}" ${u===filter?'selected':''}>${u}</option>`); html+=`</select><button onclick="checkAllReport()" style="padding:6px 12px;background:#007bff;color:#fff;border:none;border-radius:4px;">全选</button><button onclick="uncheckAllReport()" style="padding:6px 12px;background:#6c757d;color:#fff;border:none;border-radius:4px;">取消全选</button><button onclick="deleteCheckedReport()" style="padding:6px 12px;background:#e74c3c;color:#fff;border:none;border-radius:4px;">批量删除</button></div>`; html+=`<div id="reportOrderListContainer" style="flex:1; overflow-y:auto;">`; if(fin.length===0)html+=`<div style="padding:20px;text-align:center;color:#666;">暂无上报记录</div>`; else{ fin.forEach(it=>{ const ts=formatTimestampToCST(it.timestamp),ud=it.user||'未知',ta=it.totalAmount||0; html+=`<div class="order-item"><input type="checkbox" class="report-order-check" data-id="${it.id}"><div class="order-content">${it.content.replace(/\n/g,'<br>')}</div><div class="order-info"><span class="order-total" style="color:#000;">合计：${ta}</span><span class="order-meta"><span style="color:red;">用户：${ud}</span> &nbsp; ${ts}</span></div><button class="order-copy" onclick="copySingleOrder('${it.content.replace(/'/g,"\\'")}')">复制</button><button class="order-del" onclick="deleteReportOrderRecord('${it.id}')">删除</button></div>`; }); } html+=`</div></div><div class="modal-footer"><button onclick="batchCopyOrders('.report-order-check')" style="padding:8px 16px;background:#3498db;color:#fff;border:none;border-radius:4px;">批量复制</button><button onclick="document.getElementById('reportWin').remove()" style="padding:8px 16px;background:#6c757d;color:#fff;border:none;border-radius:4px;">关闭</button></div>`; w.innerHTML=html; document.body.appendChild(w); makeWindowDraggable('reportWin'); highestZ+=1; w.style.zIndex=highestZ; }catch(e){showToast('加载失败');} }
 
 async function deleteReportOrderRecord(id) { if (!(await confirm('确定删除？（可到回收站恢复）'))) return; try { const record = await new Promise((resolve) => { const tx = db.transaction([REPORT_STORE_NAME], 'readonly'); const store = tx.objectStore(REPORT_STORE_NAME); const req = store.get(id); req.onsuccess = () => resolve(req.result); req.onerror = () => resolve(null); }); const result = await deleteReportOrderRecordFromIDB(id); if (result) { if (record) addOperationLog('delete_report', record.content, currentRegion, record.user, record.totalAmount || 0); clearStatsCache(); showToast('已移入回收站'); await updateTableFromRecords(); calculateStorageUsage(); showReportOrderRecord(); updateRecycleCount(); } else { showToast('删除失败，记录可能已不存在'); } } catch(e) { console.error('删除上报异常', e); showToast('删除异常'); } }
 
@@ -1662,6 +1658,9 @@ function checkAll(){ document.querySelectorAll('.order-check').forEach(cb=>cb.ch
 function uncheckAll(){ document.querySelectorAll('.order-check').forEach(cb=>cb.checked=false); }
 function checkAllReport(){ document.querySelectorAll('.report-order-check').forEach(cb=>cb.checked=true); }
 function uncheckAllReport(){ document.querySelectorAll('.report-order-check').forEach(cb=>cb.checked=false); }
+
+function copySingleOrder(content) { navigator.clipboard.writeText(content).then(() => showToast('已复制')).catch(() => showToast('复制失败')); }
+function batchCopyOrders(selector) { const checked = document.querySelectorAll(`${selector}:checked`); if (checked.length === 0) { showToast('请先选择记录'); return; } const contents = []; checked.forEach(cb => { const item = cb.closest('.order-item'); if (item) { const contentEl = item.querySelector('.order-content'); if (contentEl) { let text = contentEl.innerText || contentEl.textContent || ''; text = text.replace(/\s*各数\s*/g, ' 各数 '); contents.push(text); } } }); if (contents.length === 0) { showToast('无内容可复制'); return; } navigator.clipboard.writeText(contents.join('\n')).then(() => showToast(`已复制 ${contents.length} 条`)).catch(() => showToast('复制失败')); }
 
 async function deleteChecked(){ const ids=[]; document.querySelectorAll('.order-check:checked').forEach(cb=>ids.push(String(cb.dataset.id))); if(ids.length===0){showToast('请选择');return;} if(!(await confirm(`确定要删除选中的 ${ids.length} 条订单记录吗？（可到回收站恢复）`))) return; try { const details = []; for (const id of ids) { const record = await new Promise((resolve) => { const tx = db.transaction([STORE_NAME], 'readonly'); const store = tx.objectStore(STORE_NAME); const req = store.get(id); req.onsuccess = () => resolve(req.result); req.onerror = () => resolve(null); }); if (record) details.push(record); } await batchDeleteOrderRecordFromIDB(ids); details.forEach(rec => addOperationLog('delete_order', rec.content, currentRegion, rec.user, rec.totalAmount || 0)); clearStatsCache(); showToast(`已将 ${ids.length} 条移入回收站`); await updateTableFromRecords(); calculateStorageUsage(); const userFilter = document.getElementById('recordUserFilter')?.value || 'all'; await showOrderRecord(userFilter); updateRecycleCount(); } catch(e) { console.error('批量删除异常', e); showToast('批量删除异常'); } }
 async function deleteCheckedReport(){ const ids=[]; document.querySelectorAll('.report-order-check:checked').forEach(cb=>ids.push(String(cb.dataset.id))); if(ids.length===0){showToast('请选择');return;} if(!(await confirm(`确定要删除选中的 ${ids.length} 条上报记录吗？（可到回收站恢复）`))) return; try { const details = []; for (const id of ids) { const record = await new Promise((resolve) => { const tx = db.transaction([REPORT_STORE_NAME], 'readonly'); const store = tx.objectStore(REPORT_STORE_NAME); const req = store.get(id); req.onsuccess = () => resolve(req.result); req.onerror = () => resolve(null); }); if (record) details.push(record); } await batchDeleteReportOrderRecordFromIDB(ids); details.forEach(rec => addOperationLog('delete_report', rec.content, currentRegion, rec.user, rec.totalAmount || 0)); clearStatsCache(); showToast(`已将 ${ids.length} 条移入回收站`); await updateTableFromRecords(); calculateStorageUsage(); const userFilter = document.getElementById('reportRecordUserFilter')?.value || 'all'; await showReportOrderRecord(userFilter); updateRecycleCount(); } catch(e) { console.error('批量删除异常', e); showToast('批量删除异常'); } }
@@ -1755,14 +1754,19 @@ async function exportData(){
   try{
     const orders=await getAllOrdersUnfiltered(); const reports=await getAllReportsUnfiltered();
     const logs = await getAllLogs();
+    const recycleRecords = await getRecycleBinRecords();
     const drawRecords = {}; for (let i = 0; i < localStorage.length; i++) { const key = localStorage.key(i); if (key && key.startsWith('drawRecord_')) { drawRecords[key] = localStorage.getItem(key); } }
     const pingtexiao = {};
     for (let i = 0; i < localStorage.length; i++) { const key = localStorage.key(i); if (key && key.startsWith('pingtexiao_')) { pingtexiao[key] = localStorage.getItem(key); } }
     const pingtexiaoHighlights = {};
     for (let i = 0; i < localStorage.length; i++) { const key = localStorage.key(i); if (key && key.startsWith('ptHighlight_')) { pingtexiaoHighlights[key] = localStorage.getItem(key); } }
+    const userData = {};
+    for (let i = 0; i < localStorage.length; i++) { const key = localStorage.key(i); if (key && key.startsWith('users_')) { userData[key] = localStorage.getItem(key); } }
     const presets = localStorage.getItem('replacePresets') || '[]';
     const aliases = localStorage.getItem('categoryAliases') || '[]';
-    const data={version:6,orders,reports,logs,drawRecords,pingtexiao,pingtexiaoHighlights,replacePresets:JSON.parse(presets),categoryAliases:JSON.parse(aliases),exportTime:new Date().toISOString()};
+    const dbConfig = localStorage.getItem('customDataConfigObj') || '{}';
+    const customCats = localStorage.getItem('customConfigCategories') || '[]';
+    const data={version:6,orders,reports,logs,recycleBin:recycleRecords,drawRecords,pingtexiao,pingtexiaoHighlights,userData,replacePresets:JSON.parse(presets),categoryAliases:JSON.parse(aliases),dbConfig:JSON.parse(dbConfig),customConfigCategories:JSON.parse(customCats),exportTime:new Date().toISOString()};
     const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
     const url=URL.createObjectURL(blob);
     const fileName = `港澳识别数据_全部_${getTodayCST()}.json`;
@@ -1814,6 +1818,31 @@ async function importData(){
             }
           }
         }
+
+        if (data.recycleBin && Array.isArray(data.recycleBin)) {
+          const existingRecycle = await getRecycleBinRecords();
+          const existingRecycleIds = new Set(existingRecycle.map(r => r.id));
+          for (const rec of data.recycleBin) {
+            if (!existingRecycleIds.has(rec.id)) {
+              await new Promise((resolve) => {
+                const tx = db.transaction([RECYCLE_STORE_NAME], 'readwrite');
+                const store = tx.objectStore(RECYCLE_STORE_NAME);
+                store.add(rec);
+                tx.oncomplete = () => resolve();
+              });
+            }
+          }
+        }
+
+        if (data.userData) {
+          for (const [key, value] of Object.entries(data.userData)) {
+            const existing = localStorage.getItem(key);
+            if (!existing) { localStorage.setItem(key, value); }
+          }
+        }
+
+        if (data.dbConfig) { localStorage.setItem('customDataConfigObj', JSON.stringify(data.dbConfig)); }
+        if (data.customConfigCategories) { localStorage.setItem('customConfigCategories', JSON.stringify(data.customConfigCategories)); }
 
         let dcImported = 0;
         if (data.drawRecords) {
@@ -2113,12 +2142,12 @@ async function showDrawRecord() {
     let valText = '';
     if (val > 0) valText = `<span style="color:#27ae60;font-weight:bold;">+${val}</span>`;
     else if (val < 0) valText = `<span style="color:#e74c3c;font-weight:bold;">${val}</span>`;
-    monthlyInnerHtml += `<tr><td style="text-align:left;padding:1px 4px;border:none;font-size:11px;">${m+1}月</td><td style="text-align:right;padding:1px 4px;border:none;font-size:11px;">${valText}</td></tr>`;
+    monthlyInnerHtml += `<tr><td style="text-align:left;padding:1px 4px;border:none;font-size:11px;color:#0000ff;">${m+1}月</td><td style="text-align:right;padding:1px 4px;border:none;font-size:11px;">${valText}</td></tr>`;
   }
   let totalText = '';
   if (totalPLSum > 0) totalText = `<span style="color:#27ae60;font-weight:bold;">+${totalPLSum}</span>`;
   else if (totalPLSum < 0) totalText = `<span style="color:#e74c3c;font-weight:bold;">${totalPLSum}</span>`;
-  monthlyInnerHtml += `<tr style="border-top:2px solid #333;"><td style="text-align:left;padding:1px 4px;border:none;font-size:11px;">总盈亏</td><td style="text-align:right;padding:1px 4px;border:none;font-size:11px;">${totalText}</td></tr>`;
+  monthlyInnerHtml += `<tr style="border-top:2px solid #333;"><td style="text-align:left;padding:1px 4px;border:none;font-size:11px;color:#0000ff;">总盈亏</td><td style="text-align:right;padding:1px 4px;border:none;font-size:11px;">${totalText}</td></tr>`;
   monthlyInnerHtml += '</tbody></table>';
 
   let tableHtml = '<div class="draw-table-wrap"><table class="draw-table"><thead><tr>';
@@ -2179,6 +2208,35 @@ async function showDrawRecord() {
   document.body.appendChild(win);
   makeWindowDraggable('drawRecordWin'); highestZ += 1; win.style.zIndex = highestZ;
   updateRecentDrawTexts();
+
+  // 绑定回车键跳转下一个输入框
+  setTimeout(() => {
+    const allNumInputs = win.querySelectorAll('.draw-number-input');
+    const allPlInputs = win.querySelectorAll('.draw-pl-input');
+    const allInputs = [...allNumInputs, ...allPlInputs].sort((a, b) => {
+      const trA = a.closest('tr'); const trB = b.closest('tr');
+      const rows = [...win.querySelectorAll('.draw-table tbody tr')];
+      if (trA !== trB) return rows.indexOf(trA) - rows.indexOf(trB);
+      const tdsA = [...trA.querySelectorAll('td')];
+      const tdsB = [...trB.querySelectorAll('td')];
+      const tdA = a.closest('td'); const tdB = b.closest('td');
+      return tdsA.indexOf(tdA) - tdsB.indexOf(tdB);
+    });
+    const enabledInputs = allInputs.filter(inp => !inp.disabled);
+    enabledInputs.forEach((inp, i) => {
+      inp.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          const nextIdx = i + 1;
+          if (nextIdx < enabledInputs.length) {
+            const next = enabledInputs[nextIdx];
+            next.focus();
+            next.select();
+          }
+        }
+      });
+    });
+  }, 200);
 }
 
 function updatePlColor(input) {
@@ -2250,12 +2308,12 @@ async function saveDrawRecord(year) {
       let valText = '';
       if (val > 0) valText = `<span style="color:#27ae60;font-weight:bold;">+${val}</span>`;
       else if (val < 0) valText = `<span style="color:#e74c3c;font-weight:bold;">${val}</span>`;
-      html += `<tr><td style="text-align:left;padding:1px 4px;border:none;font-size:11px;">${m+1}月</td><td style="text-align:right;padding:1px 4px;border:none;font-size:11px;">${valText}</td></tr>`;
+      html += `<tr><td style="text-align:left;padding:1px 4px;border:none;font-size:11px;color:#0000ff;">${m+1}月</td><td style="text-align:right;padding:1px 4px;border:none;font-size:11px;">${valText}</td></tr>`;
     }
     let totalText = '';
     if (totalPLSum > 0) totalText = `<span style="color:#27ae60;font-weight:bold;">+${totalPLSum}</span>`;
     else if (totalPLSum < 0) totalText = `<span style="color:#e74c3c;font-weight:bold;">${totalPLSum}</span>`;
-    html += `<tr style="border-top:2px solid #333;"><td style="text-align:left;padding:1px 4px;border:none;font-size:11px;">总盈亏</td><td style="text-align:right;padding:1px 4px;border:none;font-size:11px;">${totalText}</td></tr>`;
+    html += `<tr style="border-top:2px solid #333;"><td style="text-align:left;padding:1px 4px;border:none;font-size:11px;color:#0000ff;">总盈亏</td><td style="text-align:right;padding:1px 4px;border:none;font-size:11px;">${totalText}</td></tr>`;
     html += '</tbody>';
     summaryTable.innerHTML = html;
   }
@@ -3253,7 +3311,7 @@ function renderSmartDecision() {
     adviceHtml += '<table style="width:100%;border-collapse:collapse;font-size:11px;"><tr>';
     adviceHtml += '<td style="width:50%;vertical-align:top;padding:4px;border:1px solid #eee;">';
     adviceHtml += '<div class="advice-urgent" style="margin-bottom:6px;">';
-    adviceHtml += `<b>🚨 紧急抛售（倍数：<input type="number" id="urgentMultiplierInput" value="${multiplier}" min="0.1" step="0.1" style="width:45px;padding:1px 3px;font-size:11px;border:1px solid #ccc;border-radius:3px;" onchange="renderSmartDecision()"> 均值：${avgBet.toFixed(0)}）</b><br>`;
+    adviceHtml += `<b>🚨 紧急抛售（基于净风险，倍数：<input type="number" id="urgentMultiplierInput" value="${multiplier}" min="0.1" step="0.1" style="width:45px;padding:1px 3px;font-size:11px;border:1px solid #ccc;border-radius:3px;" onchange="renderSmartDecision()"> 均值：${avgBet.toFixed(0)}）</b><br>`;
     if (urgentNums.length > 0) {
       adviceHtml += '号码：' + urgentNums.map(n => `<span class="${getNumCls(n)}">${n}</span>`).join(' ');
       adviceHtml += ` <button class="copy-advice-btn" onclick="copyNumsToClipboard([${urgentNums.map(n=>"'"+n+"'").join(',')}])">📋复制</button>`;
@@ -3264,7 +3322,7 @@ function renderSmartDecision() {
     adviceHtml += '<b>🔍 最近生肖监控（往前6个不重复生肖）</b><br>';
     if (zodiacMonitorNums.length > 0) {
       adviceHtml += '生肖：' + recent6Zodiacs.map(z => `<span class="${getZodiacCls(z)}">${z}</span>`).join(' ') + '<br>';
-      adviceHtml += '风险号码：' + zodiacMonitorNums.map(n => `<span class="${getNumCls(n)}">${n}</span>`).join(' ');
+      adviceHtml += '净风险号码：' + zodiacMonitorNums.map(n => `<span class="${getNumCls(n)}">${n}</span>`).join(' ');
       adviceHtml += ` <button class="copy-advice-btn" onclick="copyNumsToClipboard([${zodiacMonitorNums.map(n=>"'"+n+"'").join(',')}])">📋复制</button>`;
     } else adviceHtml += '<span style="color:#888;">暂无</span>';
     adviceHtml += '</div>';
@@ -3278,11 +3336,11 @@ function renderSmartDecision() {
     adviceHtml += '</td>';
     adviceHtml += '<td style="width:50%;vertical-align:top;padding:4px;border:1px solid #eee;">';
     adviceHtml += '<div class="advice-monitor" style="margin-bottom:6px;">';
-    adviceHtml += '<b>❄️ 冷门监控（冷维度 × 上报风险负数）</b><br>';
+    adviceHtml += '<b>❄️ 冷门监控（冷维度 × 净风险负数）</b><br>';
     if (coldMonitorHtml) {
       adviceHtml += coldMonitorHtml;
     } else {
-      adviceHtml += '<span style="color:#888;">暂无冷门风险号码</span>';
+      adviceHtml += '<span style="color:#888;">暂无冷门净风险号码</span>';
     }
     adviceHtml += '</div>';
     adviceHtml += '</td></tr></table></div>';
@@ -3331,7 +3389,6 @@ function renderSmartDecision() {
   // ========== 最终组装 ==========
   let finalHtml = '';
   finalHtml += `<div style="display:flex; align-items:center; gap:6px; margin-bottom:6px; flex-wrap:wrap;">`;
-  finalHtml += `<span style="font-size:12px;">期数：</span><input type="number" id="smartPeriodInput" class="range-input" value="${period}" placeholder="10" min="1" style="width:50px;text-align:center;" onchange="renderSmartDecision()">`;
   finalHtml += `<button class="btn-copy" style="padding:2px 8px; font-size:11px; min-height:auto; border-radius:20px; background:${heatVisible?'#2ecc71':'#95a5a6'}; color:#fff; border:none; cursor:pointer;" onclick="toggleHeat()">开奖热度分析</button>`;
   finalHtml += `<button class="btn-copy" style="padding:2px 8px; font-size:11px; min-height:auto; border-radius:20px; background:${adviceVisible?'#2ecc71':'#95a5a6'}; color:#fff; border:none; cursor:pointer;" onclick="toggleAdvice()">智能建议</button>`;
   finalHtml += `<button class="btn-copy" style="padding:2px 8px; font-size:11px; min-height:auto; border-radius:20px; background:${surgeVisible?'#2ecc71':'#95a5a6'}; color:#fff; border:none; cursor:pointer;" onclick="toggleSurge()">暴增监控</button>`;
