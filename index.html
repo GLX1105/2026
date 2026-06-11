@@ -176,6 +176,9 @@ tr.selected-row{background-color:#dceeff!important;font-weight:bold;box-shadow:i
 .result-area-new{flex:1;}
 .result-content{width:100%;height:100%;border:none;padding:8px;resize:none;font-size:13px;outline:none;overflow-y:auto;}
 
+/* 数据库不可用警告横幅 */
+#dbWarning{display:none;background:#e74c3c;color:#fff;text-align:center;padding:8px;font-size:14px;font-weight:bold;position:sticky;top:0;z-index:9999;}
+
 /* 右侧存储抽屉 - 透明面板，固定在右下角底部 */
 .storage-drawer{position:fixed;right:0;bottom:20px;z-index:1500;display:flex;align-items:flex-end;}
 .storage-tab{background:transparent;color:#3498db;writing-mode:vertical-rl;padding:10px 6px;border-radius:8px 0 0 8px;cursor:pointer;font-size:13px;letter-spacing:2px;box-shadow:0 2px 8px rgba(0,0,0,0.15);transition:none;}
@@ -266,8 +269,8 @@ tr.selected-row{background-color:#dceeff!important;font-weight:bold;box-shadow:i
 .pt-clear-btn:hover{background:#e0e0e0;}
 .pt-small-input{width:28px!important;padding:1px 1px!important;font-size:11px!important;text-align:center;border:1px solid #ccc;border-radius:2px;margin:0 1px;}
 .draw-pl-text{font-size:11px;min-width:36px;display:inline-block;}
-.cat-insert-text{font-size:12px;color:#000;cursor:pointer;user-select:none;}
-.cat-insert-text:hover{color:#000;text-decoration:none;}
+.cat-insert-text{font-size:13px;color:#000;cursor:pointer;user-select:none;display:inline-block;padding:4px 8px;margin:2px 3px;background:#f0f4f8;border-radius:12px;transition:background 0.15s;}
+.cat-insert-text:hover{background:#dce6f0;text-decoration:none;}
 .pt-edit-input{outline:none;}
 .pt-edit-input:focus{outline:none;}
 .pt-edit-input[readonly]{cursor:pointer;user-select:none;}
@@ -314,6 +317,7 @@ tr.selected-row{background-color:#dceeff!important;font-weight:bold;box-shadow:i
 </style>
 </head>
 <body>
+<div id="dbWarning">⚠ 数据库不可用，请检查浏览器设置或存储空间</div>
 <div class="navbar" id="mainNavbar">
   <div style="display:flex; align-items:center; gap:12px;">
     <div class="navbar-title">港澳识别系统</div>
@@ -514,6 +518,7 @@ tr.selected-row{background-color:#dceeff!important;font-weight:bold;box-shadow:i
     <div class="storage-tab" id="storageTab" onclick="toggleStorageDrawer()">存储</div>
     <div class="storage-panel" id="storagePanel">
       <button class="close-drawer" onclick="toggleStorageDrawer()">×</button>
+      <p><span class="label">数据库状态：</span><span class="value" id="dbStatus" style="color:#27ae60;">正常</span></p>
       <p><span class="label">今日数量：</span><span class="value" id="todayOrderCount">0</span></p>
       <p><span class="label">订单数量：</span><span class="value" id="orderCount">0</span></p>
       <p><span class="label">已用空间：</span><span class="value" id="usedSpace">0 MB</span></p>
@@ -524,7 +529,7 @@ tr.selected-row{background-color:#dceeff!important;font-weight:bold;box-shadow:i
     </div>
   </div>
 </div>
-<div class="database-modal" id="databaseModal" style="display:none;">
+    <div class="database-modal" id="databaseModal" style="display:none;">
   <div class="database-modal-box" id="databaseModalBox">
     <div class="database-modal-header" id="databaseModalHeader"><h3>📊 数据库配置</h3><div class="window-controls"><button onclick="maximizeWindow('databaseModalBox')" title="最大化">🗖</button><button class="close-database-btn" onclick="hideDatabase()">×</button></div></div>
     <div class="database-modal-body">
@@ -579,7 +584,8 @@ tr.selected-row{background-color:#dceeff!important;font-weight:bold;box-shadow:i
           <div class="config-item"><div class="config-label">秋肖</div><div class="config-colon">：</div><input type="text" class="config-input" id="config_sx_qiuxiao" value="鸡 猴 狗"></div>
           <div class="config-item"><div class="config-label">冬肖</div><div class="config-colon">：</div><input type="text" class="config-input" id="config_sx_dongxiao" value="鼠 猪 牛"></div>
         </div>
-                <div class="config-section"><div class="config-section-title">五行配置</div>
+
+        <div class="config-section"><div class="config-section-title">五行配置</div>
           <div class="config-item"><div class="config-label">金</div><div class="config-colon">：</div><input type="text" class="config-input" id="config_jin" value="04 05 12 13 26 27 34 35 42 43"></div>
           <div class="config-item"><div class="config-label">木</div><div class="config-colon">：</div><input type="text" class="config-input" id="config_mu" value="08 09 16 17 24 25 38 39 46 47"></div>
           <div class="config-item"><div class="config-label">水</div><div class="config-colon">：</div><input type="text" class="config-input" id="config_shui" value="01 14 15 22 23 30 31 44 45"></div>
@@ -935,6 +941,7 @@ let directReportAmount = {};
 const YEAR_ZODIAC_PASSWORD_ENC = "MTUwNDA4"; const YEAR_ZODIAC_PASSWORD = decodePassword(YEAR_ZODIAC_PASSWORD_ENC);
 const DB_NAME = 'OrderDatabase', DB_VERSION = 6, STORE_NAME = 'orders', REPORT_STORE_NAME = 'report_orders', RECYCLE_STORE_NAME = 'recycle_bin', LOG_STORE_NAME = 'operation_log';
 let db = null;
+let dbAvailable = true;
 const zodiacOrder = ['马','蛇','龙','兔','虎','牛','鼠','猪','狗','鸡','猴','羊'];
 let currentZodiacMap = {};
 const redNumbers = ['01','02','07','08','12','13','18','19','23','24','29','30','34','35','40','45','46'];
@@ -967,7 +974,7 @@ async function switchRiskReport() {
   }
   await updateTableFromRecords();
 }
-  function initIndexedDB() { return new Promise((resolve) => { const request = indexedDB.open(DB_NAME, DB_VERSION); request.onerror = () => { resolve(false); }; request.onsuccess = (event) => { db = event.target.result; resolve(true); }; request.onupgradeneeded = (event) => { db = event.target.result; if (!db.objectStoreNames.contains(STORE_NAME)) { db.createObjectStore(STORE_NAME, { keyPath: 'id' }); } if (!db.objectStoreNames.contains(REPORT_STORE_NAME)) { db.createObjectStore(REPORT_STORE_NAME, { keyPath: 'id' }); } if (!db.objectStoreNames.contains(RECYCLE_STORE_NAME)) { db.createObjectStore(RECYCLE_STORE_NAME, { keyPath: 'id' }); } if (!db.objectStoreNames.contains(LOG_STORE_NAME)) { db.createObjectStore(LOG_STORE_NAME, { keyPath: 'id' }); } const tx = event.target.transaction; const orderStore = tx.objectStore(STORE_NAME); const reportStore = tx.objectStore(REPORT_STORE_NAME); const addRegion = (store) => { const allReq = store.getAll(); allReq.onsuccess = () => { const records = allReq.result; records.forEach(r => { if (!r.region) { r.region = 'macau'; store.put(r); } }); }; }; addRegion(orderStore); addRegion(reportStore); }; }); }
+    function initIndexedDB() { return new Promise((resolve) => { const request = indexedDB.open(DB_NAME, DB_VERSION); request.onerror = () => { dbAvailable = false; document.getElementById('dbWarning').style.display = 'block'; const dbStatusEl = document.getElementById('dbStatus'); if (dbStatusEl) { dbStatusEl.textContent = '异常'; dbStatusEl.style.color = '#e74c3c'; } resolve(false); }; request.onsuccess = (event) => { db = event.target.result; dbAvailable = true; document.getElementById('dbWarning').style.display = 'none'; const dbStatusEl = document.getElementById('dbStatus'); if (dbStatusEl) { dbStatusEl.textContent = '正常'; dbStatusEl.style.color = '#27ae60'; } resolve(true); }; request.onupgradeneeded = (event) => { db = event.target.result; if (!db.objectStoreNames.contains(STORE_NAME)) { db.createObjectStore(STORE_NAME, { keyPath: 'id' }); } if (!db.objectStoreNames.contains(REPORT_STORE_NAME)) { db.createObjectStore(REPORT_STORE_NAME, { keyPath: 'id' }); } if (!db.objectStoreNames.contains(RECYCLE_STORE_NAME)) { db.createObjectStore(RECYCLE_STORE_NAME, { keyPath: 'id' }); } if (!db.objectStoreNames.contains(LOG_STORE_NAME)) { db.createObjectStore(LOG_STORE_NAME, { keyPath: 'id' }); } const tx = event.target.transaction; const orderStore = tx.objectStore(STORE_NAME); const reportStore = tx.objectStore(REPORT_STORE_NAME); const addRegion = (store) => { const allReq = store.getAll(); allReq.onsuccess = () => { const records = allReq.result; records.forEach(r => { if (!r.region) { r.region = 'macau'; store.put(r); } }); }; }; addRegion(orderStore); addRegion(reportStore); }; }); }
 async function getAllOrdersUnfiltered() { return new Promise((resolve) => { if (!db) resolve([]); const tx = db.transaction([STORE_NAME],'readonly'); const store = tx.objectStore(STORE_NAME); const req = store.getAll(); req.onsuccess = (e) => resolve(e.target.result || []); }); }
 async function getAllReportsUnfiltered() { return new Promise((resolve) => { if (!db) resolve([]); const tx = db.transaction([REPORT_STORE_NAME],'readonly'); const store = tx.objectStore(REPORT_STORE_NAME); const req = store.getAll(); req.onsuccess = (e) => resolve(e.target.result || []); }); }
 async function getOrderRecords() { const all = await getAllOrdersUnfiltered(); return all.filter(r => r.region === currentRegion); }
@@ -975,7 +982,7 @@ async function getReportOrderRecords() { const all = await getAllReportsUnfilter
 
 // ===== 写入失败重试机制 =====
 async function saveOrderRecordToIDB(content, user, date, totalAmount = 0, ts = null, regionOverride = null) {
-  if (!db) return false;
+  if (!db || !dbAvailable) { showToast('数据库不可用，操作无法保存'); return false; }
   const record = { id: Date.now() + '-' + Math.random().toString(36).substr(2, 9), content, user, date, totalAmount, region: regionOverride || currentRegion, timestamp: ts || new Date().toISOString() };
   let success = false;
   for (let attempt = 0; attempt < 3; attempt++) {
@@ -999,7 +1006,7 @@ async function saveOrderRecordToIDB(content, user, date, totalAmount = 0, ts = n
   return true;
 }
 async function saveReportOrderRecordToIDB(content, user, date, totalAmount = 0, ts = null, regionOverride = null) {
-  if (!db) return false;
+  if (!db || !dbAvailable) { showToast('数据库不可用，操作无法保存'); return false; }
   const record = { id: Date.now() + '-' + Math.random().toString(36).substr(2, 9), content, user, date, totalAmount, region: regionOverride || currentRegion, timestamp: ts || new Date().toISOString() };
   let success = false;
   for (let attempt = 0; attempt < 3; attempt++) {
@@ -1022,7 +1029,7 @@ async function saveReportOrderRecordToIDB(content, user, date, totalAmount = 0, 
   if (!success) { showToast('保存失败，请重试'); return false; }
   return true;
 }
-  // ===== 操作日志函数（扩展签名：action, detail, regionOverride, orderUser, orderTotal） =====
+    // ===== 操作日志函数（扩展签名：action, detail, regionOverride, orderUser, orderTotal） =====
 async function addOperationLog(action, detail, regionOverride = null, orderUser = null, orderTotal = 0) {
   if (!db) return;
   const session = getAuthSession();
@@ -1088,10 +1095,13 @@ async function updateLogCount() {
     span.textContent = '0';
   }
 }
-  async function showOperationLog() {
+    async function showOperationLog() {
   if (document.getElementById('operationLogWin')) return;
-  const logs = await getAllLogs();
-  logs.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+  const allLogs = await getAllLogs();
+  allLogs.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+  window._allLogs = allLogs;
+  window._logPage = 0;
+  window._logPageSize = 50;
 
   const win = document.createElement('div');
   win.className = 'floating-window';
@@ -1101,19 +1111,6 @@ async function updateLogCount() {
   win.style.left = '50%';
   win.style.top = '50%';
   win.style.transform = 'translate(-50%, -50%)';
-
-  const actionLabels = {
-    'save_order': '保存订单', 'save_report': '保存上报', 'delete_order': '删除订单',
-    'delete_report': '删除上报', 'restore': '恢复记录', 'permanent_delete': '彻底删除',
-    'reset': '清空数据', 'export': '导出数据', 'import': '导入数据',
-    'switch': '切换地区', 'login': '登录', 'logout': '退出登录'
-  };
-  const actionColors = {
-    'save_order': 'log-type-save', 'save_report': 'log-type-save', 'delete_order': 'log-type-delete',
-    'delete_report': 'log-type-delete', 'restore': 'log-type-restore', 'permanent_delete': 'log-type-delete',
-    'reset': 'log-type-reset', 'export': 'log-type-export', 'import': 'log-type-export',
-    'switch': 'log-type-switch', 'login': 'log-type-login', 'logout': 'log-type-login'
-  };
 
   let html = `<div class="modal-header"><h3>📋 操作日志</h3><div class="window-controls"><button onclick="maximizeWindow('operationLogWin')">🗖</button><button onclick="document.getElementById('operationLogWin').remove()">×</button></div></div>`;
   html += `<div class="modal-body" style="display:flex; flex-direction:column; height: calc(100% - 60px);">`;
@@ -1136,12 +1133,54 @@ async function updateLogCount() {
     <button onclick="filterOperationLog()" style="padding:4px 12px;background:#007bff;color:#fff;border:none;border-radius:4px;">筛选</button>
     <button onclick="clearOperationLog()" style="padding:6px 12px;background:#e74c3c;color:#fff;border:none;border-radius:4px;margin-left:auto;">清除全部日志</button>
   </div>`;
-  html += `<div id="operationLogList" style="flex:1; overflow-y:auto;">`;
+  html += `<div id="operationLogList" style="flex:1; overflow-y:auto;"></div>`;
+  html += `</div>`;
+  win.innerHTML = html;
+  document.body.appendChild(win);
+  makeWindowDraggable('operationLogWin');
+  highestZ += 1;
+  win.style.zIndex = highestZ;
+  updateLogCount();
+  renderLogPage();
+}
 
-  if (logs.length === 0) {
-    html += '<div style="padding:20px;text-align:center;color:#666;">暂无操作日志</div>';
+function renderLogPage() {
+  const container = document.getElementById('operationLogList');
+  if (!container) return;
+
+  const filter = document.getElementById('logTypeFilter')?.value || 'all';
+  const dateFilter = document.getElementById('logDateFilter')?.value || '';
+
+  let filteredLogs = window._allLogs || [];
+  if (filter !== 'all') {
+    filteredLogs = filteredLogs.filter(log => log.action === filter);
+  }
+  if (dateFilter) {
+    filteredLogs = filteredLogs.filter(log => log.timestamp.slice(0, 10) === dateFilter);
+  }
+
+  const pageSize = window._logPageSize;
+  const start = 0;
+  const pageLogs = filteredLogs.slice(start, start + pageSize);
+
+  const actionLabels = {
+    'save_order': '保存订单', 'save_report': '保存上报', 'delete_order': '删除订单',
+    'delete_report': '删除上报', 'restore': '恢复记录', 'permanent_delete': '彻底删除',
+    'reset': '清空数据', 'export': '导出数据', 'import': '导入数据',
+    'switch': '切换地区', 'login': '登录', 'logout': '退出登录'
+  };
+  const actionColors = {
+    'save_order': 'log-type-save', 'save_report': 'log-type-save', 'delete_order': 'log-type-delete',
+    'delete_report': 'log-type-delete', 'restore': 'log-type-restore', 'permanent_delete': 'log-type-delete',
+    'reset': 'log-type-reset', 'export': 'log-type-export', 'import': 'log-type-export',
+    'switch': 'log-type-switch', 'login': 'log-type-login', 'logout': 'log-type-login'
+  };
+
+  let html = '';
+  if (pageLogs.length === 0) {
+    html = '<div style="padding:20px;text-align:center;color:#666;">暂无操作日志</div>';
   } else {
-    logs.forEach(log => {
+    pageLogs.forEach(log => {
       const ts = formatTimestampToCST(log.timestamp);
       const actionLabel = actionLabels[log.action] || log.action;
       const colorClass = actionColors[log.action] || 'log-type-login';
@@ -1158,31 +1197,86 @@ async function updateLogCount() {
         </div>
       </div>`;
     });
+
+    if (start + pageSize < filteredLogs.length) {
+      html += `<div style="text-align:center;padding:10px;" id="loadMoreBtn">
+        <button onclick="loadMoreLogs()" style="padding:6px 20px;background:#007bff;color:#fff;border:none;border-radius:4px;cursor:pointer;">
+          加载更多（${start + pageSize}/${filteredLogs.length}）
+        </button>
+      </div>`;
+    }
   }
 
-  html += `</div></div>`;
-  win.innerHTML = html;
-  document.body.appendChild(win);
-  makeWindowDraggable('operationLogWin');
-  highestZ += 1;
-  win.style.zIndex = highestZ;
-  updateLogCount();
+  container.innerHTML = html;
+}
+
+function loadMoreLogs() {
+  window._logPage = (window._logPage || 0) + 1;
+  const container = document.getElementById('operationLogList');
+  if (!container) return;
+
+  const filter = document.getElementById('logTypeFilter')?.value || 'all';
+  const dateFilter = document.getElementById('logDateFilter')?.value || '';
+
+  let filteredLogs = window._allLogs || [];
+  if (filter !== 'all') filteredLogs = filteredLogs.filter(log => log.action === filter);
+  if (dateFilter) filteredLogs = filteredLogs.filter(log => log.timestamp.slice(0, 10) === dateFilter);
+
+  const pageSize = window._logPageSize;
+  const currentPage = window._logPage;
+  const start = currentPage * pageSize;
+  const pageLogs = filteredLogs.slice(start, start + pageSize);
+
+  const actionLabels = {
+    'save_order': '保存订单', 'save_report': '保存上报', 'delete_order': '删除订单',
+    'delete_report': '删除上报', 'restore': '恢复记录', 'permanent_delete': '彻底删除',
+    'reset': '清空数据', 'export': '导出数据', 'import': '导入数据',
+    'switch': '切换地区', 'login': '登录', 'logout': '退出登录'
+  };
+  const actionColors = {
+    'save_order': 'log-type-save', 'save_report': 'log-type-save', 'delete_order': 'log-type-delete',
+    'delete_report': 'log-type-delete', 'restore': 'log-type-restore', 'permanent_delete': 'log-type-delete',
+    'reset': 'log-type-reset', 'export': 'log-type-export', 'import': 'log-type-export',
+    'switch': 'log-type-switch', 'login': 'log-type-login', 'logout': 'log-type-login'
+  };
+
+  // 移除旧按钮
+  const oldBtn = document.getElementById('loadMoreBtn');
+  if (oldBtn) oldBtn.remove();
+
+  let html = '';
+  pageLogs.forEach(log => {
+    const ts = formatTimestampToCST(log.timestamp);
+    const actionLabel = actionLabels[log.action] || log.action;
+    const colorClass = actionColors[log.action] || 'log-type-login';
+    const logDate = log.timestamp.slice(0, 10);
+    const orderContent = log.detail || '';
+    const orderUser = log.orderUser || '';
+    const orderTotal = log.orderTotal || 0;
+
+    html += `<div class="order-item log-item" data-date="${logDate}" data-action="${log.action}">
+      <div class="order-content">${orderContent.replace(/\n/g, '<br>')}</div>
+      <div class="order-info">
+        <span class="order-total" style="color:#000;">${orderTotal > 0 ? '合计：' + orderTotal : ''}</span>
+        <span class="order-meta"><span style="color:#2980b9;">${orderUser ? '用户：' + orderUser : ''}</span> &nbsp; <span class="log-type-tag ${colorClass}">${actionLabel}</span> &nbsp; ${ts}</span>
+      </div>
+    </div>`;
+  });
+
+  container.insertAdjacentHTML('beforeend', html);
+
+  if (start + pageSize < filteredLogs.length) {
+    container.insertAdjacentHTML('beforeend', `<div style="text-align:center;padding:10px;" id="loadMoreBtn">
+      <button onclick="loadMoreLogs()" style="padding:6px 20px;background:#007bff;color:#fff;border:none;border-radius:4px;cursor:pointer;">
+        加载更多（${start + pageSize}/${filteredLogs.length}）
+      </button>
+    </div>`);
+  }
 }
 
 function filterOperationLog() {
-  const filter = document.getElementById('logTypeFilter')?.value || 'all';
-  const dateFilter = document.getElementById('logDateFilter')?.value || '';
-  const container = document.getElementById('operationLogList');
-  if (!container) return;
-  const items = container.querySelectorAll('.log-item');
-  items.forEach(item => {
-    const action = item.dataset.action;
-    const date = item.dataset.date;
-    let show = true;
-    if (filter !== 'all' && action !== filter) show = false;
-    if (dateFilter && date !== dateFilter) show = false;
-    item.style.display = show ? 'flex' : 'none';
-  });
+  window._logPage = 0;
+  renderLogPage();
 }
 
 async function clearOperationLog() {
@@ -1193,7 +1287,7 @@ async function clearOperationLog() {
   if (win) win.remove();
   showToast('操作日志已清除');
 }
-  // ===== 回收站数据操作 =====
+    // ===== 回收站数据操作 =====
 async function getRecycleBinRecords() { return new Promise((resolve) => { if (!db) resolve([]); const tx = db.transaction([RECYCLE_STORE_NAME],'readonly'); const store = tx.objectStore(RECYCLE_STORE_NAME); const req = store.getAll(); req.onsuccess = (e) => resolve(e.target.result || []); }); }
 async function moveToRecycleBin(record, type) { return new Promise((resolve) => { if (!db) { resolve(false); return; } const tx = db.transaction([RECYCLE_STORE_NAME],'readwrite'); const store = tx.objectStore(RECYCLE_STORE_NAME); const recycleRecord = { id: record.id, type: type, content: record.content, user: record.user, date: record.date, totalAmount: record.totalAmount || 0, region: record.region || currentRegion, timestamp: record.timestamp, deletedAt: new Date().toISOString() }; const req = store.add(recycleRecord); req.onsuccess = () => resolve(true); req.onerror = () => resolve(false); }); }
 async function deleteFromRecycleBin(id) { return new Promise((resolve) => { if (!db) { resolve(false); return; } const tx = db.transaction([RECYCLE_STORE_NAME],'readwrite'); const store = tx.objectStore(RECYCLE_STORE_NAME); const req = store.delete(id); req.onsuccess = () => resolve(true); req.onerror = () => resolve(false); }); }
@@ -1201,12 +1295,12 @@ async function clearRecycleBin(region = null) { return new Promise((resolve) => 
 async function batchDeleteFromRecycleBin(ids) { return new Promise((resolve) => { if (!db) { resolve(false); return; } const tx = db.transaction([RECYCLE_STORE_NAME],'readwrite'); const store = tx.objectStore(RECYCLE_STORE_NAME); let count = 0; ids.forEach(id => { const req = store.delete(id); req.onsuccess = () => { count++; if (count === ids.length) resolve(true); }; req.onerror = () => { console.error('彻底删除失败', id); }; }); }); }
 
 // ===== 修正后的单条删除函数 =====
-async function deleteOrderRecordFromIDB(id) { if (!db) return false; const record = await new Promise((resolve) => { const tx = db.transaction([STORE_NAME], 'readonly'); const store = tx.objectStore(STORE_NAME); const req = store.get(id); req.onsuccess = () => resolve(req.result); req.onerror = () => resolve(null); }); if (!record) return false; await moveToRecycleBin(record, 'order'); await new Promise((resolve) => { const tx = db.transaction([STORE_NAME], 'readwrite'); const store = tx.objectStore(STORE_NAME); const req = store.delete(id); req.onsuccess = () => resolve(true); req.onerror = () => resolve(false); }); return true; }
-async function deleteReportOrderRecordFromIDB(id) { if (!db) return false; const record = await new Promise((resolve) => { const tx = db.transaction([REPORT_STORE_NAME], 'readonly'); const store = tx.objectStore(REPORT_STORE_NAME); const req = store.get(id); req.onsuccess = () => resolve(req.result); req.onerror = () => resolve(null); }); if (!record) return false; await moveToRecycleBin(record, 'report'); await new Promise((resolve) => { const tx = db.transaction([REPORT_STORE_NAME], 'readwrite'); const store = tx.objectStore(REPORT_STORE_NAME); const req = store.delete(id); req.onsuccess = () => resolve(true); req.onerror = () => resolve(false); }); return true; }
+async function deleteOrderRecordFromIDB(id) { if (!db || !dbAvailable) return false; const record = await new Promise((resolve) => { const tx = db.transaction([STORE_NAME], 'readonly'); const store = tx.objectStore(STORE_NAME); const req = store.get(id); req.onsuccess = () => resolve(req.result); req.onerror = () => resolve(null); }); if (!record) return false; await moveToRecycleBin(record, 'order'); await new Promise((resolve) => { const tx = db.transaction([STORE_NAME], 'readwrite'); const store = tx.objectStore(STORE_NAME); const req = store.delete(id); req.onsuccess = () => resolve(true); req.onerror = () => resolve(false); }); return true; }
+async function deleteReportOrderRecordFromIDB(id) { if (!db || !dbAvailable) return false; const record = await new Promise((resolve) => { const tx = db.transaction([REPORT_STORE_NAME], 'readonly'); const store = tx.objectStore(REPORT_STORE_NAME); const req = store.get(id); req.onsuccess = () => resolve(req.result); req.onerror = () => resolve(null); }); if (!record) return false; await moveToRecycleBin(record, 'report'); await new Promise((resolve) => { const tx = db.transaction([REPORT_STORE_NAME], 'readwrite'); const store = tx.objectStore(REPORT_STORE_NAME); const req = store.delete(id); req.onsuccess = () => resolve(true); req.onerror = () => resolve(false); }); return true; }
 
 // ===== 批量删除函数 =====
-async function batchDeleteOrderRecordFromIDB(ids) { if (!db) return false; try { for (const id of ids) { const record = await new Promise((resolve) => { const tx = db.transaction([STORE_NAME], 'readonly'); const store = tx.objectStore(STORE_NAME); const req = store.get(id); req.onsuccess = () => resolve(req.result); req.onerror = () => resolve(null); }); if (record) { await moveToRecycleBin(record, 'order'); await new Promise((resolve) => { const tx = db.transaction([STORE_NAME], 'readwrite'); const store = tx.objectStore(STORE_NAME); const req = store.delete(id); req.onsuccess = () => resolve(true); req.onerror = () => resolve(false); }); } } return true; } catch (e) { console.error('批量删除订单失败', e); return false; } }
-async function batchDeleteReportOrderRecordFromIDB(ids) { if (!db) return false; try { for (const id of ids) { const record = await new Promise((resolve) => { const tx = db.transaction([REPORT_STORE_NAME], 'readonly'); const store = tx.objectStore(REPORT_STORE_NAME); const req = store.get(id); req.onsuccess = () => resolve(req.result); req.onerror = () => resolve(null); }); if (record) { await moveToRecycleBin(record, 'report'); await new Promise((resolve) => { const tx = db.transaction([REPORT_STORE_NAME], 'readwrite'); const store = tx.objectStore(REPORT_STORE_NAME); const req = store.delete(id); req.onsuccess = () => resolve(true); req.onerror = () => resolve(false); }); } } return true; } catch (e) { console.error('批量删除上报记录失败', e); return false; } }
+async function batchDeleteOrderRecordFromIDB(ids) { if (!db || !dbAvailable) return false; try { for (const id of ids) { const record = await new Promise((resolve) => { const tx = db.transaction([STORE_NAME], 'readonly'); const store = tx.objectStore(STORE_NAME); const req = store.get(id); req.onsuccess = () => resolve(req.result); req.onerror = () => resolve(null); }); if (record) { await moveToRecycleBin(record, 'order'); await new Promise((resolve) => { const tx = db.transaction([STORE_NAME], 'readwrite'); const store = tx.objectStore(STORE_NAME); const req = store.delete(id); req.onsuccess = () => resolve(true); req.onerror = () => resolve(false); }); } } return true; } catch (e) { console.error('批量删除订单失败', e); return false; } }
+async function batchDeleteReportOrderRecordFromIDB(ids) { if (!db || !dbAvailable) return false; try { for (const id of ids) { const record = await new Promise((resolve) => { const tx = db.transaction([REPORT_STORE_NAME], 'readonly'); const store = tx.objectStore(REPORT_STORE_NAME); const req = store.get(id); req.onsuccess = () => resolve(req.result); req.onerror = () => resolve(null); }); if (record) { await moveToRecycleBin(record, 'report'); await new Promise((resolve) => { const tx = db.transaction([REPORT_STORE_NAME], 'readwrite'); const store = tx.objectStore(REPORT_STORE_NAME); const req = store.delete(id); req.onsuccess = () => resolve(true); req.onerror = () => resolve(false); }); } } return true; } catch (e) { console.error('批量删除上报记录失败', e); return false; } }
 
 // ===== 清空函数（物理删除，不进入回收站） =====
 async function clearAllOrderRecordsFromIDB(region = null) { return new Promise((resolve) => { if (!db) resolve(false); const tx = db.transaction([STORE_NAME],'readwrite'); const store = tx.objectStore(STORE_NAME); if (region) { const allReq = store.getAll(); allReq.onsuccess = () => { const records = allReq.result.filter(r => r.region === region); records.forEach(r => store.delete(r.id)); resolve(true); }; } else { const req = store.clear(); req.onsuccess = () => resolve(true); } }); }
@@ -1221,7 +1315,7 @@ async function deleteUser(name) { let users = getUsers(); users = users.filter(u
 function rebuildTotal() { tableBetData = {}; for (const u in userBetData) for (const n in userBetData[u]) tableBetData[n] = (tableBetData[n]||0) + userBetData[u][n]; }
 function refreshAll() { updateSelects(); updateTableFromRecords(); }
 function updateSelects() { const users = getUsers(); const orderSel = document.getElementById('orderUserSelect'); if (orderSel) { orderSel.innerHTML = ''; users.forEach(u => { const o = document.createElement('option'); o.value = u; o.textContent = u; orderSel.appendChild(o); }); } const viewSel = document.getElementById('viewUserSelect'); if (viewSel) { viewSel.innerHTML = ''; users.forEach(u => { const o = document.createElement('option'); o.value = u; o.textContent = u; viewSel.appendChild(o); }); } }
-  // ===== 快捷添加与分词 =====
+    // ===== 快捷添加与分词 =====
 function quickAddWithAmount(text, button) { const input = document.querySelector('.source-order-input'); if (!input) return; const lines = input.value.trim().split('\n').filter(l=>l.trim()); const idx = lines.findIndex(l=> l.includes(text) && (l.includes('各数')||l.includes('各号'))); if (idx !== -1) { lines.splice(idx,1); button.classList.remove('active'); } else { lines.push(`${text} 各数 `); button.classList.add('active'); } input.value = lines.join('\n'); convertOrderText(); const lastIndex = input.value.lastIndexOf('各数'); if (lastIndex !== -1) { const pos = lastIndex + 2; input.focus(); input.setSelectionRange(pos, pos); } }
 function getReplacePresets() { try { return JSON.parse(localStorage.getItem('replacePresets') || '[]'); } catch (e) { return []; } }
 function getCategoryAliases() { try { return JSON.parse(localStorage.getItem('categoryAliases') || '[]'); } catch (e) { return []; } }
@@ -1277,7 +1371,7 @@ async function resetPresetsToDefault(){
   localStorage.setItem('categoryAliases',JSON.stringify(defaultAliases));
   renderPresetList(); showToast('已恢复默认替换预设和分类缩写');
 }
-  function applyCategoryAliases(text) { const a=getCategoryAliases(); if(!a.length)return text; const s=[...a].sort((x,y)=>y.alias.length-x.alias.length); let r=text; s.forEach(x=>{ if(x.alias&&x.target)r=r.split(x.alias).join(x.target); }); return r; }
+    function applyCategoryAliases(text) { const a=getCategoryAliases(); if(!a.length)return text; const s=[...a].sort((x,y)=>y.alias.length-x.alias.length); let r=text; s.forEach(x=>{ if(x.alias&&x.target)r=r.split(x.alias).join(x.target); }); return r; }
 
 // ===== 修正后的替换预设（已去掉后边界限制） =====
 function applyReplacePresets(text) { const p = getReplacePresets(); let r = text; p.forEach(x => { if (x.old && x.new) { const escapedOld = x.old.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); const regex = new RegExp(escapedOld, 'g'); r = r.replace(regex, x.new); } }); return r; }
@@ -1288,7 +1382,7 @@ function tokenizeAndJoin(content) { const cfg = getAllConfigData(); const vc = g
 function convertOrderText() { const inputEl = document.querySelector('.source-order-input'); const resultEl = document.getElementById('orderResult'); const invalidSpan = document.getElementById('invalidTokensDisplay'); if (!inputEl || !resultEl) return; let text = applyCategoryAliases(applyReplacePresets(inputEl.value.trim())); if (!text) { resultEl.innerHTML = ''; if (invalidSpan) { invalidSpan.textContent = ''; invalidSpan.style.display = 'none'; } updateOrderTotalDisplay(); return; } const lines = text.split('\n'); const resultLines = []; const originalContents = []; const skipInvalidCheck = new Set(); const HARD_AMP_LIST = ['每个号','各号码','各数','每数','每号','个号','各号','各码','号','个','=','各']; const cusAmp = getCustomAmountPrefixes(); const allAmpList = [...HARD_AMP_LIST, ...cusAmp]; allAmpList.sort((a, b) => b.length - a.length); const AMP_ORIGINAL = '(?:' + allAmpList.map(s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|') + ')'; const IGN = ['奥特','特码','澳门特码','特','奥','澳','澳门','澳門','澳門特碼','澳门特码','澳門特码',':','。','.','新',',','新','新奥','门','，','新澳','新特','新澳特','特碼']; const cusPre = getCustomPrefixes(); const allPre = [...IGN, ...cusPre]; const baseSuf = '元块咪米斤#،。\\s'; const cusAmtSuf = getCustomAmountSuffixes(); const allAmtChars = [...new Set([...baseSuf.split(''), ...cusAmtSuf])].join(''); const AMTS = `[${allAmtChars}]*`; function cn2n(s) { const m = {'零':0,'一':1,'二':2,'三':3,'四':4,'五':5,'六':6,'七':7,'八':8,'九':9,'十':10,'百':100,'千':1000}; let sum = 0, tmp = 0; for (let c of s) { const v = m[c]; if (v === 10 || v === 100 || v === 1000) { if (tmp === 0) tmp = 1; tmp *= v; sum += tmp; tmp = 0; } else if (v !== undefined) { if (tmp > 0) { sum += tmp; tmp = 0; } tmp = v; } } sum += tmp; return sum; } const SIMPLE_PAIR = /^(\d{1,2})[^\d\s]+(\d+)$/; const cfg = getAllConfigData(); const vc = getAllValidCategories(cfg); const allCatNames = new Set(); Object.keys(cfg.zodiac).forEach(z => allCatNames.add(z)); vc.forEach(c => allCatNames.add(c)); const ZODIAC_SET = new Set(Object.keys(cfg.zodiac)); function startsWithCategory(str) { for (let cat of allCatNames) { if (str.startsWith(cat)) return true; } return false; } function isValidNumber(token) { return /^(0[1-9]|[1-4][0-9]|49?|[1-9])$/.test(token); } const PUNCT_REGEX = /[\s,，.。、+\-*＊\/\\|!@#$%^&*()=+_{}\[\]:;"'<>,.?\/~！@#￥%…&*（）—+【】{}|："；"''《》，。？、]/g; function isValidToken(token) { const clean = token.replace(PUNCT_REGEX, ''); if (clean === '') return false; if (isValidNumber(clean)) return true; if (/^\d+尾$/.test(clean) || /^\d+头$/.test(clean)) return true; if (allCatNames.has(clean)) return true; if (/^[\u4e00-\u9fa5]+$/.test(clean) && clean.length > 1) { const chars = clean.split(''); if (chars.every(ch => allCatNames.has(ch))) return true; } return false; } lines.forEach(line => { line = line.trim(); if (!line) return; const rangeFullMatch = line.match(new RegExp(`^([\\u4e00-\\u9fa5\\-]*?)(\\d{1,2})到(\\d{1,2})\\s*${AMP_ORIGINAL}\\s*(\\d+)\\s*${AMTS}$`)); if (rangeFullMatch) { const prefix = rangeFullMatch[1].replace(/-$/, '').trim(); const startNum = parseInt(rangeFullMatch[2]); const endNum = parseInt(rangeFullMatch[3]); const amt = rangeFullMatch[4]; if (startNum >= 1 && startNum <= 49 && endNum >= 1 && endNum <= 49 && startNum <= endNum) { const numList = []; for (let i = startNum; i <= endNum; i++) { numList.push(i.toString().padStart(2, '0')); } const expanded = numList.join('-'); const finalLine = prefix ? `${prefix}-${expanded}` : expanded; resultLines.push(`${finalLine} 各数 ${amt}`); originalContents.push(finalLine); skipInvalidCheck.add(resultLines.length - 1); return; } } const pairMatch = line.match(SIMPLE_PAIR); if (pairMatch) { let num = pairMatch[1]; const amount = pairMatch[2]; if (num.length === 1) num = '0' + num; resultLines.push(`${num} 各数 ${amount}`); originalContents.push(pairMatch[1]); return; } let cl = line; allPre.forEach(p => { if (cl.startsWith(p)) cl = cl.substring(p.length).trim(); }); cl = cl.replace(/[^\u4e00-\u9fa5\d]+$/, ''); cl = cl.replace(/([一二三四五六七八九十百千]+)/g, (m) => cn2n(m)); while (cl && !/^[\d\u4e00-\u9fa5]/.test(cl)) { cl = cl.substring(1).trim(); } while (cl && !/^\d/.test(cl) && !startsWithCategory(cl)) { cl = cl.substring(1).trim(); } if (!cl) return; const shxMatch = cl.match(new RegExp(`^(.+?)(各肖|各)\\s*(\\d+)${AMTS}$`)); if (shxMatch) { const rawContent = shxMatch[1]; const amtRaw = parseInt(shxMatch[3]) || 0; if (!/\d/.test(rawContent)) { const zodiacs = []; for (const ch of rawContent) { if (ZODIAC_SET.has(ch)) zodiacs.push(ch); } if (zodiacs.length > 0) { const curBenming = document.getElementById('startZodiacSelect')?.value || '马'; const benmingList = [], otherList = []; zodiacs.forEach(z => { if (z === curBenming) benmingList.push(z); else otherList.push(z); }); const amtPerBen = Math.round(amtRaw / 5); const amtPerOther = Math.round(amtRaw / 4); if (benmingList.length > 0) { resultLines.push(`${benmingList.join('-')} 各数 ${amtPerBen}`); originalContents.push(benmingList.join('-')); } if (otherList.length > 0) { resultLines.push(`${otherList.join('-')} 各数 ${amtPerOther}`); originalContents.push(otherList.join('-')); } return; } } } const op = new RegExp(`(${AMP_ORIGINAL}\\s*\\d+${AMTS})`, 'g'); const om = cl.match(op); if (om && om.length > 0) { let rl = cl; om.forEach(om => { const oi = rl.indexOf(om); if (oi !== -1) { const cont = rl.substring(0, oi).trim(); const am = om.match(/(\d+)/); if (am) { const amt = am[1]; if (cont) { const jo = tokenizeAndJoin(cont); if (jo) { resultLines.push(`${jo} 各数 ${amt}`); originalContents.push(cont); } } rl = rl.substring(oi + om.length); } } }); if (rl.trim()) { const jo = tokenizeAndJoin(rl.trim()); if (jo) { resultLines.push(`${jo} 各数 0`); originalContents.push(rl.trim()); } } } else { const pat = new RegExp(`^(.+?)${AMP_ORIGINAL}\\s*(\\d+)$`); const m = cl.match(pat); if (m) { const jo = tokenizeAndJoin(m[1].trim()); if (jo) { resultLines.push(`${jo} 各数 ${m[2]}`); originalContents.push(m[1].trim()); } } else { const sp = new RegExp(`(\\d+)(?:号|${AMP_ORIGINAL})\\s*(\\d+)$`); const sm = cl.match(sp); if (sm) { let num = sm[1].trim(); if (parseInt(num) >= 1 && parseInt(num) <= 49) { num = num.length === 1 ? `0${num}` : num; resultLines.push(`${num} 各数 ${sm[2]}`); originalContents.push(num); } } else { const jo = tokenizeAndJoin(cl); if (jo) { resultLines.push(`${jo} 各数 0`); originalContents.push(cl); } } } } }); const lineInvalidTokens = []; resultLines.forEach((line, idx) => { if (skipInvalidCheck.has(idx)) { lineInvalidTokens.push([]); return; } const originalContent = originalContents[idx] || ''; const rawTokens = originalContent.split(/[\s,，.。、+\-*＊\/\\|]+/).filter(t => t.trim()); const invalidInLine = []; rawTokens.forEach(token => { if (!isValidToken(token)) { const clean = token.replace(PUNCT_REGEX, ''); if (clean) { if (/^[\u4e00-\u9fa5]+$/.test(clean) && clean.length > 1) { const chars = clean.split(''); chars.forEach(ch => { if (!allCatNames.has(ch)) invalidInLine.push(ch); }); } else { invalidInLine.push(clean); } } } }); lineInvalidTokens.push(invalidInLine); }); let html = ''; resultLines.forEach((line, idx) => { const m = line.match(/^(.+?)\s+各数\s+(\d+)$/); if (!m) { html += `<div style="color:red;">${line}</div>`; return; } const content = m[1]; const amt = parseInt(m[2]) || 0; const hasInvalidInSource = lineInvalidTokens[idx].length > 0; const isSkipped = skipInvalidCheck.has(idx); const { numbers, zodiacs } = countItemsInLine(line, cfg, vc); const totalItems = numbers.length + zodiacs.length; const isInvalid = !isSkipped && (totalItems === 0 || amt <= 0 || hasInvalidInSource); if (isInvalid) { html += `<div style="color:red;">${line}</div>`; } else { html += `<div>${line}</div>`; } }); resultEl.innerHTML = html; if (invalidSpan) { const displayLines = []; lineInvalidTokens.forEach(arr => { if (arr.length > 0) { displayLines.push('无效: ' + arr.join(', ')); } }); if (displayLines.length > 0) { invalidSpan.innerHTML = displayLines.join('<br>'); invalidSpan.style.display = 'inline'; } else { invalidSpan.innerHTML = ''; invalidSpan.style.display = 'none'; } } updateOrderTotalDisplay(); }
 
 function getAllValidCategories(cfg) { const s=new Set(); Object.keys(cfg.zodiac).forEach(k=>s.add(k)); Object.keys(cfg.shengxiaoAttr).forEach(k=>s.add(k)); Object.keys(cfg.wuxing).forEach(k=>s.add(k)); Object.keys(cfg.bose).forEach(k=>s.add(k)); Object.keys(cfg.banbo).forEach(k=>s.add(k)); Object.keys(cfg.danshuang).forEach(k=>s.add(k)); Object.keys(cfg.weishu).forEach(k=>s.add(k)); Object.keys(cfg.daxiaodanshuang).forEach(k=>s.add(k)); Object.keys(cfg.daxiao).forEach(k=>s.add(k)); Object.keys(cfg.heshu).forEach(k=>s.add(k)); Object.keys(cfg.toushu).forEach(k=>s.add(k)); Object.keys(cfg.menshu).forEach(k=>s.add(k)); Object.keys(cfg.duanwei).forEach(k=>s.add(k)); Object.keys(cfg.hedahexiao).forEach(k=>s.add(k)); Object.keys(cfg.weidaweixiao).forEach(k=>s.add(k)); Object.keys(cfg.hewei).forEach(k=>s.add(k)); Object.keys(cfg.heshudanshuang).forEach(k=>s.add(k)); Object.keys(cfg.toushuDanshuang).forEach(k=>s.add(k)); s.add('蓝大'); s.add('蓝小'); s.add('红大'); s.add('红小'); s.add('绿大'); s.add('绿小'); s.add('蓝波大'); s.add('蓝波小'); s.add('红波大'); s.add('红波小'); s.add('绿波大'); s.add('绿波小'); return s; }
-  async function saveOrder(){ const user=document.getElementById('orderUserSelect')?.value; if(!user){showToast('请选择用户');return;} const resultEl=document.getElementById('orderResult'); const rawText=resultEl?resultEl.innerText:''; const inputText=document.querySelector('.source-order-input')?.value.trim(); const textToUse=rawText||inputText; if(!textToUse)return; const vl=textToUse.split('\n').filter(l=>{const m=l.match(/各数\s+(\d+)/);return m&&parseInt(m[1])>0;}); if(!vl.length){showToast('订单无效');return;} const content=vl.join('\n'); const date=document.getElementById('filterDate')?.value||getTodayCST(); const total=computeCurrentOrderTotal(); await saveOrderRecordToIDB(content,user,date,total); processCurrentOrder(content,user,true,date); addOperationLog('save_order', content, currentRegion, user, total); const si=document.querySelector('.source-order-input'); if(si)si.value=''; if(resultEl)resultEl.innerHTML=''; updateOrderTotalDisplay(); document.querySelectorAll('.category-btn').forEach(b=>b.classList.remove('active')); calculateStorageUsage(); showStorageDrawerTemporary(5000); renderSmartDecision(); updateSingleBetDisplay(); clearStatsCache(); }
+    async function saveOrder(){ const user=document.getElementById('orderUserSelect')?.value; if(!user){showToast('请选择用户');return;} const resultEl=document.getElementById('orderResult'); const rawText=resultEl?resultEl.innerText:''; const inputText=document.querySelector('.source-order-input')?.value.trim(); const textToUse=rawText||inputText; if(!textToUse)return; const vl=textToUse.split('\n').filter(l=>{const m=l.match(/各数\s+(\d+)/);return m&&parseInt(m[1])>0;}); if(!vl.length){showToast('订单无效');return;} const content=vl.join('\n'); const date=document.getElementById('filterDate')?.value||getTodayCST(); const total=computeCurrentOrderTotal(); await saveOrderRecordToIDB(content,user,date,total); processCurrentOrder(content,user,true,date); addOperationLog('save_order', content, currentRegion, user, total); const si=document.querySelector('.source-order-input'); if(si)si.value=''; if(resultEl)resultEl.innerHTML=''; updateOrderTotalDisplay(); document.querySelectorAll('.category-btn').forEach(b=>b.classList.remove('active')); calculateStorageUsage(); showStorageDrawerTemporary(5000); renderSmartDecision(); updateSingleBetDisplay(); clearStatsCache(); }
 async function saveReportOrder(){ const user=document.getElementById('orderUserSelect')?.value; if(!user){showToast('请选择用户');return;} const resultEl=document.getElementById('orderResult'); const rawText=resultEl?resultEl.innerText:''; const inputText=document.querySelector('.source-order-input')?.value.trim(); const textToUse=rawText||inputText; if(!textToUse)return; const vl=textToUse.split('\n').filter(l=>{const m=l.match(/各数\s+(\d+)/);return m&&parseInt(m[1])>0;}); if(!vl.length){showToast('订单无效');return;} const content=vl.join('\n'); const date=document.getElementById('filterDate')?.value||getTodayCST(); const total=computeCurrentOrderTotal(); await saveReportOrderRecordToIDB(content,user,date,total); processCurrentOrder(content,user,false,date); addOperationLog('save_report', content, currentRegion, user, total); const si=document.querySelector('.source-order-input'); if(si)si.value=''; if(resultEl)resultEl.innerHTML=''; updateOrderTotalDisplay(); document.querySelectorAll('.category-btn').forEach(b=>b.classList.remove('active')); calculateStorageUsage(); showStorageDrawerTemporary(5000); renderSmartDecision(); clearStatsCache(); }
 function countItemsInLine(line,cfg,keys){ const m=line.match(/([\u4e00-\u9fa5\d\-]+)\s+各数\s+(\d+)/); if(!m)return{numbers:[],zodiacs:[],amount:0}; let cont=m[1]; const amt=parseInt(m[2])||0; const items=cont.split('-').map(i=>i.trim()).filter(i=>i); const nums=[],zods=[]; items.forEach(item=>{ if(/^\d+$/.test(item))nums.push(item.padStart(2,'0')); else if(cfg.shengxiaoAttr[item]){ const zs=cfg.shengxiaoAttr[item]||[]; zs.forEach(z=>zods.push(z)); } else if(cfg.zodiac[item])zods.push(item); else if(cfg.toushuDanshuang&&cfg.toushuDanshuang[item]){ (cfg.toushuDanshuang[item]||[]).forEach(n=>nums.push(n.padStart(2,'0'))); } else { const nl=getNumberListForCategory(item,cfg); if(nl&&nl.length>0)nl.forEach(n=>nums.push(n.padStart(2,'0'))); } }); return{numbers:nums,zodiacs:zods,amount:amt}; }
 function processCurrentOrder(input,user,isNormal,date=null){ const cfg=getAllConfigData(); const keys=getAllValidCategories(cfg); const lines=input.split('\n').filter(l=>l.trim()); if(!userBetData[user])userBetData[user]={}; const curZod=localStorage.getItem('selectedStartZodiac')||'马'; lines.forEach(line=>{ const{numbers,zodiacs,amount}=countItemsInLine(line,cfg,keys); const nMin=parseInt(document.getElementById('numAmountMin')?.value)||1,nMax=parseInt(document.getElementById('numAmountMax')?.value)||50000; const zMin=parseInt(document.getElementById('zodiacAmountMin')?.value)||1,zMax=parseInt(document.getElementById('zodiacAmountMax')?.value)||50000; if(isNormal){ if(zodiacs.length>0){ zodiacs.forEach(z=>{ const w=z===curZod?5:4; zodiacWeightedTotal+=amount*w; }); }else if(numbers.length>0){ numberOrderTotal+=numbers.length*amount; } } numbers.forEach(num=>{ if(isNormal){ userBetData[user][num]=(userBetData[user][num]||0)+amount; tableBetData[num]=(tableBetData[num]||0)+amount; reportBetData[num]=(reportBetData[num]||0)+amount; numberCount[num]=(numberCount[num]||0)+1; if(amount>=nMin&&amount<=nMax)numberAmountCount[num]=(numberAmountCount[num]||0)+1; originalOrderAmount[num]=(originalOrderAmount[num]||0)+amount; if(zodiacs.length === 0) directOrderAmount[num] = (directOrderAmount[num]||0) + amount; } else { userBetData[user][num]=(userBetData[user][num]||0)-amount; reportBetData[num]=(reportBetData[num]||0)-amount; reportAmountData[num]=(reportAmountData[num]||0)+amount; if(zodiacs.length === 0) directReportAmount[num] = (directReportAmount[num]||0) + amount; } }); if(isNormal){ zodiacs.forEach(z=>{ zodiacCount[z]=(zodiacCount[z]||0)+1; zodiacDirectAmount[z]=(zodiacDirectAmount[z]||0)+amount*(cfg.zodiac[z]?.length||0); if(amount>=zMin&&amount<=zMax){zodiacAmountCount[z]=(zodiacAmountCount[z]||0)+1; zodiacFilteredAmount[z]=(zodiacFilteredAmount[z]||0)+amount*(cfg.zodiac[z]?.length||0);} (cfg.zodiac[z]||[]).forEach(n=>{ const num=n.padStart(2,'0'); userBetData[user][num]=(userBetData[user][num]||0)+amount; tableBetData[num]=(tableBetData[num]||0)+amount; reportBetData[num]=(reportBetData[num]||0)+amount; originalOrderAmount[num]=(originalOrderAmount[num]||0)+amount; }); }); } else { zodiacs.forEach(z=>{ zodiacReportAmount[z]=(zodiacReportAmount[z]||0)+amount*(cfg.zodiac[z]?.length||0); if(amount>=zMin&&amount<=zMax){ zodiacFilteredReportAmount[z]=(zodiacFilteredReportAmount[z]||0)+amount*(cfg.zodiac[z]?.length||0);} (cfg.zodiac[z]||[]).forEach(n=>{ const num=n.padStart(2,'0'); userBetData[user][num]=(userBetData[user][num]||0)-amount; reportBetData[num]=(reportBetData[num]||0)-amount; reportAmountData[num]=(reportAmountData[num]||0)+amount; }); }); } }); generateRiskTable(); generateReportTable(); renderFrequencyCards(); renderAmountFrequencyCards(); renderReportAmountTable(); renderOriginalAmountTable(); updateReportAmountTotal(); updateAmountDisplays(); }
@@ -1430,7 +1524,7 @@ async function updateTableFromRecords(){
     calculateStorageUsage(); renderSmartDecision(); updateSingleBetDisplay();
   }catch(e){}
 }
-  function updateDirectAmountTotals() {
+    function updateDirectAmountTotals() {
   let orderTotal = 0; let reportTotal = 0;
   for (let n in directOrderAmount) { orderTotal += directOrderAmount[n] || 0; }
   for (let n in directReportAmount) { reportTotal += directReportAmount[n] || 0; }
@@ -1488,7 +1582,69 @@ function orderContainsTarget(content,targetNum,cfg){ if(!targetNum)return true; 
 function getSpecialAmountFromOrder(content, prizeNum, cfg) { if (!prizeNum) return 0; const targetNum = prizeNum.padStart(2, '0'); const lines = content.split('\n'); let total = 0; for (const line of lines) { const match = line.match(/^(.+?)\s+各数\s+(\d+)$/); if (!match) continue; const tokensPart = match[1]; const amount = parseInt(match[2]) || 0; const tokens = tokensPart.split('-').map(t => t.trim()).filter(t => t); let hit = false; for (const token of tokens) { if (isTokenMatching(token, targetNum, cfg)) { hit = true; break; } } if (hit) { total += amount; } } return total; }
 function formatTimestampToCST(iso){ const d=new Date(iso); return new Intl.DateTimeFormat('zh-CN',{year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false,timeZone:'Asia/Shanghai'}).format(d); }
 function getUserColor(u){ let h=0; for(let i=0;i<u.length;i++)h=u.charCodeAt(i)+((h<<5)-h); const hue=(h%360+360)%360; return`hsl(${hue},70%,45%)`; }
-function renderOrderStats(allOrders, allReports, filterUser, prizeNum) { const container = document.getElementById('orderStatsContainer'); if (!container) return; const mul = parseFloat(document.getElementById('multipleVal')?.value) || 1; const rr = parseFloat(document.getElementById('rebateRate')?.value) || 0; const cfg = getAllConfigData(); let totalAmountSum = 0; allOrders.forEach(it => { totalAmountSum += it.totalAmount || 0; }); let reportTotalAmount = 0; allReports.forEach(it => { reportTotalAmount += it.totalAmount || 0; }); let totalSpecial = 0, reportSpecial = 0, hitCount = 0; if (prizeNum) { const num = prizeNum.padStart(2, '0'); if (filterUser === 'all' || !filterUser) { totalSpecial = tableBetData[num] || 0; } else { const userData = userBetData[filterUser] || {}; totalSpecial = userData[num] || 0; } allOrders.forEach(it => { if (orderContainsTarget(it.content, prizeNum, cfg)) hitCount++; }); allReports.forEach(it => { reportSpecial += getSpecialAmountFromOrder(it.content, prizeNum, cfg); }); } const totalProfit = totalAmountSum - totalSpecial * mul - totalAmountSum * (rr / 100); const reportProfit = reportTotalAmount - reportSpecial * mul - reportTotalAmount * (rr / 100); const netProfit = totalProfit - reportProfit; const showStats = prizeNum && prizeNum.trim() !== ''; let html = '<div class="stats-block">'; html += '<div class="stats-row">'; if (totalAmountSum > 0) { html += `<span class="stat-col"><span class="slabel">总额:</span><span class="stat-val-amount">${totalAmountSum}</span></span>`; } if (showStats) { html += `<span class="stat-col"><span class="slabel">总特:</span><span class="stat-val-special">${totalSpecial}</span></span>`; const tp = Math.round(totalProfit); const tlabel = tp >= 0 ? '总盈' : '总亏'; const tcls = tp >= 0 ? 'stat-val-profit' : 'stat-val-loss'; html += `<span class="stat-col"><span class="slabel">${tlabel}:</span><span class="${tcls}">${tp}</span></span>`; html += `<span class="stat-col"><span class="slabel">中:</span><span class="stat-val-count">${hitCount}条</span></span>`; } html += '</div><div class="stats-row">'; if (reportTotalAmount > 0) { html += `<span class="stat-col"><span class="slabel">上报金额:</span><span class="stat-val-amount">${reportTotalAmount}</span></span>`; } if (showStats) { html += `<span class="stat-col"><span class="slabel">上报特:</span><span class="stat-val-special">${reportSpecial}</span></span>`; const rp = Math.round(reportProfit); const rlabel = rp >= 0 ? '报盈' : '报亏'; const rcls = rp >= 0 ? 'stat-val-profit' : 'stat-val-loss'; html += `<span class="stat-col"><span class="slabel">${rlabel}:</span><span class="${rcls}">${rp}</span></span>`; const np = Math.round(netProfit); const nlabel = np >= 0 ? '盈' : '亏'; const ncls = np >= 0 ? 'stat-val-profit' : 'stat-val-loss'; html += `<span class="stat-col"><span class="slabel">${nlabel}:</span><span class="${ncls}">${np}</span></span>`; } html += '</div></div>'; container.innerHTML = html; }
+    function renderOrderStats(allOrders, allReports, filterUser, prizeNum) {
+  const container = document.getElementById('orderStatsContainer');
+  if (!container) return;
+  const mul = parseFloat(document.getElementById('multipleVal')?.value) || 1;
+  const rr = parseFloat(document.getElementById('rebateRate')?.value) || 0;
+  const cfg = getAllConfigData();
+
+  // 直接从传入的订单列表计算总特码金额，不再依赖全局 tableBetData
+  let totalAmountSum = 0;
+  allOrders.forEach(it => { totalAmountSum += it.totalAmount || 0; });
+
+  let reportTotalAmount = 0;
+  allReports.forEach(it => { reportTotalAmount += it.totalAmount || 0; });
+
+  // 从原始订单重新计算总特码金额
+  let totalSpecial = 0, reportSpecial = 0, hitCount = 0;
+  if (prizeNum) {
+    const num = prizeNum.padStart(2, '0');
+    allOrders.forEach(it => {
+      totalSpecial += getSpecialAmountFromOrder(it.content, prizeNum, cfg);
+      if (orderContainsTarget(it.content, prizeNum, cfg)) hitCount++;
+    });
+    allReports.forEach(it => {
+      reportSpecial += getSpecialAmountFromOrder(it.content, prizeNum, cfg);
+    });
+  }
+
+  const totalProfit = totalAmountSum - totalSpecial * mul - totalAmountSum * (rr / 100);
+  const reportProfit = reportTotalAmount - reportSpecial * mul - reportTotalAmount * (rr / 100);
+  const netProfit = totalProfit - reportProfit;
+  const showStats = prizeNum && prizeNum.trim() !== '';
+
+  let html = '<div class="stats-block">';
+  html += '<div class="stats-row">';
+  if (totalAmountSum > 0) {
+    html += `<span class="stat-col"><span class="slabel">总额:</span><span class="stat-val-amount">${totalAmountSum}</span></span>`;
+  }
+  if (showStats) {
+    html += `<span class="stat-col"><span class="slabel">总特:</span><span class="stat-val-special">${totalSpecial}</span></span>`;
+    const tp = Math.round(totalProfit);
+    const tlabel = tp >= 0 ? '总盈' : '总亏';
+    const tcls = tp >= 0 ? 'stat-val-profit' : 'stat-val-loss';
+    html += `<span class="stat-col"><span class="slabel">${tlabel}:</span><span class="${tcls}">${tp}</span></span>`;
+    html += `<span class="stat-col"><span class="slabel">中:</span><span class="stat-val-count">${hitCount}条</span></span>`;
+  }
+  html += '</div><div class="stats-row">';
+  if (reportTotalAmount > 0) {
+    html += `<span class="stat-col"><span class="slabel">上报金额:</span><span class="stat-val-amount">${reportTotalAmount}</span></span>`;
+  }
+  if (showStats) {
+    html += `<span class="stat-col"><span class="slabel">上报特:</span><span class="stat-val-special">${reportSpecial}</span></span>`;
+    const rp = Math.round(reportProfit);
+    const rlabel = rp >= 0 ? '报盈' : '报亏';
+    const rcls = rp >= 0 ? 'stat-val-profit' : 'stat-val-loss';
+    html += `<span class="stat-col"><span class="slabel">${rlabel}:</span><span class="${rcls}">${rp}</span></span>`;
+    const np = Math.round(netProfit);
+    const nlabel = np >= 0 ? '盈' : '亏';
+    const ncls = np >= 0 ? 'stat-val-profit' : 'stat-val-loss';
+    html += `<span class="stat-col"><span class="slabel">${nlabel}:</span><span class="${ncls}">${np}</span></span>`;
+  }
+  html += '</div></div>';
+  container.innerHTML = html;
+}
 
 function updatePrizeStats(pn) {}
 
