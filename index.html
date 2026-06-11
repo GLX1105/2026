@@ -1581,26 +1581,29 @@ function highlightContent(content,targetNum,cfg){ if(!targetNum)return content; 
 function orderContainsTarget(content,targetNum,cfg){ if(!targetNum)return true; const t=targetNum.padStart(2,'0'); const lines=content.split('\n'); for(const line of lines){ const m=line.match(/^(.+?)\s+各数\s+(\d+)$/); if(!m)continue; const cont=m[1]; const parts=[];let tmp=''; for(const ch of cont){if(ch==='-'||ch===' '){if(tmp)parts.push(tmp);tmp='';}else{tmp+=ch;}} if(tmp)parts.push(tmp); for(const p of parts){if(p!=='-'&&p!==' '&&isTokenMatching(p,targetNum,cfg))return true;} } return false; }
 function formatTimestampToCST(iso){ const d=new Date(iso); return new Intl.DateTimeFormat('zh-CN',{year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false,timeZone:'Asia/Shanghai'}).format(d); }
 function getUserColor(u){ let h=0; for(let i=0;i<u.length;i++)h=u.charCodeAt(i)+((h<<5)-h); const hue=(h%360+360)%360; return`hsl(${hue},70%,45%)`; }
-function renderOrderStats(allOrders, allReports, filterUser, prizeNum) {
+    function renderOrderStats(allOrders, allReports, filterUser, prizeNum) {
   const container = document.getElementById('orderStatsContainer');
   if (!container) return;
   const mul = parseFloat(document.getElementById('multipleVal')?.value) || 1;
   const rr = parseFloat(document.getElementById('rebateRate')?.value) || 0;
   const cfg = getAllConfigData();
 
-  // 直接从传入的订单列表计算总特码金额，不再依赖全局 tableBetData
   let totalAmountSum = 0;
   allOrders.forEach(it => { totalAmountSum += it.totalAmount || 0; });
 
   let reportTotalAmount = 0;
   allReports.forEach(it => { reportTotalAmount += it.totalAmount || 0; });
 
-  // 从原始订单重新计算总特码金额
   let totalSpecial = 0, reportSpecial = 0, hitCount = 0;
   if (prizeNum) {
     const num = prizeNum.padStart(2, '0');
+    if (filterUser === 'all' || !filterUser) {
+      totalSpecial = tableBetData[num] || 0;
+    } else {
+      const userData = userBetData[filterUser] || {};
+      totalSpecial = userData[num] || 0;
+    }
     allOrders.forEach(it => {
-      totalSpecial += getSpecialAmountFromOrder(it.content, prizeNum, cfg);
       if (orderContainsTarget(it.content, prizeNum, cfg)) hitCount++;
     });
     allReports.forEach(it => {
@@ -1643,6 +1646,30 @@ function renderOrderStats(allOrders, allReports, filterUser, prizeNum) {
   }
   html += '</div></div>';
   container.innerHTML = html;
+}
+
+function getSpecialAmountFromOrder(content, prizeNum, cfg) {
+  if (!prizeNum) return 0;
+  const targetNum = prizeNum.padStart(2, '0');
+  const lines = content.split('\n');
+  let total = 0;
+  for (const line of lines) {
+    const match = line.match(/^(.+?)\s+各数\s+(\d+)$/);
+    if (!match) continue;
+    const tokensPart = match[1];
+    const amount = parseInt(match[2]) || 0;
+    const tokens = tokensPart.split('-').map(t => t.trim()).filter(t => t);
+    let hitCount = 0;
+    for (const token of tokens) {
+      if (isTokenMatching(token, targetNum, cfg)) {
+        hitCount++;
+      }
+    }
+    if (hitCount > 0) {
+      total += amount * hitCount;
+    }
+  }
+  return total;
 }
 
 function updatePrizeStats(pn) {}
