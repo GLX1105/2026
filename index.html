@@ -72,7 +72,20 @@ body {background:#f5f7fa;font-size:14px;line-height:1.4;overflow-x:hidden;positi
 select {padding:4px 24px 4px 8px!important;border:1px solid #ccc!important;border-radius:4px!important;font-size:13px!important;background:#fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23333' d='M6 8L1 3h10z'/%3E%3C/svg%3E") no-repeat right 8px center!important;-webkit-appearance:none!important;-moz-appearance:none!important;appearance:none!important;cursor:pointer;margin:0;vertical-align:middle;}
 input[type="number"]::-webkit-inner-spin-button,input[type="number"]::-webkit-outer-spin-button{-webkit-appearance:none;margin:0;}
 input[type="number"]{-moz-appearance:textfield;}
-.navbar{background:linear-gradient(135deg,#2c3e50 0%,#1a252f 100%);padding:10px 20px;display:flex;justify-content:space-between;align-items:center;box-shadow:0 4px 15px rgba(0,0,0,0.15);flex-wrap:wrap;border-bottom:1px solid rgba(255,255,255,0.1);border-radius:0 0 20px 20px;}
+
+/* 导航栏底部细线颜色过渡 */
+.navbar{
+  background:linear-gradient(135deg,#2c3e50 0%,#1a252f 100%);
+  padding:10px 20px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  box-shadow:0 4px 15px rgba(0,0,0,0.15);
+  flex-wrap:wrap;
+  border-bottom:2px solid #e74c3c; /* 默认红色，JS动态修改 */
+  border-radius:0 0 20px 20px;
+  transition: border-bottom-color 0.3s ease;
+}
 .navbar-title{color:#ecf0f1;font-size:22px;font-weight:bold;letter-spacing:1px;text-shadow:0 2px 4px rgba(0,0,0,0.2);}
 .navbar-actions{display:flex;gap:10px;flex-wrap:wrap;}
 .navbar-actions .btn{background:rgba(255,255,255,0.1);backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px);color:#ecf0f1;border:1px solid rgba(255,255,255,0.2);border-radius:25px;padding:8px 18px;font-weight:600;letter-spacing:0.5px;box-shadow:0 4px 10px rgba(0,0,0,0.1);transition:all 0.2s ease;}
@@ -84,6 +97,108 @@ input[type="number"]{-moz-appearance:textfield;}
 .btn-hongkong.region-active{background:#2e86c1!important;box-shadow:0 0 12px rgba(46,134,193,0.7);border-color:#7fb3d8!important;}
 .btn-yuegang{background:#27ae60!important;border-color:#2ecc71!important;color:#fff!important;font-weight:600;letter-spacing:0.5px;box-shadow:0 2px 8px rgba(39,174,96,0.4);}
 .btn-yuegang.region-active{background:#2ecc71!important;box-shadow:0 0 12px rgba(46,204,113,0.7);border-color:#58d68d!important;}
+
+/* 五颜六色跑马灯灯珠旋转动画 */
+@keyframes marquee-lights {
+  0%   { box-shadow:
+          0px -8px 0 2px rgba(231,76,60,1),     /* 上方 - 红 */
+          6px -6px 0 2px rgba(46,134,193,0.8),   /* 右上 - 蓝 */
+          8px 0px 0 2px rgba(46,204,113,0.6),    /* 右 - 绿 */
+          6px 6px 0 2px rgba(241,196,15,0.4),    /* 右下 - 金 */
+          0px 8px 0 2px rgba(155,89,182,0.2),    /* 下 - 紫 */
+          -6px 6px 0 2px rgba(231,76,60,0.1),    /* 左下 */
+          -8px 0px 0 2px rgba(46,134,193,0.1),   /* 左 */
+          -6px -6px 0 2px rgba(46,204,113,0.1);  /* 左上 */
+  }
+  12.5% { box-shadow:
+          0px -8px 0 2px rgba(46,204,113,0.1),
+          6px -6px 0 2px rgba(231,76,60,1),
+          8px 0px 0 2px rgba(46,134,193,0.8),
+          6px 6px 0 2px rgba(46,204,113,0.6),
+          0px 8px 0 2px rgba(241,196,15,0.4),
+          -6px 6px 0 2px rgba(155,89,182,0.2),
+          -8px 0px 0 2px rgba(231,76,60,0.1),
+          -6px -6px 0 2px rgba(46,134,193,0.1);
+  }
+  25%  { box-shadow:
+          0px -8px 0 2px rgba(46,134,193,0.1),
+          6px -6px 0 2px rgba(46,204,113,0.1),
+          6px -6px 0 2px rgba(231,76,60,1),
+          8px 0px 0 2px rgba(46,134,193,0.8),
+          6px 6px 0 2px rgba(46,204,113,0.6),
+          0px 8px 0 2px rgba(241,196,15,0.4),
+          -6px 6px 0 2px rgba(155,89,182,0.2),
+          -8px 0px 0 2px rgba(231,76,60,0.1);
+  }
+  37.5% { box-shadow:
+          0px -8px 0 2px rgba(155,89,182,0.1),
+          6px -6px 0 2px rgba(46,134,193,0.1),
+          8px 0px 0 2px rgba(46,204,113,0.1),
+          6px 6px 0 2px rgba(231,76,60,1),
+          0px 8px 0 2px rgba(46,134,193,0.8),
+          -6px 6px 0 2px rgba(46,204,113,0.6),
+          -8px 0px 0 2px rgba(241,196,15,0.4),
+          -6px -6px 0 2px rgba(155,89,182,0.2);
+  }
+  50%  { box-shadow:
+          0px -8px 0 2px rgba(241,196,15,0.2),
+          6px -6px 0 2px rgba(155,89,182,0.1),
+          8px 0px 0 2px rgba(46,134,193,0.1),
+          6px 6px 0 2px rgba(46,204,113,0.1),
+          0px 8px 0 2px rgba(231,76,60,1),
+          -6px 6px 0 2px rgba(46,134,193,0.8),
+          -8px 0px 0 2px rgba(46,204,113,0.6),
+          -6px -6px 0 2px rgba(241,196,15,0.4);
+  }
+  62.5% { box-shadow:
+          0px -8px 0 2px rgba(46,204,113,0.4),
+          6px -6px 0 2px rgba(241,196,15,0.2),
+          8px 0px 0 2px rgba(155,89,182,0.1),
+          6px 6px 0 2px rgba(46,134,193,0.1),
+          0px 8px 0 2px rgba(46,204,113,0.1),
+          -6px 6px 0 2px rgba(231,76,60,1),
+          -8px 0px 0 2px rgba(46,134,193,0.8),
+          -6px -6px 0 2px rgba(46,204,113,0.6);
+  }
+  75%  { box-shadow:
+          0px -8px 0 2px rgba(46,134,193,0.6),
+          6px -6px 0 2px rgba(46,204,113,0.4),
+          8px 0px 0 2px rgba(241,196,15,0.2),
+          6px 6px 0 2px rgba(155,89,182,0.1),
+          0px 8px 0 2px rgba(46,134,193,0.1),
+          -6px 6px 0 2px rgba(46,204,113,0.1),
+          -8px 0px 0 2px rgba(231,76,60,1),
+          -6px -6px 0 2px rgba(46,134,193,0.8);
+  }
+  87.5% { box-shadow:
+          0px -8px 0 2px rgba(46,134,193,0.8),
+          6px -6px 0 2px rgba(46,134,193,0.6),
+          8px 0px 0 2px rgba(46,204,113,0.4),
+          6px 6px 0 2px rgba(241,196,15,0.2),
+          0px 8px 0 2px rgba(155,89,182,0.1),
+          -6px 6px 0 2px rgba(46,134,193,0.1),
+          -8px 0px 0 2px rgba(46,204,113,0.1),
+          -6px -6px 0 2px rgba(231,76,60,1);
+  }
+  100% { box-shadow:
+          0px -8px 0 2px rgba(231,76,60,1),
+          6px -6px 0 2px rgba(46,134,193,0.8),
+          8px 0px 0 2px rgba(46,204,113,0.6),
+          6px 6px 0 2px rgba(241,196,15,0.4),
+          0px 8px 0 2px rgba(155,89,182,0.2),
+          -6px 6px 0 2px rgba(231,76,60,0.1),
+          -8px 0px 0 2px rgba(46,134,193,0.1),
+          -6px -6px 0 2px rgba(46,204,113,0.1);
+  }
+}
+
+/* 只给当前选中按钮加跑马灯，保留高亮背景色 */
+.btn-macau.region-active,
+.btn-hongkong.region-active,
+.btn-yuegang.region-active {
+  animation: marquee-lights 1.5s linear infinite;
+}
+
 .btn-recognize{background:#27ae60!important;border-color:#2ecc71!important;color:#fff!important;}
 .btn-recognize:hover{background:#2ecc71!important;}
 .container{width:100%;margin:0;padding:10px 10px;display:flex;flex-direction:row;gap:15px;align-items:flex-start;}
@@ -810,10 +925,23 @@ document.addEventListener('click', function(e) {
   }
 });
 
-// ===== 地区切换核心逻辑 =====
+// ===== 地区切换核心逻辑（含导航栏底部细线颜色切换） =====
 let currentRegion = localStorage.getItem('currentRegion') || 'macau';
 function getCurrentRegion() { return currentRegion; }
-function setCurrentRegion(region) { currentRegion = region; localStorage.setItem('currentRegion', region); document.getElementById('btnMacau').classList.toggle('region-active', region === 'macau'); document.getElementById('btnHongkong').classList.toggle('region-active', region === 'hongkong'); document.getElementById('btnYuegang').classList.toggle('region-active', region === 'yuegang'); }
+function setCurrentRegion(region) {
+  currentRegion = region;
+  localStorage.setItem('currentRegion', region);
+  document.getElementById('btnMacau').classList.toggle('region-active', region === 'macau');
+  document.getElementById('btnHongkong').classList.toggle('region-active', region === 'hongkong');
+  document.getElementById('btnYuegang').classList.toggle('region-active', region === 'yuegang');
+  // 导航栏底部细线颜色跟随地区
+  const navbar = document.getElementById('mainNavbar');
+  if (navbar) {
+    if (region === 'macau') navbar.style.borderBottomColor = '#e74c3c';
+    else if (region === 'hongkong') navbar.style.borderBottomColor = '#3498db';
+    else if (region === 'yuegang') navbar.style.borderBottomColor = '#27ae60';
+  }
+}
 
 async function switchRegion(region) {
   if (region === currentRegion) return;
@@ -1301,21 +1429,39 @@ async function pasteComboOrder() {
   } catch(err) { showToast('无法访问剪贴板'); }
 }
 
-// ===== 截图全部（修改：截图前解除高度限制，截图后恢复） =====
+// ===== 截图全部（修改：截图前遍历所有卡片内部滚动容器，解除限制后截图） =====
 async function screenshotLianxiaoStatsAll() {
   const container = document.getElementById('lianxiaoStatsContainer');
   if (!container) { showToast('无内容'); return; }
   try {
-    // 保存原始样式
+    // 保存并解除 container 自身限制
     const origOverflow = container.style.overflow;
     const origMaxHeight = container.style.maxHeight;
-    // 临时解除滚动限制，让内容全部展开
     container.style.overflow = 'visible';
     container.style.maxHeight = 'none';
+
+    // 遍历所有卡片内部的滚动容器，解除限制
+    const scrollDivs = container.querySelectorAll('div[style*="max-height:400px"]');
+    const savedStyles = [];
+    scrollDivs.forEach(div => {
+      savedStyles.push({ div, overflow: div.style.overflow, maxHeight: div.style.maxHeight });
+      div.style.overflow = 'visible';
+      div.style.maxHeight = 'none';
+    });
+
+    // 强制重排，确保样式生效
+    container.offsetHeight;
+
     const canvas = await html2canvas(container, { backgroundColor: '#ffffff', scale: 2, logging: false });
-    // 恢复样式
+
+    // 恢复所有样式
     container.style.overflow = origOverflow;
     container.style.maxHeight = origMaxHeight;
+    savedStyles.forEach(item => {
+      item.div.style.overflow = item.overflow;
+      item.div.style.maxHeight = item.maxHeight;
+    });
+
     canvas.toBlob(async blob => {
       if (!blob) { showToast('生成图片失败'); return; }
       try {
@@ -1327,11 +1473,37 @@ async function screenshotLianxiaoStatsAll() {
   } catch(e) { showToast('截图失败'); }
 }
 
+// ===== 截图单个卡片（修复：克隆节点离屏截图，避免残留/闪烁） =====
 async function screenshotSingleComboCard(cardId) {
   const card = document.getElementById(cardId);
   if (!card) { showToast('卡片不存在'); return; }
   try {
-    const canvas = await html2canvas(card, { backgroundColor: '#ffffff', scale: 2, logging: false });
+    // 克隆卡片节点（深拷贝）
+    const clone = card.cloneNode(true);
+    // 设置克隆节点样式：绝对定位到屏幕外，不可见但可渲染
+    clone.style.position = 'absolute';
+    clone.style.left = '-9999px';
+    clone.style.top = '0';
+    clone.style.width = card.offsetWidth + 'px';
+    clone.style.display = 'block';
+    clone.style.visibility = 'visible';
+    document.body.appendChild(clone);
+
+    // 解除克隆节点内部的滚动限制
+    const scrollDiv = clone.querySelector('div[style*="max-height:400px"]');
+    if (scrollDiv) {
+      scrollDiv.style.overflow = 'visible';
+      scrollDiv.style.maxHeight = 'none';
+    }
+
+    // 强制重排
+    clone.offsetHeight;
+
+    const canvas = await html2canvas(clone, { backgroundColor: '#ffffff', scale: 2, logging: false });
+
+    // 删除克隆节点
+    document.body.removeChild(clone);
+
     canvas.toBlob(async blob => {
       if (!blob) { showToast('生成图片失败'); return; }
       try {
@@ -1732,7 +1904,7 @@ async function saveComboOrder() {
   updateComboTotalDisplay();
   showToast('已保存连肖订单');
 }
-   // ===== 连肖统计函数（卡片内容超250px滚动，汇总行固定底部，显示去括号，总金额蓝色） =====
+    // ===== 连肖统计函数（卡片内容超400px滚动，汇总行固定底部，显示去括号，总金额蓝色） =====
 async function refreshLianxiaoStats() {
   const container = document.getElementById('lianxiaoStatsContainer');
   if (!container) return;
@@ -1918,7 +2090,8 @@ async function refreshLianxiaoStats() {
     grandPL += cardPL;
     const roundedCardPL = Math.round(cardPL);
 
-    cardHtml += `<div style="max-height:250px;overflow-y:auto;">${tablesHtml}</div>`;
+    // 滚动容器 max-height 调为 400px
+    cardHtml += `<div style="max-height:400px;overflow-y:auto;">${tablesHtml}</div>`;
     cardHtml += `<div style="border-top:1px solid #ddd;margin-top:4px;padding-top:4px;font-size:11px;text-align:center;">小计：${totalGroups}组 金额：${totalAmount}`;
     if (drawZodiacs.length > 0 || drawNumbers.length > 0) {
       cardHtml += ` 盈亏：<span style="color:${roundedCardPL>0?'#27ae60':(roundedCardPL<0?'#e74c3c':'')};">${roundedCardPL>0?roundedCardPL:(roundedCardPL<0?roundedCardPL:'')}</span>`;
@@ -1930,6 +2103,7 @@ async function refreshLianxiaoStats() {
   cardsArray.sort((a, b) => a.groups - b.groups);
   container.innerHTML = cardsArray.map(c => c.html).join('') || '<div style="color:#666;text-align:center;padding:10px;">暂无连肖数据</div>';
   const roundedGrandPL = Math.round(grandPL);
+  // 总下单金额数值改为蓝色
   let totalHtml = `<span style="color:#0000ff;">总下单金额：</span><span style="color:#0000ff;">${grandTotal}</span>`;
   if (drawZodiacs.length > 0 || drawNumbers.length > 0) {
     totalHtml += ` &nbsp; <span style="color:#0000ff;">总盈亏：</span><span style="color:${roundedGrandPL>0?'#27ae60':(roundedGrandPL<0?'#e74c3c':'')};">${roundedGrandPL>0?roundedGrandPL:(roundedGrandPL<0?roundedGrandPL:'')}</span>`;
@@ -1982,37 +2156,6 @@ async function saveComboOrderRecordToIDB(content, user, date, totalAmount = 0, c
   for (let attempt = 0; attempt < 3; attempt++) { try { await new Promise((resolve, reject) => { const tx = db.transaction([COMBO_STORE_NAME], 'readwrite'); const store = tx.objectStore(COMBO_STORE_NAME); const req = store.add(record); req.onsuccess = () => resolve(true); req.onerror = () => reject(req.error); tx.oncomplete = () => resolve(true); tx.onerror = () => reject(tx.error); }); success = true; break; } catch (e) { if (attempt < 2) await new Promise(r => setTimeout(r, 300)); } }
   if (!success) { showToast('保存失败，请重试'); return false; }
   return true;
-}
-
-// ===== 截图单个卡片（修复：截图前解除滚动限制，截图后恢复） =====
-async function screenshotSingleComboCard(cardId) {
-  const card = document.getElementById(cardId);
-  if (!card) { showToast('卡片不存在'); return; }
-  try {
-    // 找到卡片内部的滚动容器并解除限制
-    const scrollDiv = card.querySelector('div[style*="max-height:250px"]');
-    let origOverflow = '', origMaxHeight = '';
-    if (scrollDiv) {
-      origOverflow = scrollDiv.style.overflow;
-      origMaxHeight = scrollDiv.style.maxHeight;
-      scrollDiv.style.overflow = 'visible';
-      scrollDiv.style.maxHeight = 'none';
-    }
-    const canvas = await html2canvas(card, { backgroundColor: '#ffffff', scale: 2, logging: false });
-    // 恢复样式
-    if (scrollDiv) {
-      scrollDiv.style.overflow = origOverflow;
-      scrollDiv.style.maxHeight = origMaxHeight;
-    }
-    canvas.toBlob(async blob => {
-      if (!blob) { showToast('生成图片失败'); return; }
-      try {
-        const item = new ClipboardItem({ 'image/png': blob });
-        await navigator.clipboard.write([item]);
-        showToast('截图已复制');
-      } catch(e) { showToast('复制失败'); }
-    }, 'image/png');
-  } catch(e) { showToast('截图失败'); }
 }
     // ===== 操作日志函数 =====
 async function addOperationLog(action, detail, regionOverride = null, orderUser = null, orderTotal = 0) {
