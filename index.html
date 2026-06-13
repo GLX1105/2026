@@ -98,105 +98,10 @@ input[type="number"]{-moz-appearance:textfield;}
 .btn-yuegang{background:#27ae60!important;border-color:#2ecc71!important;color:#fff!important;font-weight:600;letter-spacing:0.5px;box-shadow:0 2px 8px rgba(39,174,96,0.4);}
 .btn-yuegang.region-active{background:#2ecc71!important;box-shadow:0 0 12px rgba(46,204,113,0.7);border-color:#58d68d!important;}
 
-/* 五颜六色跑马灯灯珠旋转动画 */
-@keyframes marquee-lights {
-  0%   { box-shadow:
-          0px -8px 0 2px rgba(231,76,60,1),     /* 上方 - 红 */
-          6px -6px 0 2px rgba(46,134,193,0.8),   /* 右上 - 蓝 */
-          8px 0px 0 2px rgba(46,204,113,0.6),    /* 右 - 绿 */
-          6px 6px 0 2px rgba(241,196,15,0.4),    /* 右下 - 金 */
-          0px 8px 0 2px rgba(155,89,182,0.2),    /* 下 - 紫 */
-          -6px 6px 0 2px rgba(231,76,60,0.1),    /* 左下 */
-          -8px 0px 0 2px rgba(46,134,193,0.1),   /* 左 */
-          -6px -6px 0 2px rgba(46,204,113,0.1);  /* 左上 */
-  }
-  12.5% { box-shadow:
-          0px -8px 0 2px rgba(46,204,113,0.1),
-          6px -6px 0 2px rgba(231,76,60,1),
-          8px 0px 0 2px rgba(46,134,193,0.8),
-          6px 6px 0 2px rgba(46,204,113,0.6),
-          0px 8px 0 2px rgba(241,196,15,0.4),
-          -6px 6px 0 2px rgba(155,89,182,0.2),
-          -8px 0px 0 2px rgba(231,76,60,0.1),
-          -6px -6px 0 2px rgba(46,134,193,0.1);
-  }
-  25%  { box-shadow:
-          0px -8px 0 2px rgba(46,134,193,0.1),
-          6px -6px 0 2px rgba(46,204,113,0.1),
-          6px -6px 0 2px rgba(231,76,60,1),
-          8px 0px 0 2px rgba(46,134,193,0.8),
-          6px 6px 0 2px rgba(46,204,113,0.6),
-          0px 8px 0 2px rgba(241,196,15,0.4),
-          -6px 6px 0 2px rgba(155,89,182,0.2),
-          -8px 0px 0 2px rgba(231,76,60,0.1);
-  }
-  37.5% { box-shadow:
-          0px -8px 0 2px rgba(155,89,182,0.1),
-          6px -6px 0 2px rgba(46,134,193,0.1),
-          8px 0px 0 2px rgba(46,204,113,0.1),
-          6px 6px 0 2px rgba(231,76,60,1),
-          0px 8px 0 2px rgba(46,134,193,0.8),
-          -6px 6px 0 2px rgba(46,204,113,0.6),
-          -8px 0px 0 2px rgba(241,196,15,0.4),
-          -6px -6px 0 2px rgba(155,89,182,0.2);
-  }
-  50%  { box-shadow:
-          0px -8px 0 2px rgba(241,196,15,0.2),
-          6px -6px 0 2px rgba(155,89,182,0.1),
-          8px 0px 0 2px rgba(46,134,193,0.1),
-          6px 6px 0 2px rgba(46,204,113,0.1),
-          0px 8px 0 2px rgba(231,76,60,1),
-          -6px 6px 0 2px rgba(46,134,193,0.8),
-          -8px 0px 0 2px rgba(46,204,113,0.6),
-          -6px -6px 0 2px rgba(241,196,15,0.4);
-  }
-  62.5% { box-shadow:
-          0px -8px 0 2px rgba(46,204,113,0.4),
-          6px -6px 0 2px rgba(241,196,15,0.2),
-          8px 0px 0 2px rgba(155,89,182,0.1),
-          6px 6px 0 2px rgba(46,134,193,0.1),
-          0px 8px 0 2px rgba(46,204,113,0.1),
-          -6px 6px 0 2px rgba(231,76,60,1),
-          -8px 0px 0 2px rgba(46,134,193,0.8),
-          -6px -6px 0 2px rgba(46,204,113,0.6);
-  }
-  75%  { box-shadow:
-          0px -8px 0 2px rgba(46,134,193,0.6),
-          6px -6px 0 2px rgba(46,204,113,0.4),
-          8px 0px 0 2px rgba(241,196,15,0.2),
-          6px 6px 0 2px rgba(155,89,182,0.1),
-          0px 8px 0 2px rgba(46,134,193,0.1),
-          -6px 6px 0 2px rgba(46,204,113,0.1),
-          -8px 0px 0 2px rgba(231,76,60,1),
-          -6px -6px 0 2px rgba(46,134,193,0.8);
-  }
-  87.5% { box-shadow:
-          0px -8px 0 2px rgba(46,134,193,0.8),
-          6px -6px 0 2px rgba(46,134,193,0.6),
-          8px 0px 0 2px rgba(46,204,113,0.4),
-          6px 6px 0 2px rgba(241,196,15,0.2),
-          0px 8px 0 2px rgba(155,89,182,0.1),
-          -6px 6px 0 2px rgba(46,134,193,0.1),
-          -8px 0px 0 2px rgba(46,204,113,0.1),
-          -6px -6px 0 2px rgba(231,76,60,1);
-  }
-  100% { box-shadow:
-          0px -8px 0 2px rgba(231,76,60,1),
-          6px -6px 0 2px rgba(46,134,193,0.8),
-          8px 0px 0 2px rgba(46,204,113,0.6),
-          6px 6px 0 2px rgba(241,196,15,0.4),
-          0px 8px 0 2px rgba(155,89,182,0.2),
-          -6px 6px 0 2px rgba(231,76,60,0.1),
-          -8px 0px 0 2px rgba(46,134,193,0.1),
-          -6px -6px 0 2px rgba(46,204,113,0.1);
-  }
-}
-
-/* 只给当前选中按钮加跑马灯，保留高亮背景色 */
-.btn-macau.region-active,
-.btn-hongkong.region-active,
-.btn-yuegang.region-active {
-  animation: marquee-lights 1.5s linear infinite;
+/* ── 呼吸灯动画 ── */
+@keyframes breathe {
+    from { opacity: 0.15; }
+    to   { opacity: 1; }
 }
 
 .btn-recognize{background:#27ae60!important;border-color:#2ecc71!important;color:#fff!important;}
@@ -204,8 +109,24 @@ input[type="number"]{-moz-appearance:textfield;}
 .container{width:100%;margin:0;padding:10px 10px;display:flex;flex-direction:row;gap:15px;align-items:flex-start;}
 .recognize-wrap{flex:1;min-width:0;display:flex;flex-direction:column;gap:15px;}
 .risk-report-area{flex:0 0 420px;position:relative;top:auto;}
-.card{background:#fff;border:1px solid #eee;border-radius:14px;padding:15px;box-shadow:0 4px 12px rgba(0,0,0,0.08);transition:all 0.25s ease;}
+.card{background:#fff;border:1px solid #eee;border-radius:14px;padding:15px;box-shadow:0 4px 12px rgba(0,0,0,0.08);transition:all 0.25s ease;position:relative;}
 .card:hover{transform:translateY(-2px);box-shadow:0 8px 20px rgba(0,0,0,0.12);}
+
+/* 卡片内部呼吸灯细线 */
+.card::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    pointer-events: none;
+    border: 2px solid #ccc;
+    animation: breathe 1s ease-in-out infinite alternate;
+    transition: border-color 0.3s ease;
+}
+body[data-region="macau"] .card::after { border-color: #e74c3c; }
+body[data-region="hongkong"] .card::after { border-color: #3498db; }
+body[data-region="yuegang"] .card::after { border-color: #27ae60; }
+
 .card-title{font-size:16px;font-weight:bold;color:#333;margin-bottom:12px;padding:10px 12px 8px;border-bottom:2px solid #e0e0e0;display:flex;align-items:center;flex-wrap:wrap;gap:6px;background-color:#e3f2fd;border-radius:10px 10px 0 0;overflow:visible;}
 .year-zodiac-area{display:flex;align-items:center;gap:6px;font-size:13px;font-weight:normal;}
 .year-zodiac-area select{padding:3px 6px;border-radius:4px;border:1px solid #ccc;font-size:13px;background:#fff;}
@@ -255,7 +176,11 @@ td{border:1px solid #ddd;padding:5px 6px;text-align:center;white-space:nowrap;}
 .green-text{color:#008000!important;font-weight:bold;}
 #riskTable th:nth-child(5),#riskTable td:nth-child(5),#reportTable th:nth-child(5),#reportTable td:nth-child(5){width:50px;text-align:center;}
 tr.selected-row{background-color:#dceeff!important;font-weight:bold;box-shadow:inset 0 0 5px rgba(52,152,219,0.5);}
-.floating-window{position:fixed;background:rgba(255,255,255,0.9);backdrop-filter:blur(10px);border-radius:16px;box-shadow:0 20px 40px rgba(0,0,0,0.3);border:1px solid rgba(255,255,255,0.5);display:flex;flex-direction:column;resize:both;overflow:auto;min-width:320px;min-height:250px;z-index:2000;transition:none;}
+.floating-window{position:fixed;background:rgba(255,255,255,0.9);backdrop-filter:blur(10px);border-radius:16px;box-shadow:0 20px 40px rgba(0,0,0,0.3),inset 0 0 0 1px #ccc;border:1px solid rgba(255,255,255,0.5);display:flex;flex-direction:column;resize:both;overflow:auto;min-width:320px;min-height:250px;z-index:2000;transition:box-shadow 0.3s ease;}
+/* 弹窗内部细线跟随地区 */
+body[data-region="macau"] .floating-window { box-shadow:0 20px 40px rgba(0,0,0,0.3),inset 0 0 0 1px #e74c3c; }
+body[data-region="hongkong"] .floating-window { box-shadow:0 20px 40px rgba(0,0,0,0.3),inset 0 0 0 1px #3498db; }
+body[data-region="yuegang"] .floating-window { box-shadow:0 20px 40px rgba(0,0,0,0.3),inset 0 0 0 1px #27ae60; }
 .floating-window .modal-header{padding:10px 15px;background:rgba(26,26,46,0.9);color:#fff;display:flex;justify-content:space-between;align-items:center;cursor:move;user-select:none;border-radius:16px 16px 0 0;}
 .floating-window .modal-body{padding:15px;overflow-y:auto;flex:1;}
 .floating-window .modal-footer{padding:10px 15px;background:rgba(245,247,250,0.8);display:flex;gap:8px;justify-content:flex-end;border-radius:0 0 16px 16px;}
@@ -941,6 +866,8 @@ function setCurrentRegion(region) {
     else if (region === 'hongkong') navbar.style.borderBottomColor = '#3498db';
     else if (region === 'yuegang') navbar.style.borderBottomColor = '#27ae60';
   }
+  // 新增：设置 body 属性，驱动卡片/弹窗内部细线颜色
+  document.body.setAttribute('data-region', region);
 }
 
 async function switchRegion(region) {
