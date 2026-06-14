@@ -66,7 +66,6 @@ body {background:#f5f7fa;font-size:14px;line-height:1.4;overflow-x:hidden;positi
     #originalAmountTable th:nth-child(4),#originalAmountTable td:nth-child(4){width:44px!important;}
     .number-stats-scroll{overflow-x:auto!important;-webkit-overflow-scrolling:touch!important;}
     .floating-window[data-maximized="true"] {width:100vw!important;left:0!important;right:0!important;}
-    /* 手机端快捷分类：去掉按钮样式，纯文字，排列更紧凑 */
     .cat-insert-text {
         font-size:11px!important;
         background:none!important;
@@ -75,15 +74,29 @@ body {background:#f5f7fa;font-size:14px;line-height:1.4;overflow-x:hidden;positi
         border-radius:0!important;
         display:inline!important;
     }
-    /* 手机端缩小连肖统计卡片上的截图按钮 */
     .freq-card .freq-title .btn {padding:2px 6px!important;font-size:10px!important;min-height:auto!important;}
+    /* 手机端识别弹窗标题栏两行布局 */
+    .recognize-card .card-title {flex-wrap:wrap!important;}
+    .recognize-card .card-title .btn-prefix,
+    .recognize-card .card-title .btn-amount-prefix,
+    .recognize-card .card-title .btn-amount-prefix2 {flex:none!important;white-space:nowrap!important;}
+    .recognize-card .card-title .btn-prefix {width:40px!important;font-size:10px!important;padding:4px 2px!important;}
+    .recognize-card .card-title .btn-amount-prefix {width:52px!important;font-size:10px!important;padding:4px 2px!important;}
+    .recognize-card .card-title .btn-amount-prefix2 {width:52px!important;font-size:10px!important;padding:4px 2px!important;}
+    /* 手机端识别弹窗底部操作按钮分两行固定宽度 */
+    .recognize-card .btn-group {display:grid!important;grid-template-columns:repeat(4,1fr)!important;gap:3px!important;}
+    .recognize-card .btn-group .btn {flex:none!important;width:auto!important;white-space:nowrap!important;font-size:10px!important;padding:4px 2px!important;min-height:28px!important;overflow:hidden!important;text-overflow:ellipsis!important;}
+    /* 手机端连肖统计 grid 自适应列数 */
+    #lianxiaoStatsContainer {display:grid!important;grid-template-columns:repeat(auto-fill,minmax(max-content,1fr))!important;gap:8px!important;column-count:auto!important;}
+    #lianxiaoStatsContainer .freq-card {width:100%!important;max-width:100%!important;box-sizing:border-box!important;}
+    #lianxiaoStatsContainer table {min-width:auto!important;width:auto!important;table-layout:auto!important;}
+    #lianxiaoStatsContainer th,#lianxiaoStatsContainer td {white-space:nowrap!important;font-size:10px!important;padding:1px 2px!important;}
 }
 
 select {padding:4px 24px 4px 8px!important;border:1px solid #ccc!important;border-radius:4px!important;font-size:13px!important;background:#fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23333' d='M6 8L1 3h10z'/%3E%3C/svg%3E") no-repeat right 8px center!important;-webkit-appearance:none!important;-moz-appearance:none!important;appearance:none!important;cursor:pointer;margin:0;vertical-align:middle;}
 input[type="number"]::-webkit-inner-spin-button,input[type="number"]::-webkit-outer-spin-button{-webkit-appearance:none;margin:0;}
 input[type="number"]{-moz-appearance:textfield;}
 
-/* 导航栏 */
 .navbar{
   background:linear-gradient(135deg,#2c3e50 0%,#1a252f 100%);
   padding:10px 20px;
@@ -96,7 +109,6 @@ input[type="number"]{-moz-appearance:textfield;}
   position:relative;
   overflow:visible;
 }
-/* 导航栏底部流光细线 */
 .navbar::after {
   content: '';
   position: absolute;
@@ -133,7 +145,6 @@ body[data-region="yuegang"] .navbar::after {
 .btn-yuegang{background:#27ae60!important;border-color:#2ecc71!important;color:#fff!important;font-weight:600;letter-spacing:0.5px;box-shadow:0 2px 8px rgba(39,174,96,0.4);}
 .btn-yuegang.region-active{background:#2ecc71!important;box-shadow:0 0 12px rgba(46,204,113,0.7);border-color:#58d68d!important;}
 
-/* ── 呼吸灯动画（2秒周期） ── */
 @keyframes breathe {
     from { opacity: 0.15; }
     to   { opacity: 1; }
@@ -147,7 +158,6 @@ body[data-region="yuegang"] .navbar::after {
 .card{background:#fff;border:1px solid #eee;border-radius:14px;padding:15px;box-shadow:0 4px 12px rgba(0,0,0,0.08);transition:all 0.25s ease;position:relative;}
 .card:hover{transform:translateY(-2px);box-shadow:0 8px 20px rgba(0,0,0,0.12);}
 
-/* 卡片内部呼吸灯细线（2秒周期） */
 .card::after {
     content: '';
     position: absolute;
@@ -162,10 +172,8 @@ body[data-region="macau"] .card::after { border-color: #e74c3c; }
 body[data-region="hongkong"] .card::after { border-color: #3498db; }
 body[data-region="yuegang"] .card::after { border-color: #27ae60; }
 
-/* 弹窗内部卡片：彻底删除呼吸细线 */
 .floating-window .card::after { content: none; }
 
-/* 弹窗自身呼吸细线（2秒周期） */
 .floating-window {
     position:fixed;
     background:rgba(255,255,255,0.9);
@@ -196,7 +204,6 @@ body[data-region="hongkong"] .floating-window::after { border-color: #3498db; }
 body[data-region="yuegang"] .floating-window::after { border-color: #27ae60; }
 
 .card-title{font-size:16px;font-weight:bold;color:#333;margin-bottom:12px;padding:10px 12px 8px;border-bottom:2px solid #e0e0e0;display:flex;align-items:center;flex-wrap:wrap;gap:6px;background-color:#e3f2fd;border-radius:10px 10px 0 0;overflow:visible;}
-/* 北京时间显示 */
 #liveClock {
     font-size:14px;
     font-weight:bold;
@@ -204,8 +211,8 @@ body[data-region="yuegang"] .floating-window::after { border-color: #27ae60; }
     margin-left:auto;
     white-space:nowrap;
     letter-spacing:0.5px;
+    word-spacing:3px;
 }
-/* 最大亏损显示 */
 #maxLossDisplay {
     font-size:12px;
     font-weight:bold;
@@ -214,6 +221,12 @@ body[data-region="yuegang"] .floating-window::after { border-color: #27ae60; }
     white-space:nowrap;
     display:none;
 }
+/* 电脑端连肖统计 grid 固定4列自适应列宽 */
+#lianxiaoStatsContainer {display:grid!important;grid-template-columns:repeat(4,minmax(max-content,1fr))!important;gap:10px!important;column-count:auto!important;}
+#lianxiaoStatsContainer .freq-card {width:100%!important;max-width:100%!important;box-sizing:border-box!important;overflow:hidden!important;}
+#lianxiaoStatsContainer table {min-width:auto!important;width:auto!important;table-layout:auto!important;}
+#lianxiaoStatsContainer th,#lianxiaoStatsContainer td {white-space:nowrap!important;font-size:12px!important;padding:2px 4px!important;}
+
 .year-zodiac-area{display:flex;align-items:center;gap:6px;font-size:13px;font-weight:normal;}
 .year-zodiac-area select{padding:3px 6px;border-radius:4px;border:1px solid #ccc;font-size:13px;background:#fff;}
 .summary-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;font-size:14px;font-weight:bold;color:#222;gap:6px;flex-wrap:wrap;}
@@ -406,21 +419,16 @@ tr.selected-row{background-color:#dceeff!important;font-weight:bold;box-shadow:i
 .log-type-restore{background:#d4edda;color:#155724;}
 .log-type-switch{background:#e8daef;color:#6c3483;}
 
-/* ===== 修改后的录开奖样式：无背景填充，深色默认文字 ===== */
 .draw-number-input-plain {
     width: 24px;
     padding: 2px 1px; text-align: center; font-size: 14px; font-weight: bold;
     border: none; outline: none; background: transparent;
-    color: #333; /* 默认深色 */
-    /* 删除了 border-bottom */
+    color: #333;
 }
 .draw-number-input-plain:disabled { background: transparent; color: inherit; }
 
-/* 删除背景类 bg-red/bg-blue/bg-green */
-
 .draw-zodiac-plain { font-size: 12px; font-weight: bold; min-width: 24px; display: inline-block; text-align: center; }
 
-/* 单元格紧凑 */
 .pt-num-cell { padding: 0 1px; text-align: center; vertical-align: middle; cursor: pointer; }
 .special-tag-cell { padding: 0 1px; text-align: center; font-size: 10px; color: #333; width: 16px; vertical-align: middle; }
 </style>
@@ -495,6 +503,7 @@ tr.selected-row{background-color:#dceeff!important;font-weight:bold;box-shadow:i
               <button class="btn" onclick="showLianxiaoStatsWin()" style="padding:2px 6px; font-size:11px; min-height:auto; border-radius:15px; background:#2980b9; color:#fff;">连肖统计</button>
             </div>
             <div id="pingtexiaoTableContainer" style="overflow-x:auto;"></div>
+            <!-- pt-summary-bar 已删除 -->
           </div>
         </div>
       </div>
@@ -562,7 +571,7 @@ tr.selected-row{background-color:#dceeff!important;font-weight:bold;box-shadow:i
         </div>
       </div>
     </div>
-        <!-- 右侧风险报告区域 -->
+    <!-- 右侧风险报告区域 -->
     <div class="risk-report-area">
         <div class="card">
           <div class="card-title">
@@ -631,7 +640,7 @@ tr.selected-row{background-color:#dceeff!important;font-weight:bold;box-shadow:i
     </div>
   </div>
 </div>
-    <div class="database-modal" id="databaseModal" style="display:none;">
+<div class="database-modal" id="databaseModal" style="display:none;">
   <div class="database-modal-box" id="databaseModalBox">
     <div class="database-modal-header" id="databaseModalHeader"><h3>📊 数据库配置</h3><div class="window-controls"><button onclick="maximizeWindow('databaseModalBox')" title="最大化">🗖</button><button class="close-database-btn" onclick="hideDatabase()">×</button></div></div>
     <div class="database-modal-body">
@@ -887,7 +896,6 @@ function showLoginScreen() { const overlay = document.createElement('div'); over
   document.getElementById('cardCodeInput').addEventListener('keypress', (e) => { if (e.key === 'Enter') document.getElementById('cardLoginBtn').click(); });
   document.getElementById('adminLoginBtn').onclick = () => { const pwd = document.getElementById('loginPassword').value.trim(); if (pwd === ADMIN_PASSWORD) { setAuthSession({ role: 'admin' }); overlay.remove(); initMainSystem(); } else showToast('管理员密码错误'); };
   document.getElementById('cardLoginBtn').onclick = () => { const code = document.getElementById('cardCodeInput').value.trim().toUpperCase(); if (!code) { showToast('请输入卡密'); return; } const result = checkCardAccess(code); if (result.valid) { setAuthSession({ role: 'card', cardCode: code }); overlay.remove(); initMainSystem(); } else showToast(result.reason); };
-  // 自动聚焦到管理员密码输入框
   setTimeout(() => { document.getElementById('loginPassword').focus(); }, 100);
 }
 function logout() { clearAuthSession(); location.reload(); }
@@ -939,14 +947,12 @@ function setCurrentRegion(region) {
   document.getElementById('btnMacau').classList.toggle('region-active', region === 'macau');
   document.getElementById('btnHongkong').classList.toggle('region-active', region === 'hongkong');
   document.getElementById('btnYuegang').classList.toggle('region-active', region === 'yuegang');
-  // 导航栏底部细线颜色跟随地区
   const navbar = document.getElementById('mainNavbar');
   if (navbar) {
     if (region === 'macau') navbar.style.borderBottomColor = '#e74c3c';
     else if (region === 'hongkong') navbar.style.borderBottomColor = '#3498db';
     else if (region === 'yuegang') navbar.style.borderBottomColor = '#27ae60';
   }
-  // 新增：设置 body 属性，驱动卡片/弹窗内部细线颜色
   document.body.setAttribute('data-region', region);
 }
 
@@ -1046,7 +1052,7 @@ function renderCustomConfigContainer() { const container = document.getElementBy
 async function addCustomCategory() { const label = await prompt('请输入新分类名称（如：大尾）'); if (!label) return; const value = await prompt(`请输入"${label}"对应的号码或分类名（空格分隔，例如：01 02 牛 马）`); if (value === null) return; const cats = loadCustomCategories(); cats.push({ label, value: value.trim() }); saveCustomCategories(cats); renderCustomConfigContainer(); showToast('自定义分类已添加，请点击"保存"按钮存储配置'); }
 async function deleteCustomCategory() { const cats = loadCustomCategories(); if (cats.length === 0) { showToast('没有可删除的自定义分类'); return; } const labels = cats.map((c,i) => `${i+1}. ${c.label}`).join('\n'); const idxStr = await prompt(`请输入要删除的分类编号：\n${labels}`); if (!idxStr) return; const idx = parseInt(idxStr) - 1; if (isNaN(idx) || idx < 0 || idx >= cats.length) { showToast('无效编号'); return; } cats.splice(idx, 1); saveCustomCategories(cats); renderCustomConfigContainer(); showToast('自定义分类已删除，请点击"保存"按钮使更改生效'); }
 function deleteCustomCategoryByIndex(index) { const cats = loadCustomCategories(); cats.splice(index, 1); saveCustomCategories(cats); renderCustomConfigContainer(); }
-    // ===== 订单变量与基础函数 =====
+// ===== 订单变量与基础函数 =====
 let tableBetData = {}, userBetData = {}, reportBetData = {}, reportAmountData = {}, reportRiskData = {};
 let numberCount = {}, zodiacCount = {}, numberAmountCount = {}, zodiacAmountCount = {};
 let zodiacDirectAmount = {}, zodiacFilteredAmount = {};
@@ -1102,17 +1108,15 @@ function computeMaxLoss() {
   const lines = txt.split('\n');
   const cfg = getAllConfigData();
   const keys = getAllValidCategories(cfg);
-  const numAmountMap = {}; // 号码 → 累加金额
+  const numAmountMap = {};
   let totalAmount = 0;
   lines.forEach(line => {
     const { numbers, zodiacs, amount } = countItemsInLine(line, cfg, keys);
     if (amount <= 0) return;
-    // 累加号码金额
     numbers.forEach(num => {
       numAmountMap[num] = (numAmountMap[num] || 0) + amount;
       totalAmount += amount;
     });
-    // 展开生肖为号码并累加
     zodiacs.forEach(z => {
       const znums = cfg.zodiac[z] || [];
       znums.forEach(n => {
@@ -1123,7 +1127,6 @@ function computeMaxLoss() {
     });
   });
   if (totalAmount === 0) return 0;
-  // 找最高金额的号码
   let maxNumAmount = 0;
   for (const num in numAmountMap) {
     if (numAmountMap[num] > maxNumAmount) maxNumAmount = numAmountMap[num];
@@ -1165,6 +1168,7 @@ function showLianxiaoGenerateWin() {
           <span>合计：</span><span id="comboTotalAmount">0</span>
           <span id="comboLineCount" style="margin-left:10px;font-weight:normal;font-size:13px;display:none;"></span>
         </div>
+        <span id="comboMaxLossDisplay" style="color:#e74c3c; font-weight:bold; margin-left:6px; white-space:nowrap; display:none;"></span>
       </div>
       <div style="display:flex; gap:0; margin-bottom:10px; border:1px solid #ddd; min-height:320px;">
         <div style="flex:1; display:flex; flex-direction:column;">
@@ -1577,7 +1581,7 @@ async function screenshotSingleComboCard(cardId) {
     }, 'image/png');
   } catch(e) { showToast('截图失败'); }
 }
-    // ===== 组合生成核心函数（含平特肖/平特尾标红、元素不足标红，多元素组合加括号） =====
+// ===== 组合生成核心函数（含平特肖/平特尾标红、元素不足标红，多元素组合加括号） =====
 window.comboGenerate = function(comboType) {
   const inputEl = document.getElementById('comboInput');
   const resultEl = document.getElementById('comboResult');
@@ -1591,7 +1595,7 @@ window.comboGenerate = function(comboType) {
   const lines = rawText.split('\n');
   const allResults = [];
   window._comboPureContents = [];
-  window._lastComboType = comboType; // 记录当前玩法类型，供 saveComboOrder 使用
+  window._lastComboType = comboType;
 
   lines.forEach(line => {
     line = line.trim();
@@ -1739,7 +1743,6 @@ window.comboGenerate = function(comboType) {
       results = combos.map(c => ({ combo: c, amount: amount }));
     }
 
-    // ===== 无组合结果时标红提示 =====
     if (results.length === 0) {
       let actualElements = [];
       if (comboType.startsWith('lianxiao')) { actualElements = zodiacs; }
@@ -1781,7 +1784,6 @@ window.comboGenerate = function(comboType) {
     const comboNumberMap = { lianxiao2: '二', lianxiao3: '三', lianxiao4: '四', lianxiao5: '五', lianwei2: '二', lianwei3: '三', lianwei4: '四', lianwei5: '五' };
     const comboNumStr = comboNumberMap[comboType] || '';
 
-    // ===== 拼接时加括号（仅多元素组合） =====
     if (comboType.startsWith('lianxiao')) {
       const withYear = [], withoutYear = [];
       results.forEach(r => { (r.combo.some(z => z === curYearZodiac) ? withYear : withoutYear).push(r); });
@@ -1809,13 +1811,11 @@ window.comboGenerate = function(comboType) {
         allResults.push(hasWarning ? `<span style="color:red;">${comboNumStr}连尾 ${withoutStr} 各组 ${amount}（${warningText}）</span>` : `${comboNumStr}连尾 ${withoutStr} 各组 ${amount}`);
       }
     } else if (comboType === 'pingma') {
-      // 平码不加括号
       const str = results.map(r => r.combo.join('-')).join(' ');
       const pureLine = `${str} 各组 ${amount}`;
       window._comboPureContents.push(pureLine);
       allResults.push(hasWarning ? `<span style="color:red;">平码 ${str} 各组 ${amount}（${warningText}）</span>` : `平码 ${str} 各组 ${amount}`);
     } else {
-      // 不中、二中二、三中三等，加括号
       const typeLabel = getComboTypeLabel(comboType);
       const str = results.map(r => '(' + r.combo.join('-') + ')').join(' ');
       const pureLine = `${str} 各组 ${amount}`;
@@ -1917,26 +1917,83 @@ function updateComboTotalDisplay() {
   const span = document.getElementById('comboTotalAmount');
   if (!box || !span) return;
   let total = 0;
+  let groupCount = 0;
   if (window._comboPureContents && window._comboPureContents.length > 0) {
     window._comboPureContents.forEach(line => {
       const match = line.match(/^(.+?)\s+各组\s+(\d+)$/);
       if (!match) return;
       const combosStr = match[1]; const amt = parseInt(match[2]) || 0;
       const cleaned = combosStr.replace(/[()]/g, '');
-      total += cleaned.split(/\s+/).filter(c => c.trim()).length * amt;
+      const groups = cleaned.split(/\s+/).filter(c => c.trim());
+      total += groups.length * amt;
+      groupCount += groups.length;
     });
   }
   span.textContent = total;
   box.style.display = total > 0 ? 'inline-flex' : 'none';
+  const lineCountSpan = document.getElementById('comboLineCount');
+  if (lineCountSpan) {
+    if (groupCount > 0) {
+      lineCountSpan.innerHTML = '<span style="color:#000;">' + groupCount + '</span>组';
+      lineCountSpan.style.display = 'inline';
+    } else {
+      lineCountSpan.style.display = 'none';
+    }
+  }
+  updateComboMaxLoss();
 }
 
-// ===== 保存连肖订单（方案B：存储玩法类型） =====
+function updateComboMaxLoss() {
+  const existingSpan = document.getElementById('comboMaxLossDisplay');
+  if (!existingSpan) return;
+  if (!window._comboPureContents || window._comboPureContents.length === 0) {
+    existingSpan.textContent = ''; existingSpan.style.display = 'none'; return;
+  }
+  const oddsData = getOddsData();
+  const defaults = {
+    'pingtexiao':{odds:2,rebate:4},'lianxiao2':{odds:4,rebate:4},'lianxiao3':{odds:10,rebate:4},'lianxiao4':{odds:30,rebate:4},
+    'lianxiao5':{odds:100,rebate:4},'pingtewei':{odds:1.8,rebate:4},'lianwei2':{odds:3,rebate:4},'lianwei3':{odds:6,rebate:4},
+    'lianwei4':{odds:14,rebate:4},'lianwei5':{odds:28,rebate:4},'buzhong5':{odds:2,rebate:4},'buzhong6':{odds:2.5,rebate:4},
+    'buzhong7':{odds:3,rebate:4},'buzhong8':{odds:3.5,rebate:4},'buzhong9':{odds:4,rebate:4},'buzhong10':{odds:5,rebate:4},
+    'buzhong11':{odds:6,rebate:4},'buzhong12':{odds:7,rebate:4},'zhong2':{odds:60,rebate:4},'zhong3':{odds:600,rebate:4},'pingma':{odds:7,rebate:4}
+  };
+  const type = window._lastComboType || 'pingtexiao';
+  let odds = 2, rebate = 4;
+  if (defaults[type]) { odds = parseFloat(defaults[type].odds); rebate = parseFloat(defaults[type].rebate); }
+  if (oddsData[type]) {
+    if (oddsData[type].odds) odds = parseFloat(oddsData[type].odds);
+    if (oddsData[type].rebate) rebate = parseFloat(oddsData[type].rebate);
+  }
+  let totalAmount = 0;
+  let maxSingleAmount = 0;
+  window._comboPureContents.forEach(line => {
+    const match = line.match(/^(.+?)\s+各组\s+(\d+)$/);
+    if (!match) return;
+    const combosStr = match[1]; const amt = parseInt(match[2]) || 0;
+    const cleaned = combosStr.replace(/[()]/g, '');
+    const groups = cleaned.split(/\s+/).filter(c => c.trim());
+    groups.forEach(g => { totalAmount += amt; if (amt > maxSingleAmount) maxSingleAmount = amt; });
+  });
+  if (totalAmount === 0) { existingSpan.textContent = ''; existingSpan.style.display = 'none'; return; }
+  const singleLoss = Math.round(totalAmount - totalAmount * (rebate / 100) - maxSingleAmount * odds);
+  const allLoss = Math.round(totalAmount - totalAmount * (rebate / 100) - totalAmount * odds);
+  let displayText = '';
+  if (singleLoss !== 0) displayText += '最大亏损：' + singleLoss;
+  if (allLoss !== 0) {
+    if (displayText) displayText += ' ';
+    displayText += '全中：' + allLoss;
+  }
+  if (displayText) { existingSpan.innerHTML = displayText; existingSpan.style.display = 'inline'; }
+  else { existingSpan.textContent = ''; existingSpan.style.display = 'none'; }
+}
+
+// ===== 保存连肖订单 =====
 async function saveComboOrder() {
   if (!window._comboPureContents || window._comboPureContents.length === 0) { showToast('请先生成组合'); return; }
   const user = document.getElementById('comboUserSelect')?.value;
   if (!user) { showToast('请先选择用户'); return; }
   const date = document.getElementById('filterDate')?.value || getTodayCST();
-  const comboType = window._lastComboType || 'combo'; // 从临时变量获取玩法类型
+  const comboType = window._lastComboType || 'combo';
   const pureText = window._comboPureContents.join('\n');
   let totalAmount = 0;
   const cfg = getAllConfigData();
@@ -1956,7 +2013,7 @@ async function saveComboOrder() {
     });
   });
 
-  await saveComboOrderRecordToIDB(pureText, user, date, totalAmount, comboType); // 传入玩法类型
+  await saveComboOrderRecordToIDB(pureText, user, date, totalAmount, comboType);
   addOperationLog('save_order', pureText, currentRegion, user, totalAmount);
   savePingtexiaoData(pingtexiaoData);
   renderPingtexiaoTable(); updatePingtexiaoTotal();
@@ -1965,9 +2022,12 @@ async function saveComboOrder() {
   document.getElementById('comboResult').innerHTML = '';
   window._comboPureContents = [];
   updateComboTotalDisplay();
+  const box = document.getElementById('comboTotalAmountBox'); if (box) box.style.display = 'none';
+  const lineSpan = document.getElementById('comboLineCount'); if (lineSpan) lineSpan.style.display = 'none';
+  const lossSpan = document.getElementById('comboMaxLossDisplay'); if (lossSpan) { lossSpan.textContent = ''; lossSpan.style.display = 'none'; }
   showToast('已保存连肖订单');
 }
-    // ===== 连肖统计函数（卡片内容超400px滚动，汇总行固定底部，显示去括号，总金额蓝色，盈亏排名高亮，中奖总金额） =====
+// ===== 连肖统计函数（卡片内容超400px滚动，汇总行固定底部，显示去括号，总金额蓝色，盈亏排名高亮，中奖总金额） =====
 async function refreshLianxiaoStats() {
   const container = document.getElementById('lianxiaoStatsContainer');
   if (!container) return;
@@ -2152,7 +2212,6 @@ async function refreshLianxiaoStats() {
     grandPL += cardPL;
     const roundedCardPL = Math.round(cardPL);
 
-    // 盈亏排名高亮：根据 cardPL 设置卡片背景色
     let cardBgStyle = '';
     if (drawZodiacs.length > 0 || drawNumbers.length > 0) {
       if (cardPL <= -500) cardBgStyle = 'background:#fff0f0;';
@@ -2161,14 +2220,10 @@ async function refreshLianxiaoStats() {
       else if (cardPL > 0) cardBgStyle = 'background:#f8fff8;';
     }
 
-    // 卡片HTML
     let cardHtml = `<div class="freq-card" id="${cardId}" style="break-inside:avoid; margin-bottom:10px; min-width:180px;${cardBgStyle}">`;
     cardHtml += `<div class="freq-title" style="display:flex; align-items:center; justify-content:space-between;"><span>${getComboTypeLabel(type)}</span><button class="btn" style="background:#27ae60;color:#fff;padding:2px 8px;font-size:11px;min-height:auto;border-radius:20px;" onclick="screenshotSingleComboCard('${cardId}')">截图</button></div>`;
 
-    // 滚动容器 max-height 调为 400px
     cardHtml += `<div style="max-height:400px;overflow-y:auto;">${tablesHtml}</div>`;
-
-    // 卡片底部汇总：小计 → 金额 → 中 → 盈亏
     cardHtml += `<div style="border-top:1px solid #ddd;margin-top:4px;padding-top:4px;font-size:11px;text-align:center;">小计：${totalGroups}组 金额：${totalAmount}`;
     if (drawZodiacs.length > 0 || drawNumbers.length > 0) {
       cardHtml += ` 中：${totalHitAmount}`;
@@ -2181,7 +2236,6 @@ async function refreshLianxiaoStats() {
   cardsArray.sort((a, b) => a.groups - b.groups);
   container.innerHTML = cardsArray.map(c => c.html).join('') || '<div style="color:#666;text-align:center;padding:10px;">暂无连肖数据</div>';
   const roundedGrandPL = Math.round(grandPL);
-  // 总下单金额数值改为蓝色
   let totalHtml = `<span style="color:#0000ff;">总下单金额：</span><span style="color:#0000ff;">${grandTotal}</span>`;
   if (drawZodiacs.length > 0 || drawNumbers.length > 0) {
     totalHtml += ` &nbsp; <span style="color:#0000ff;">总盈亏：</span><span style="color:${roundedGrandPL>0?'#27ae60':(roundedGrandPL<0?'#e74c3c':'')};">${roundedGrandPL>0?roundedGrandPL:(roundedGrandPL<0?roundedGrandPL:'')}</span>`;
@@ -2235,7 +2289,7 @@ async function saveComboOrderRecordToIDB(content, user, date, totalAmount = 0, c
   if (!success) { showToast('保存失败，请重试'); return false; }
   return true;
 }
-    // ===== 操作日志函数 =====
+// ===== 操作日志函数 =====
 async function addOperationLog(action, detail, regionOverride = null, orderUser = null, orderTotal = 0) {
   if (!db) return;
   const session = getAuthSession();
@@ -2420,7 +2474,7 @@ async function deleteUser(name) { let users = getUsers(); users = users.filter(u
 function rebuildTotal() { tableBetData = {}; for (const u in userBetData) for (const n in userBetData[u]) tableBetData[n] = (tableBetData[n]||0) + userBetData[u][n]; }
 function refreshAll() { updateSelects(); updateTableFromRecords(); }
 function updateSelects() { const users = getUsers(); const orderSel = document.getElementById('orderUserSelect'); if (orderSel) { orderSel.innerHTML = ''; users.forEach(u => { const o = document.createElement('option'); o.value = u; o.textContent = u; orderSel.appendChild(o); }); } const comboUserSel = document.getElementById('comboUserSelect'); if (comboUserSel) { comboUserSel.innerHTML = ''; users.forEach(u => { const o = document.createElement('option'); o.value = u; o.textContent = u; comboUserSel.appendChild(o); }); } const viewSel = document.getElementById('viewUserSelect'); if (viewSel) { viewSel.innerHTML = ''; users.forEach(u => { const o = document.createElement('option'); o.value = u; o.textContent = u; viewSel.appendChild(o); }); } }
-    // ===== 快捷添加与分词 =====
+// ===== 快捷添加与分词 =====
 function quickAddWithAmount(text, button) { const input = document.querySelector('.source-order-input'); if (!input) return; const lines = input.value.trim().split('\n').filter(l=>l.trim()); const idx = lines.findIndex(l=> l.includes(text) && (l.includes('各数')||l.includes('各号'))); if (idx !== -1) { lines.splice(idx,1); button.classList.remove('active'); } else { lines.push(`${text} 各数 `); button.classList.add('active'); } input.value = lines.join('\n'); convertOrderText(); const lastIndex = input.value.lastIndexOf('各数'); if (lastIndex !== -1) { const pos = lastIndex + 2; input.focus(); input.setSelectionRange(pos, pos); } }
 function getReplacePresets() { try { return JSON.parse(localStorage.getItem('replacePresets') || '[]'); } catch (e) { return []; } }
 function getCategoryAliases() { try { return JSON.parse(localStorage.getItem('categoryAliases') || '[]'); } catch (e) { return []; } }
@@ -2495,7 +2549,7 @@ async function resetPresetsToDefault(){
   localStorage.setItem('categoryAliases',JSON.stringify(defaultAliases));
   renderPresetList(); showToast('已恢复默认替换预设和分类缩写');
 }
-    function applyCategoryAliases(text) { const a=getCategoryAliases(); if(!a.length)return text; const s=[...a].sort((x,y)=>y.alias.length-x.alias.length); let r=text; s.forEach(x=>{ if(x.alias&&x.target)r=r.split(x.alias).join(x.target); }); return r; }
+function applyCategoryAliases(text) { const a=getCategoryAliases(); if(!a.length)return text; const s=[...a].sort((x,y)=>y.alias.length-x.alias.length); let r=text; s.forEach(x=>{ if(x.alias&&x.target)r=r.split(x.alias).join(x.target); }); return r; }
 
 function applyReplacePresets(text) { const p = getReplacePresets(); let r = text; p.forEach(x => { if (x.old && x.new) { const escapedOld = x.old.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); const regex = new RegExp(escapedOld, 'g'); r = r.replace(regex, x.new); } }); return r; }
 
@@ -2505,7 +2559,7 @@ function tokenizeAndJoin(content) { const cfg = getAllConfigData(); const vc = g
 function convertOrderText() { const inputEl = document.querySelector('.source-order-input'); const resultEl = document.getElementById('orderResult'); const invalidSpan = document.getElementById('invalidTokensDisplay'); if (!inputEl || !resultEl) return; let text = applyCategoryAliases(applyReplacePresets(inputEl.value.trim())); if (!text) { resultEl.innerHTML = ''; if (invalidSpan) { invalidSpan.textContent = ''; invalidSpan.style.display = 'none'; } updateOrderTotalDisplay(); updateMaxLossDisplay(); return; } const lines = text.split('\n'); const resultLines = []; const originalContents = []; const skipInvalidCheck = new Set(); const HARD_AMP_LIST = ['每个号','各号码','各数','每数','每号','个号','各号','各码','号','个','=','各']; const cusAmp = getCustomAmountPrefixes(); const allAmpList = [...HARD_AMP_LIST, ...cusAmp]; allAmpList.sort((a, b) => b.length - a.length); const AMP_ORIGINAL = '(?:' + allAmpList.map(s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|') + ')'; const IGN = ['奥特','特码','澳门特码','特','奥','澳','澳门','澳門','澳門特碼','澳门特码','澳門特码',':','。','.','新',',','新','新奥','门','，','新澳','新特','新澳特','特碼']; const cusPre = getCustomPrefixes(); const allPre = [...IGN, ...cusPre]; const baseSuf = '元块咪米斤#،。\\s'; const cusAmtSuf = getCustomAmountSuffixes(); const allAmtChars = [...new Set([...baseSuf.split(''), ...cusAmtSuf])].join(''); const AMTS = `[${allAmtChars}]*`; function cn2n(s) { const m = {'零':0,'一':1,'二':2,'三':3,'四':4,'五':5,'六':6,'七':7,'八':8,'九':9,'十':10,'百':100,'千':1000}; let sum = 0, tmp = 0; for (let c of s) { const v = m[c]; if (v === 10 || v === 100 || v === 1000) { if (tmp === 0) tmp = 1; tmp *= v; sum += tmp; tmp = 0; } else if (v !== undefined) { if (tmp > 0) { sum += tmp; tmp = 0; } tmp = v; } } sum += tmp; return sum; } const SIMPLE_PAIR = /^(\d{1,2})[^\d\s]+(\d+)$/; const cfg = getAllConfigData(); const vc = getAllValidCategories(cfg); const allCatNames = new Set(); Object.keys(cfg.zodiac).forEach(z => allCatNames.add(z)); vc.forEach(c => allCatNames.add(c)); const ZODIAC_SET = new Set(Object.keys(cfg.zodiac)); function startsWithCategory(str) { for (let cat of allCatNames) { if (str.startsWith(cat)) return true; } return false; } function isValidNumber(token) { return /^(0[1-9]|[1-4][0-9]|49?|[1-9])$/.test(token); } const PUNCT_REGEX = /[\s,，.。、+\-*＊\/\\|!@#$%^&*()=+_{}\[\]:;"'<>,.?\/~！@#￥%…&*（）—+【】{}|："；"''《》，。？、]/g; function isValidToken(token) { const clean = token.replace(PUNCT_REGEX, ''); if (clean === '') return false; if (isValidNumber(clean)) return true; if (/^\d+尾$/.test(clean) || /^\d+头$/.test(clean)) return true; if (allCatNames.has(clean)) return true; if (/^[\u4e00-\u9fa5]+$/.test(clean) && clean.length > 1) { const chars = clean.split(''); if (chars.every(ch => allCatNames.has(ch))) return true; } return false; } lines.forEach(line => { line = line.trim(); if (!line) return; const rangeFullMatch = line.match(new RegExp(`^([\\u4e00-\\u9fa5\\-]*?)(\\d{1,2})到(\\d{1,2})\\s*${AMP_ORIGINAL}\\s*(\\d+)\\s*${AMTS}$`)); if (rangeFullMatch) { const prefix = rangeFullMatch[1].replace(/-$/, '').trim(); const startNum = parseInt(rangeFullMatch[2]); const endNum = parseInt(rangeFullMatch[3]); const amt = rangeFullMatch[4]; if (startNum >= 1 && startNum <= 49 && endNum >= 1 && endNum <= 49 && startNum <= endNum) { const numList = []; for (let i = startNum; i <= endNum; i++) { numList.push(i.toString().padStart(2, '0')); } const expanded = numList.join('-'); const finalLine = prefix ? `${prefix}-${expanded}` : expanded; resultLines.push(`${finalLine} 各数 ${amt}`); originalContents.push(finalLine); skipInvalidCheck.add(resultLines.length - 1); return; } } const pairMatch = line.match(SIMPLE_PAIR); if (pairMatch) { let num = pairMatch[1]; const amount = pairMatch[2]; if (num.length === 1) num = '0' + num; resultLines.push(`${num} 各数 ${amount}`); originalContents.push(pairMatch[1]); return; } let cl = line; allPre.forEach(p => { if (cl.startsWith(p)) cl = cl.substring(p.length).trim(); }); cl = cl.replace(/[^\u4e00-\u9fa5\d]+$/, ''); cl = cl.replace(/([一二三四五六七八九十百千]+)/g, (m) => cn2n(m)); while (cl && !/^[\d\u4e00-\u9fa5]/.test(cl)) { cl = cl.substring(1).trim(); } while (cl && !/^\d/.test(cl) && !startsWithCategory(cl)) { cl = cl.substring(1).trim(); } if (!cl) return; const shxMatch = cl.match(new RegExp(`^(.+?)(各肖|各)\\s*(\\d+)${AMTS}$`)); if (shxMatch) { const rawContent = shxMatch[1]; const amtRaw = parseInt(shxMatch[3]) || 0; if (!/\d/.test(rawContent)) { const zodiacs = []; for (const ch of rawContent) { if (ZODIAC_SET.has(ch)) zodiacs.push(ch); } if (zodiacs.length > 0) { const curBenming = document.getElementById('startZodiacSelect')?.value || '马'; const benmingList = [], otherList = []; zodiacs.forEach(z => { if (z === curBenming) benmingList.push(z); else otherList.push(z); }); const amtPerBen = Math.round(amtRaw / 5); const amtPerOther = Math.round(amtRaw / 4); if (benmingList.length > 0) { resultLines.push(`${benmingList.join('-')} 各数 ${amtPerBen}`); originalContents.push(benmingList.join('-')); } if (otherList.length > 0) { resultLines.push(`${otherList.join('-')} 各数 ${amtPerOther}`); originalContents.push(otherList.join('-')); } return; } } } const op = new RegExp(`(${AMP_ORIGINAL}\\s*\\d+${AMTS})`, 'g'); const om = cl.match(op); if (om && om.length > 0) { let rl = cl; om.forEach(om => { const oi = rl.indexOf(om); if (oi !== -1) { const cont = rl.substring(0, oi).trim(); const am = om.match(/(\d+)/); if (am) { const amt = am[1]; if (cont) { const jo = tokenizeAndJoin(cont); if (jo) { resultLines.push(`${jo} 各数 ${amt}`); originalContents.push(cont); } } rl = rl.substring(oi + om.length); } } }); if (rl.trim()) { const jo = tokenizeAndJoin(rl.trim()); if (jo) { resultLines.push(`${jo} 各数 0`); originalContents.push(rl.trim()); } } } else { const pat = new RegExp(`^(.+?)${AMP_ORIGINAL}\\s*(\\d+)$`); const m = cl.match(pat); if (m) { const jo = tokenizeAndJoin(m[1].trim()); if (jo) { resultLines.push(`${jo} 各数 ${m[2]}`); originalContents.push(m[1].trim()); } } else { const sp = new RegExp(`(\\d+)(?:号|${AMP_ORIGINAL})\\s*(\\d+)$`); const sm = cl.match(sp); if (sm) { let num = sm[1].trim(); if (parseInt(num) >= 1 && parseInt(num) <= 49) { num = num.length === 1 ? `0${num}` : num; resultLines.push(`${num} 各数 ${sm[2]}`); originalContents.push(num); } } else { const jo = tokenizeAndJoin(cl); if (jo) { resultLines.push(`${jo} 各数 0`); originalContents.push(cl); } } } } }); const lineInvalidTokens = []; resultLines.forEach((line, idx) => { if (skipInvalidCheck.has(idx)) { lineInvalidTokens.push([]); return; } const originalContent = originalContents[idx] || ''; const rawTokens = originalContent.split(/[\s,，.。、+\-*＊\/\\|]+/).filter(t => t.trim()); const invalidInLine = []; rawTokens.forEach(token => { if (!isValidToken(token)) { const clean = token.replace(PUNCT_REGEX, ''); if (clean) { if (/^[\u4e00-\u9fa5]+$/.test(clean) && clean.length > 1) { const chars = clean.split(''); chars.forEach(ch => { if (!allCatNames.has(ch)) invalidInLine.push(ch); }); } else { invalidInLine.push(clean); } } } }); lineInvalidTokens.push(invalidInLine); }); let html = ''; resultLines.forEach((line, idx) => { const m = line.match(/^(.+?)\s+各数\s+(\d+)$/); if (!m) { html += `<div style="color:red;">${line}</div>`; return; } const content = m[1]; const amt = parseInt(m[2]) || 0; const hasInvalidInSource = lineInvalidTokens[idx].length > 0; const isSkipped = skipInvalidCheck.has(idx); const { numbers, zodiacs } = countItemsInLine(line, cfg, vc); const totalItems = numbers.length + zodiacs.length; const isInvalid = !isSkipped && (totalItems === 0 || amt <= 0 || hasInvalidInSource); if (isInvalid) { html += `<div style="color:red;">${line}</div>`; } else { html += `<div>${line}</div>`; } }); resultEl.innerHTML = html; if (invalidSpan) { const displayLines = []; lineInvalidTokens.forEach(arr => { if (arr.length > 0) { displayLines.push('无效: ' + arr.join(', ')); } }); if (displayLines.length > 0) { invalidSpan.innerHTML = displayLines.join('<br>'); invalidSpan.style.display = 'inline'; } else { invalidSpan.innerHTML = ''; invalidSpan.style.display = 'none'; } } updateOrderTotalDisplay(); updateMaxLossDisplay(); }
 
 function getAllValidCategories(cfg) { const s=new Set(); Object.keys(cfg.zodiac).forEach(k=>s.add(k)); Object.keys(cfg.shengxiaoAttr).forEach(k=>s.add(k)); Object.keys(cfg.wuxing).forEach(k=>s.add(k)); Object.keys(cfg.bose).forEach(k=>s.add(k)); Object.keys(cfg.banbo).forEach(k=>s.add(k)); Object.keys(cfg.danshuang).forEach(k=>s.add(k)); Object.keys(cfg.weishu).forEach(k=>s.add(k)); Object.keys(cfg.daxiaodanshuang).forEach(k=>s.add(k)); Object.keys(cfg.daxiao).forEach(k=>s.add(k)); Object.keys(cfg.heshu).forEach(k=>s.add(k)); Object.keys(cfg.toushu).forEach(k=>s.add(k)); Object.keys(cfg.menshu).forEach(k=>s.add(k)); Object.keys(cfg.duanwei).forEach(k=>s.add(k)); Object.keys(cfg.hedahexiao).forEach(k=>s.add(k)); Object.keys(cfg.weidaweixiao).forEach(k=>s.add(k)); Object.keys(cfg.hewei).forEach(k=>s.add(k)); Object.keys(cfg.heshudanshuang).forEach(k=>s.add(k)); Object.keys(cfg.toushuDanshuang).forEach(k=>s.add(k)); s.add('蓝大'); s.add('蓝小'); s.add('红大'); s.add('红小'); s.add('绿大'); s.add('绿小'); s.add('蓝波大'); s.add('蓝波小'); s.add('红波大'); s.add('红波小'); s.add('绿波大'); s.add('绿波小'); return s; }
-  async function saveOrder(){ const user=document.getElementById('orderUserSelect')?.value; if(!user){showToast('请选择用户');return;} const resultEl=document.getElementById('orderResult'); const rawText=resultEl?resultEl.innerText:''; const inputText=document.querySelector('.source-order-input')?.value.trim(); const textToUse=rawText||inputText; if(!textToUse)return; const vl=textToUse.split('\n').filter(l=>{const m=l.match(/各数\s+(\d+)/);return m&&parseInt(m[1])>0;}); if(!vl.length){showToast('订单无效');return;} const content=vl.join('\n'); const date=document.getElementById('filterDate')?.value||getTodayCST(); const total=computeCurrentOrderTotal(); await saveOrderRecordToIDB(content,user,date,total); processCurrentOrder(content,user,true,date); addOperationLog('save_order', content, currentRegion, user, total); const si=document.querySelector('.source-order-input'); if(si)si.value=''; if(resultEl)resultEl.innerHTML=''; updateOrderTotalDisplay(); const md=document.getElementById('maxLossDisplay'); if(md){md.textContent='';md.style.display='none';} document.querySelectorAll('.category-btn').forEach(b=>b.classList.remove('active')); calculateStorageUsage(); showStorageDrawerTemporary(5000); renderSmartDecision(); updateSingleBetDisplay(); clearStatsCache(); }
+async function saveOrder(){ const user=document.getElementById('orderUserSelect')?.value; if(!user){showToast('请选择用户');return;} const resultEl=document.getElementById('orderResult'); const rawText=resultEl?resultEl.innerText:''; const inputText=document.querySelector('.source-order-input')?.value.trim(); const textToUse=rawText||inputText; if(!textToUse)return; const vl=textToUse.split('\n').filter(l=>{const m=l.match(/各数\s+(\d+)/);return m&&parseInt(m[1])>0;}); if(!vl.length){showToast('订单无效');return;} const content=vl.join('\n'); const date=document.getElementById('filterDate')?.value||getTodayCST(); const total=computeCurrentOrderTotal(); await saveOrderRecordToIDB(content,user,date,total); processCurrentOrder(content,user,true,date); addOperationLog('save_order', content, currentRegion, user, total); const si=document.querySelector('.source-order-input'); if(si)si.value=''; if(resultEl)resultEl.innerHTML=''; updateOrderTotalDisplay(); const md=document.getElementById('maxLossDisplay'); if(md){md.textContent='';md.style.display='none';} document.querySelectorAll('.category-btn').forEach(b=>b.classList.remove('active')); calculateStorageUsage(); showStorageDrawerTemporary(5000); renderSmartDecision(); updateSingleBetDisplay(); clearStatsCache(); }
 async function saveReportOrder(){ const user=document.getElementById('orderUserSelect')?.value; if(!user){showToast('请选择用户');return;} const resultEl=document.getElementById('orderResult'); const rawText=resultEl?resultEl.innerText:''; const inputText=document.querySelector('.source-order-input')?.value.trim(); const textToUse=rawText||inputText; if(!textToUse)return; const vl=textToUse.split('\n').filter(l=>{const m=l.match(/各数\s+(\d+)/);return m&&parseInt(m[1])>0;}); if(!vl.length){showToast('订单无效');return;} const content=vl.join('\n'); const date=document.getElementById('filterDate')?.value||getTodayCST(); const total=computeCurrentOrderTotal(); await saveReportOrderRecordToIDB(content,user,date,total); processCurrentOrder(content,user,false,date); addOperationLog('save_report', content, currentRegion, user, total); const si=document.querySelector('.source-order-input'); if(si)si.value=''; if(resultEl)resultEl.innerHTML=''; updateOrderTotalDisplay(); const md=document.getElementById('maxLossDisplay'); if(md){md.textContent='';md.style.display='none';} document.querySelectorAll('.category-btn').forEach(b=>b.classList.remove('active')); calculateStorageUsage(); showStorageDrawerTemporary(5000); renderSmartDecision(); clearStatsCache(); }
 function countItemsInLine(line,cfg,keys){ const m=line.match(/([\u4e00-\u9fa5\d\-]+)\s+各数\s+(\d+)/); if(!m)return{numbers:[],zodiacs:[],amount:0}; let cont=m[1]; const amt=parseInt(m[2])||0; const items=cont.split('-').map(i=>i.trim()).filter(i=>i); const nums=[],zods=[]; items.forEach(item=>{ if(/^\d+$/.test(item))nums.push(item.padStart(2,'0')); else if(cfg.shengxiaoAttr[item]){ const zs=cfg.shengxiaoAttr[item]||[]; zs.forEach(z=>zods.push(z)); } else if(cfg.zodiac[item])zods.push(item); else if(cfg.toushuDanshuang&&cfg.toushuDanshuang[item]){ (cfg.toushuDanshuang[item]||[]).forEach(n=>nums.push(n.padStart(2,'0'))); } else { const nl=getNumberListForCategory(item,cfg); if(nl&&nl.length>0)nl.forEach(n=>nums.push(n.padStart(2,'0'))); } }); return{numbers:nums,zodiacs:zods,amount:amt}; }
 function processCurrentOrder(input,user,isNormal,date=null){ const cfg=getAllConfigData(); const keys=getAllValidCategories(cfg); const lines=input.split('\n').filter(l=>l.trim()); if(!userBetData[user])userBetData[user]={}; const curZod=localStorage.getItem('selectedStartZodiac')||'马'; lines.forEach(line=>{ const{numbers,zodiacs,amount}=countItemsInLine(line,cfg,keys); const nMin=parseInt(document.getElementById('numAmountMin')?.value)||1,nMax=parseInt(document.getElementById('numAmountMax')?.value)||50000; const zMin=parseInt(document.getElementById('zodiacAmountMin')?.value)||1,zMax=parseInt(document.getElementById('zodiacAmountMax')?.value)||50000; if(isNormal){ if(zodiacs.length>0){ zodiacs.forEach(z=>{ const w=z===curZod?5:4; zodiacWeightedTotal+=amount*w; }); }else if(numbers.length>0){ numberOrderTotal+=numbers.length*amount; } } numbers.forEach(num=>{ if(isNormal){ userBetData[user][num]=(userBetData[user][num]||0)+amount; tableBetData[num]=(tableBetData[num]||0)+amount; reportBetData[num]=(reportBetData[num]||0)+amount; numberCount[num]=(numberCount[num]||0)+1; if(amount>=nMin&&amount<=nMax)numberAmountCount[num]=(numberAmountCount[num]||0)+1; originalOrderAmount[num]=(originalOrderAmount[num]||0)+amount; if(zodiacs.length === 0) directOrderAmount[num] = (directOrderAmount[num]||0) + amount; } else { userBetData[user][num]=(userBetData[user][num]||0)-amount; reportBetData[num]=(reportBetData[num]||0)-amount; reportAmountData[num]=(reportAmountData[num]||0)+amount; if(zodiacs.length === 0) directReportAmount[num] = (directReportAmount[num]||0) + amount; } }); if(isNormal){ zodiacs.forEach(z=>{ zodiacCount[z]=(zodiacCount[z]||0)+1; zodiacDirectAmount[z]=(zodiacDirectAmount[z]||0)+amount*(cfg.zodiac[z]?.length||0); if(amount>=zMin&&amount<=zMax){zodiacAmountCount[z]=(zodiacAmountCount[z]||0)+1; zodiacFilteredAmount[z]=(zodiacFilteredAmount[z]||0)+amount*(cfg.zodiac[z]?.length||0);} (cfg.zodiac[z]||[]).forEach(n=>{ const num=n.padStart(2,'0'); userBetData[user][num]=(userBetData[user][num]||0)+amount; tableBetData[num]=(tableBetData[num]||0)+amount; reportBetData[num]=(reportBetData[num]||0)+amount; originalOrderAmount[num]=(originalOrderAmount[num]||0)+amount; }); }); } else { zodiacs.forEach(z=>{ zodiacReportAmount[z]=(zodiacReportAmount[z]||0)+amount*(cfg.zodiac[z]?.length||0); if(amount>=zMin&&amount<=zMax){ zodiacFilteredReportAmount[z]=(zodiacFilteredReportAmount[z]||0)+amount*(cfg.zodiac[z]?.length||0);} (cfg.zodiac[z]||[]).forEach(n=>{ const num=n.padStart(2,'0'); userBetData[user][num]=(userBetData[user][num]||0)-amount; reportBetData[num]=(reportBetData[num]||0)-amount; reportAmountData[num]=(reportAmountData[num]||0)+amount; }); }); } }); generateRiskTable(); generateReportTable(); renderFrequencyCards(); renderAmountFrequencyCards(); renderReportAmountTable(); renderOriginalAmountTable(); updateReportAmountTotal(); updateAmountDisplays(); }
@@ -2557,8 +2611,8 @@ async function updateTableFromRecords(){
     renderReportAmountTable(); renderOriginalAmountTable(); updateReportAmountTotal(); updateAmountDisplays();
     calculateStorageUsage(); renderSmartDecision(); updateSingleBetDisplay();
   }catch(e){}
-} 
-    function updateDirectAmountTotals() {
+}
+function updateDirectAmountTotals() {
   let orderTotal = 0; let reportTotal = 0;
   for (let n in directOrderAmount) { orderTotal += directOrderAmount[n] || 0; }
   for (let n in directReportAmount) { reportTotal += directReportAmount[n] || 0; }
@@ -2616,7 +2670,7 @@ function orderContainsTarget(content,targetNum,cfg){ if(!targetNum)return true; 
 function getSpecialAmountFromOrder(content, prizeNum, cfg) { if (!prizeNum) return 0; const targetNum = prizeNum.padStart(2, '0'); const lines = content.split('\n'); let total = 0; for (const line of lines) { const match = line.match(/^(.+?)\s+各数\s+(\d+)$/); if (!match) continue; const tokensPart = match[1]; const amount = parseInt(match[2]) || 0; const tokens = tokensPart.split('-').map(t => t.trim()).filter(t => t); for (const token of tokens) { if (isTokenMatching(token, targetNum, cfg)) { total += amount; } } } return total; }
 function formatTimestampToCST(iso){ const d=new Date(iso); return new Intl.DateTimeFormat('zh-CN',{year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false,timeZone:'Asia/Shanghai'}).format(d); }
 function getUserColor(u){ let h=0; for(let i=0;i<u.length;i++)h=u.charCodeAt(i)+((h<<5)-h); const hue=(h%360+360)%360; return`hsl(${hue},70%,45%)`; }
-    function renderOrderStats(allOrders, allReports, filterUser, prizeNum) {
+function renderOrderStats(allOrders, allReports, filterUser, prizeNum) {
   const container = document.getElementById('orderStatsContainer');
   if (!container) return;
   const mul = parseFloat(document.getElementById('multipleVal')?.value) || 1;
@@ -2875,7 +2929,7 @@ function switchParseMethod() { const text = document.getElementById('reportCapIn
 function copyOrderGroup() { const text = document.getElementById('parseResultArea').innerText; if (!text) { showToast('没有解析结果'); return; } navigator.clipboard.writeText(text).then(() => showToast('订单组已复制')); }
 const originalApplyReportCap = applyReportCap;
 applyReportCap = function() { originalApplyReportCap(); const info = document.getElementById('reportCapInfo').innerText; if (!info || info === '无超出的号码') { document.getElementById('parseResultArea').innerText = ''; } };
-    // ===== 回收站窗口 =====
+// ===== 回收站窗口 =====
 async function showRecycleBin() { const existingWin = document.getElementById('recycleWin'); if (existingWin) existingWin.remove(); const allRecords = await getRecycleBinRecords(); const records = allRecords.filter(r => r.region === currentRegion); const win = document.createElement('div'); win.className = 'floating-window'; win.id = 'recycleWin'; win.style.width = '750px'; win.style.height = '550px'; win.style.left = '50%'; win.style.top = '50%'; win.style.transform = 'translate(-50%, -50%)'; let html = `<div class="modal-header"><h3>🗑️ 回收站</h3><div class="window-controls"><button onclick="maximizeWindow('recycleWin')">🗖</button><button onclick="document.getElementById('recycleWin').remove()">×</button></div></div>`; html += `<div class="modal-body" style="display:flex; flex-direction:column; height: calc(100% - 120px);">`; html += `<div style="margin-bottom:10px;display:flex;gap:12px;flex-wrap:wrap;align-items:center;position:sticky;top:0;background:rgba(255,255,255,0.9);z-index:2;padding:5px 0;"><button onclick="checkAllRecycle()" style="padding:6px 12px;background:#007bff;color:#fff;border:none;border-radius:4px;">全选</button><button onclick="uncheckAllRecycle()" style="padding:6px 12px;background:#6c757d;color:#fff;border:none;border-radius:4px;">取消全选</button><button onclick="restoreCheckedRecycle()" style="padding:6px 12px;background:#27ae60;color:#fff;border:none;border-radius:4px;">恢复选中</button><button onclick="deleteCheckedRecycle()" style="padding:6px 12px;background:#e74c3c;color:#fff;border:none;border-radius:4px;">彻底删除</button><button onclick="emptyRecycleBin()" style="padding:6px 12px;background:#8e44ad;color:#fff;border:none;border-radius:4px;margin-left:auto;">清空回收站</button></div>`; html += `<div id="recycleListContainer" style="flex:1; overflow-y:auto;">`; if (records.length === 0) { html += `<div style="padding:20px;text-align:center;color:#666;">回收站为空</div>`; } else { records.sort((a,b) => new Date(b.deletedAt) - new Date(a.deletedAt)); records.forEach(rec => { const ts = formatTimestampToCST(rec.deletedAt); const typeLabel = rec.type === 'order' ? '下单' : (rec.type === 'report' ? '上报' : '连肖'); const typeColor = rec.type === 'order' ? '#3498db' : (rec.type === 'report' ? '#e67e22' : '#8e44ad'); html += `<div class="order-item"><input type="checkbox" class="recycle-check" data-id="${rec.id}"><div class="order-content">${rec.content.replace(/\n/g,'<br>')}</div><div class="order-info"><span class="order-total" style="color:#000;">合计：${rec.totalAmount || 0}</span><span class="order-meta"><span style="color:${typeColor};">类型：${typeLabel}</span><span style="color:#e74c3c;">删除：${ts}</span><span>用户：${rec.user || '未知'}</span></span></div><button class="order-del" onclick="restoreRecycleRecord('${rec.id}')" style="background:#27ae60;margin-right:4px;">恢复</button><button class="order-del" onclick="permanentlyDeleteRecycleRecord('${rec.id}')">删除</button></div>`; }); } html += `</div></div><div class="modal-footer" style="justify-content:space-between;"><span style="font-size:12px;color:#666;" id="recycleStorageInfo"></span><button onclick="document.getElementById('recycleWin').remove()" style="padding:8px 16px;background:#6c757d;color:#fff;border:none;border-radius:4px;">关闭</button></div>`; win.innerHTML = html; document.body.appendChild(win); updateRecycleStorageInfo(); makeWindowDraggable('recycleWin'); highestZ += 1; win.style.zIndex = highestZ; updateRecycleCount(); }
 function updateRecycleStorageInfo() { const span = document.getElementById('recycleStorageInfo'); if (!span) return; getRecycleBinRecords().then(allRecords => { const records = allRecords.filter(r => r.region === currentRegion); let bytes = 0; records.forEach(r => bytes += JSON.stringify(r).length * 2); const usedMB = (bytes / (1024*1024)).toFixed(2); span.textContent = `回收站占用：${usedMB} MB（共${records.length}条记录）`; }); }
 async function updateRecycleCount() { const span = document.getElementById('recycleCount'); if (!span) return; try { const allRecords = await getRecycleBinRecords(); const count = allRecords.filter(r => r.region === currentRegion).length; if (count > 0) { span.textContent = count; span.style.display = 'inline-block'; } else { span.style.display = 'none'; } } catch(e) { span.style.display = 'none'; } }
