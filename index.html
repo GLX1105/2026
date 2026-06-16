@@ -1682,18 +1682,17 @@ function getOddsForType(type, oddsData) {
   };
 }
 
-// ===== 兑奖：普通订单特码行（含生肖/属性/分类展开，只看第7位特码，hasValidDraw控制是否计算中奖） =====
+// ===== 兑奖：普通订单特码行（含生肖/属性/分类展开，只看第7位特码，不去重，hasValidDraw控制是否计算中奖） =====
 function processNormalLineDuijiang(stats, match, drawTeMa, cfg, vc, oddsData, hasValidDraw) {
   const cont = match[1]; const amt = parseInt(match[2]) || 0;
   const items = cont.split('-').map(i => i.trim()).filter(i => i);
-  const allNums = new Set();
+  const nums = [];
   items.forEach(item => {
-    if (/^\d+$/.test(item)) { allNums.add(item.padStart(2, '0')); }
-    else if (cfg.zodiac[item]) { (cfg.zodiac[item] || []).forEach(n => allNums.add(n.padStart(2, '0'))); }
-    else if (cfg.shengxiaoAttr[item]) { (cfg.shengxiaoAttr[item] || []).forEach(z => { (cfg.zodiac[z] || []).forEach(n => allNums.add(n.padStart(2, '0'))); }); }
-    else if (vc.has(item)) { const nl = getNumberListForCategory(item, cfg); nl.forEach(n => allNums.add(n.padStart(2, '0'))); }
+    if (/^\d+$/.test(item)) { nums.push(item.padStart(2, '0')); }
+    else if (cfg.zodiac[item]) { (cfg.zodiac[item] || []).forEach(n => nums.push(n.padStart(2, '0'))); }
+    else if (cfg.shengxiaoAttr[item]) { (cfg.shengxiaoAttr[item] || []).forEach(z => { (cfg.zodiac[z] || []).forEach(n => nums.push(n.padStart(2, '0'))); }); }
+    else if (vc.has(item)) { const nl = getNumberListForCategory(item, cfg); nl.forEach(n => nums.push(n.padStart(2, '0'))); }
   });
-  const nums = [...allNums];
   const { odds, rebate } = getOddsForType('特码', oddsData);
   stats.orderTotal += nums.length * amt;
   stats.orderRebate += nums.length * amt * (rebate / 100);
@@ -1772,18 +1771,17 @@ function processComboLineDuijiang(stats, match, drawZodiacsSet, drawNumbersSet, 
   });
 }
 
-// ===== 兑奖：上报订单特码行（含生肖/属性/分类展开，只看第7位特码，hasValidDraw控制是否计算中奖） =====
+// ===== 兑奖：上报订单特码行（含生肖/属性/分类展开，只看第7位特码，不去重，hasValidDraw控制是否计算中奖） =====
 function processReportLineDuijiang(stats, match, drawTeMa, cfg, vc, oddsData, hasValidDraw) {
   const cont = match[1]; const amt = parseInt(match[2]) || 0;
   const items = cont.split('-').map(i => i.trim()).filter(i => i);
-  const allNums = new Set();
+  const nums = [];
   items.forEach(item => {
-    if (/^\d+$/.test(item)) { allNums.add(item.padStart(2, '0')); }
-    else if (cfg.zodiac[item]) { (cfg.zodiac[item] || []).forEach(n => allNums.add(n.padStart(2, '0'))); }
-    else if (cfg.shengxiaoAttr[item]) { (cfg.shengxiaoAttr[item] || []).forEach(z => { (cfg.zodiac[z] || []).forEach(n => allNums.add(n.padStart(2, '0'))); }); }
-    else if (vc.has(item)) { const nl = getNumberListForCategory(item, cfg); nl.forEach(n => allNums.add(n.padStart(2, '0'))); }
+    if (/^\d+$/.test(item)) { nums.push(item.padStart(2, '0')); }
+    else if (cfg.zodiac[item]) { (cfg.zodiac[item] || []).forEach(n => nums.push(n.padStart(2, '0'))); }
+    else if (cfg.shengxiaoAttr[item]) { (cfg.shengxiaoAttr[item] || []).forEach(z => { (cfg.zodiac[z] || []).forEach(n => nums.push(n.padStart(2, '0'))); }); }
+    else if (vc.has(item)) { const nl = getNumberListForCategory(item, cfg); nl.forEach(n => nums.push(n.padStart(2, '0'))); }
   });
-  const nums = [...allNums];
   const { odds, rebate } = getOddsForType('特码', oddsData);
   stats.reportTotal += nums.length * amt;
   stats.reportRebate += nums.length * amt * (rebate / 100);
