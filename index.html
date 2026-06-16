@@ -1456,7 +1456,7 @@ async function screenshotRiskCard() {
     }, 'image/png');
   } catch(e) { showToast('截图失败'); }
 }
-  // ===== 兑奖窗口（含返水列、中奖详情红色、所有用户行镶入不加粗、截图按钮、赔率按钮） =====
+ // ===== 兑奖窗口（含返水列、中奖详情红色、所有用户行镶入不加粗、截图按钮、赔率按钮） =====
 function showDuiJiangWin() {
   if (document.getElementById('duiJiangWin')) return;
   const fd = document.getElementById('filterDate')?.value || getTodayCST();
@@ -1492,11 +1492,11 @@ function showDuiJiangWin() {
     <div class="modal-header">🏆 兑奖窗口<div class="window-controls"><button onclick="maximizeWindow('duiJiangWin')">🗖</button><button onclick="document.getElementById('duiJiangWin').remove()">×</button></div></div>
     <div class="modal-body" style="overflow-y:auto; padding:10px;">
       <div class="duijiang-section-title">📋 下单统计 <button class="btn" onclick="screenshotDuiJiangTable('duiJiangOrderTable')" style="padding:2px 8px;font-size:11px;min-height:auto;border-radius:20px;background:#27ae60;color:#fff;border:none;cursor:pointer;margin-left:8px;">截图</button></div>
-      <div style="overflow-x:auto;"><table class="duijiang-table" id="duiJiangOrderTable"><thead><tr><th>用户</th><th>下单金额</th><th>返水</th><th>中奖详情</th><th>盈亏</th></tr></thead><tbody id="duiJiangOrderBody"><tr><td colspan="5" style="text-align:center;color:#888;">请先录入开奖号码并保存兑奖</td></tr></tbody></table></div>
+      <div style="overflow-x:auto;"><table class="duijiang-table" id="duiJiangOrderTable"><thead><tr><th>用户</th><th>下单金额</th><th>返水</th><th>中奖详情</th><th>盈亏</th></tr></thead><tbody id="duiJiangOrderBody"><tr><td colspan="5" style="text-align:center;color:#888;">加载中...</td></tr></tbody></table></div>
       <div class="duijiang-section-title">📤 上报统计 <button class="btn" onclick="screenshotDuiJiangTable('duiJiangReportTable')" style="padding:2px 8px;font-size:11px;min-height:auto;border-radius:20px;background:#27ae60;color:#fff;border:none;cursor:pointer;margin-left:8px;">截图</button></div>
-      <div style="overflow-x:auto;"><table class="duijiang-table" id="duiJiangReportTable"><thead><tr><th>用户</th><th>上报金额</th><th>返水</th><th>中奖详情</th><th>盈亏</th></tr></thead><tbody id="duiJiangReportBody"><tr><td colspan="5" style="text-align:center;color:#888;">请先录入开奖号码并保存兑奖</td></tr></tbody></table></div>
+      <div style="overflow-x:auto;"><table class="duijiang-table" id="duiJiangReportTable"><thead><tr><th>用户</th><th>上报金额</th><th>返水</th><th>中奖详情</th><th>盈亏</th></tr></thead><tbody id="duiJiangReportBody"><tr><td colspan="5" style="text-align:center;color:#888;">加载中...</td></tr></tbody></table></div>
       <div class="duijiang-section-title">📊 最终合计 <button class="btn" onclick="screenshotDuiJiangTable('duiJiangFinalTable')" style="padding:2px 8px;font-size:11px;min-height:auto;border-radius:20px;background:#27ae60;color:#fff;border:none;cursor:pointer;margin-left:8px;">截图</button></div>
-      <div style="overflow-x:auto;"><table class="duijiang-table" id="duiJiangFinalTable"><thead><tr><th>净金额</th><th>净返水</th><th>中奖详情</th><th>净盈亏</th></tr></thead><tbody id="duiJiangFinalBody"><tr><td colspan="4" style="text-align:center;color:#888;">请先录入开奖号码并保存兑奖</td></tr></tbody></table></div>
+      <div style="overflow-x:auto;"><table class="duijiang-table" id="duiJiangFinalTable"><thead><tr><th>净金额</th><th>净返水</th><th>中奖详情</th><th>净盈亏</th></tr></thead><tbody id="duiJiangFinalBody"><tr><td colspan="4" style="text-align:center;color:#888;">加载中...</td></tr></tbody></table></div>
       <div class="duijiang-section-title">🎰 录开奖</div>
       ${drawTableHtml}
       <div style="display:flex; gap:6px; margin-top:6px; justify-content:center;">
@@ -1508,7 +1508,8 @@ function showDuiJiangWin() {
     </div>`;
   document.body.appendChild(win);
   makeWindowDraggable('duiJiangWin'); highestZ += 1; win.style.zIndex = highestZ;
-  if (savedNumbers.length > 0) { refreshDuiJiangStats(); }
+  // 始终调用刷新函数，无开奖时也显示下单金额和返水
+  refreshDuiJiangStats();
 }
 
 async function saveDuiJiangDraw() {
