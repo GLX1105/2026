@@ -573,9 +573,9 @@ tr.selected-row{background-color:#dceeff!important;font-weight:bold;box-shadow:i
         </div>
       </div>
     </div>
-        <!-- 右侧风险报告区域 -->
+           <!-- 右侧风险报告区域 -->
     <div class="risk-report-area">
-        <div class="card">
+        <div class="card" id="riskReportCard">
           <div class="card-title">
             <div class="title-left">
               <input type="date" id="filterDate" style="padding:4px;border-radius:4px;border:1px solid #ccc;" onchange="updateTableFromRecords()">
@@ -592,6 +592,7 @@ tr.selected-row{background-color:#dceeff!important;font-weight:bold;box-shadow:i
               <select id="startZodiacSelect">
                 <option value="马">马</option><option value="蛇">蛇</option><option value="龙">龙</option><option value="兔">兔</option><option value="虎">虎</option><option value="牛">牛</option><option value="鼠">鼠</option><option value="猪">猪</option><option value="狗">狗</option><option value="鸡">鸡</option><option value="猴">猴</option><option value="羊">羊</option>
               </select>
+              <button class="btn-screenshot" style="padding:2px 8px; font-size:12px; min-height:auto; border-radius:20px; background:#27ae60; color:#fff; border:none; cursor:pointer; margin-left:4px;" onclick="screenshotRiskCard()">截图</button>
             </div>
           </div>
           <div id="riskSection">
@@ -1153,7 +1154,7 @@ function updateMaxLossDisplay() {
   }
 }
 
-// ===== 连肖识别弹窗 =====
+// ===== 连肖识别弹窗（含草稿保存） =====
 function showLianxiaoGenerateWin() {
   if (document.getElementById('lianxiaoGenerateWin')) return;
   const users = getUsers();
@@ -1162,7 +1163,7 @@ function showLianxiaoGenerateWin() {
   win.style.width = '850px'; win.style.height = '650px'; win.style.left = '50%'; win.style.top = '50%'; win.style.transform = 'translate(-50%, -50%)';
   win.setAttribute('data-orig-width', '850px'); win.setAttribute('data-orig-height', '650px');
   win.innerHTML = `
-    <div class="modal-header">连肖识别<div class="window-controls"><button onclick="maximizeWindow('lianxiaoGenerateWin')">🗖</button><button onclick="document.getElementById('lianxiaoGenerateWin').remove()">×</button></div></div>
+    <div class="modal-header">连肖识别<div class="window-controls"><button onclick="maximizeWindow('lianxiaoGenerateWin')">🗖</button><button id="comboCloseBtn">×</button></div></div>
     <div class="modal-body" style="display:flex; flex-direction:column; gap:10px;">
       <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px;">
         <select id="comboUserSelect" style="padding:4px 8px;border-radius:4px;border:1px solid #ccc;font-size:13px;">${userOptions}</select>
@@ -1215,6 +1216,22 @@ function showLianxiaoGenerateWin() {
     </div>`;
   document.body.appendChild(win);
   makeWindowDraggable('lianxiaoGenerateWin'); highestZ += 1; win.style.zIndex = highestZ;
+  // 草稿恢复
+  const draftKey = `comboDraft_${currentRegion}`;
+  const draft = localStorage.getItem(draftKey);
+  if (draft) {
+    document.getElementById('comboInput').value = draft;
+    convertComboText();
+  }
+  // 关闭按钮保存草稿
+  document.getElementById('comboCloseBtn').addEventListener('click', () => {
+    const input = document.getElementById('comboInput');
+    if (input) {
+      const draftKey = `comboDraft_${currentRegion}`;
+      localStorage.setItem(draftKey, input.value);
+    }
+    document.getElementById('lianxiaoGenerateWin').remove();
+  });
 }
 
 // ===== 赔率弹窗（已添加特码行） =====
@@ -1406,6 +1423,37 @@ async function screenshotSingleComboCard(cardId) {
     const canvas = await html2canvas(clone, { backgroundColor: '#ffffff', scale: 2, logging: false });
     document.body.removeChild(clone);
     canvas.toBlob(async blob => { if (!blob) { showToast('生成图片失败'); return; } try { const item = new ClipboardItem({ 'image/png': blob }); await navigator.clipboard.write([item]); showToast('截图已复制'); } catch(e) { showToast('复制失败'); } }, 'image/png');
+  } catch(e) { showToast('截图失败'); }
+}
+
+// ===== 截图风险卡片 =====
+async function screenshotRiskCard() {
+  const card = document.getElementById('riskReportCard');
+  if (!card) { showToast('卡片不存在'); return; }
+  try {
+    const clone = card.cloneNode(true);
+    clone.style.position = 'absolute';
+    clone.style.left = '-9999px';
+    clone.style.top = '0';
+    clone.style.width = card.offsetWidth + 'px';
+    clone.style.display = 'block';
+    clone.style.visibility = 'visible';
+    document.body.appendChild(clone);
+    // 展开所有滚动区域
+    const scrollDivs = clone.querySelectorAll('.table-container, [style*="overflow"]');
+    const savedStyles = [];
+    scrollDivs.forEach(div => {
+      savedStyles.push({ div, overflow: div.style.overflow, maxHeight: div.style.maxHeight });
+      div.style.overflow = 'visible';
+      div.style.maxHeight = 'none';
+    });
+    clone.offsetHeight;
+    const canvas = await html2canvas(clone, { backgroundColor: '#ffffff', scale: 2, logging: false });
+    document.body.removeChild(clone);
+    canvas.toBlob(async blob => {
+      if (!blob) { showToast('生成图片失败'); return; }
+      try { const item = new ClipboardItem({ 'image/png': blob }); await navigator.clipboard.write([item]); showToast('卡片截图已复制'); } catch(e) { showToast('复制失败'); }
+    }, 'image/png');
   } catch(e) { showToast('截图失败'); }
 }
    // ===== 兑奖窗口（含返水列、中奖详情红色、所有用户行镶入不加粗、截图按钮、赔率按钮） =====
