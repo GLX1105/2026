@@ -1166,6 +1166,19 @@ function insertPlayNameToComboInput(playName) {
   convertComboText();
 }
 
+// ===== 清空连肖输入框 =====
+function clearComboInput() {
+  const input = document.getElementById('comboInput');
+  const result = document.getElementById('comboResult');
+  if (input) input.value = '';
+  if (result) result.innerHTML = '';
+  window._comboPureContents = [];
+  updateComboTotalDisplay();
+  const box = document.getElementById('comboTotalAmountBox'); if (box) box.style.display = 'none';
+  const lineSpan = document.getElementById('comboLineCount'); if (lineSpan) lineSpan.style.display = 'none';
+  const lossSpan = document.getElementById('comboMaxLossDisplay'); if (lossSpan) { lossSpan.textContent = ''; lossSpan.style.display = 'none'; }
+}
+
 // ===== 连肖识别弹窗（含草稿保存） =====
 function showLianxiaoGenerateWin() {
   if (document.getElementById('lianxiaoGenerateWin')) return;
@@ -1199,6 +1212,7 @@ function showLianxiaoGenerateWin() {
         <button class="btn btn-paste" onclick="pasteComboOrder()" style="padding:4px 10px; font-size:12px; min-height:28px;">粘贴</button>
         <button class="btn btn-save-order" onclick="saveComboOrder()" style="padding:4px 10px; font-size:12px; min-height:28px;">保存下单</button>
         <button class="btn btn-remove-sep" onclick="comboRemoveSeparators()" style="padding:4px 10px; font-size:12px; min-height:28px;">去分隔</button>
+        <button class="btn btn-clear" onclick="clearComboInput()" style="padding:4px 10px; font-size:12px; min-height:28px;">清空</button>
       </div>
       <div style="display:flex; gap:4px; flex-wrap:wrap; margin-bottom:4px;">
         <button class="category-btn" onclick="insertPlayNameToComboInput('平特肖')">平特肖</button>
@@ -1330,7 +1344,7 @@ function saveOddsData() {
   document.querySelectorAll('.odds-input').forEach(inp => { inp.disabled = true; inp.style.border = 'none'; inp.style.background = 'transparent'; });
   showToast('赔率已保存'); if (document.getElementById('lianxiaoStatsWin')) refreshLianxiaoStats();
 }
-   // ===== 连肖统计弹窗（移除赔率按钮） =====
+    // ===== 连肖统计弹窗（移除赔率按钮） =====
 function showLianxiaoStatsWin() {
   if (document.getElementById('lianxiaoStatsWin')) return;
   const win = document.createElement('div'); win.className = 'floating-window'; win.id = 'lianxiaoStatsWin';
@@ -1484,7 +1498,7 @@ function parseComboLine(rawLine, playNames, allAmpList, cfg, curYearZodiac, AMTS
   let matchedPlay = null;
   let contentStart = 0;
 
-  // 尝试直接匹配玩法名（无关键字前缀的情况，如“二连肖复试...”）
+  // 尝试直接匹配玩法名（无关键字前缀的情况）
   for (const pname of playNames) {
     if (remaining.startsWith(pname)) {
       matchedPlay = pname;
@@ -1493,43 +1507,36 @@ function parseComboLine(rawLine, playNames, allAmpList, cfg, curYearZodiac, AMTS
     }
   }
 
-  // 如果没匹配到，检查是否以“复试/复式”开头，跳过关键字再匹配
+  // 如果没匹配到，检查是否以“复试/复式”开头
   if (!matchedPlay && (remaining.startsWith('复试') || remaining.startsWith('复式'))) {
     isFushi = true;
     let temp = remaining.substring(2).trim();
     for (const pname of playNames) {
       if (temp.startsWith(pname)) {
         matchedPlay = pname;
-        contentStart = 2 + temp.indexOf(pname) + pname.length; // 原行中关键字长度 + 可能空格 + 玩法名长度
-        // 重新计算，直接取 remaining 中玩法名结束的位置
         let startIdx = 2; while (startIdx < remaining.length && remaining[startIdx] === ' ') startIdx++;
         contentStart = startIdx + pname.length;
         break;
       }
     }
     if (!matchedPlay) {
-      // 若仍未匹配，则无法识别
       return { html: `<span style="color:red;">${rawLine}（未识别玩法名）</span>`, pureLines: [], endIndex: rawLine.length };
     }
   }
 
-  // 如果仍未匹配到，整行无效
   if (!matchedPlay) {
     return { html: `<span style="color:red;">${rawLine}（未识别玩法名）</span>`, pureLines: [], endIndex: rawLine.length };
   }
 
-  // 此时 remaining 从 contentStart 开始是内容部分，但可能玩法名后面紧跟着“复试/复式”关键字
   remaining = rawLine.substring(contentStart).trim();
   if (!isFushi && (remaining.startsWith('复试') || remaining.startsWith('复式'))) {
     isFushi = true;
-    // 跳过关键字
     remaining = remaining.substring(2).trim();
-    contentStart = rawLine.indexOf(remaining); // 更新 contentStart 到内容实际开始处
+    contentStart = rawLine.indexOf(remaining);
   }
 
   const playType = normalizePlayType(matchedPlay);
 
-  // 现在 remaining 是内容 + 指定词 + 金额部分
   // 找指定词
   let ampWord = '';
   let ampIndex = -1;
@@ -1547,11 +1554,10 @@ function parseComboLine(rawLine, playNames, allAmpList, cfg, curYearZodiac, AMTS
   const contentStr = remaining.substring(0, ampIndex).trim();
   const afterAmp = remaining.substring(ampIndex + ampWord.length).trim();
 
-  // 提取末尾金额（支持后缀）
+  // 提取末尾金额
   const amountRegex = new RegExp(`^(\\d+)\\s*${AMTS}$`);
   const amountMatch = afterAmp.match(amountRegex);
   if (!amountMatch) {
-    // 尝试只提取数字（兼容无后缀但紧挨下一个玩法的情况）
     const simpleMatch = afterAmp.match(/^(\d+)/);
     if (simpleMatch) {
       const amt = parseInt(simpleMatch[1]) || 0;
@@ -1567,7 +1573,6 @@ function parseComboLine(rawLine, playNames, allAmpList, cfg, curYearZodiac, AMTS
     return { html: `<span style="color:red;">${matchedPlay} ${remaining}（金额无效）</span>`, pureLines: [], endIndex: rawLine.length };
   }
 
-  // 计算结束位置：从 rawLine 中定位 afterAmp 的开始位置，加上数字部分长度
   const ampStartInRaw = rawLine.indexOf(afterAmp);
   const endIdx = ampStartInRaw + amountMatch[0].length;
   const result = generateComboResults(playType, contentStr, amount, cfg, curYearZodiac, isFushi);
@@ -1599,12 +1604,12 @@ function getPlayGroupSize(playType) {
   return map[playType] || 1;
 }
 
-// 判断玩法是否需要组内连写（连肖/连尾需要，其他不需要）
+// 判断玩法是否需要组内连写
 function isPlayNeedsConsecutive(playType) {
   return ['二连肖','三连肖','四连肖','五连肖','二连尾','三连尾','四连尾','五连尾'].includes(playType);
 }
 
-// 判断玩法是否号码之间必须有分隔符（不中/二中二/三中三）
+// 判断玩法是否号码之间必须有分隔符
 function isPlayNeedsSeparator(playType) {
   return ['五不中','六不中','七不中','八不中','九不中','十不中','十一不中','十二不中','二中二','三中三'].includes(playType);
 }
@@ -2252,6 +2257,50 @@ function showDuiJiangWin() {
 
 async function saveDuiJiangDraw() {
   await saveDrawNumbers();
+
+  // === 新增：兑奖窗口数据联动开奖记录窗口 ===
+  const fd = document.getElementById('filterDate')?.value || getTodayCST();
+  let year = new Date().getFullYear();
+  const m = fd.match(/^(\d{4})/);
+  if (m) year = parseInt(m[1]);
+  const issueNumber = getCurrentIssueNumber(year, fd);
+  if (!issueNumber) { refreshDuiJiangStats(); return; }
+  const issueId = issueNumber.toString().padStart(2, '0');
+  
+  // 获取特码（第7个号码）
+  const teMaInput = document.getElementById('drawNum7');
+  const teMa = teMaInput ? teMaInput.value.trim() : '';
+  let teMaFormatted = '';
+  if (/^\d$/.test(teMa)) teMaFormatted = '0' + teMa;
+  else if (/^\d{2}$/.test(teMa) && parseInt(teMa) >= 1 && parseInt(teMa) <= 49) teMaFormatted = teMa;
+
+  // 获取净盈亏（从最终合计表）
+  const finalBody = document.getElementById('duiJiangFinalBody');
+  let netPL = '';
+  if (finalBody) {
+    const cells = finalBody.querySelectorAll('td');
+    if (cells.length >= 4) {
+      const plCell = cells[3];
+      if (plCell) {
+        const plText = plCell.textContent.trim();
+        if (plText !== '' && !isNaN(parseFloat(plText))) {
+          netPL = plText;
+        }
+      }
+    }
+  }
+
+  // 写入开奖记录
+  if (teMaFormatted || netPL !== '') {
+    const storageKey = `drawRecord_${currentRegion}_${year}`;
+    let savedData = {};
+    try { savedData = JSON.parse(localStorage.getItem(storageKey) || '{}'); } catch(e) {}
+    if (!savedData[issueId]) savedData[issueId] = { number: '', pl: '' };
+    if (teMaFormatted) savedData[issueId].number = teMaFormatted;
+    if (netPL !== '') savedData[issueId].pl = netPL;
+    localStorage.setItem(storageKey, JSON.stringify(savedData));
+  }
+
   refreshDuiJiangStats();
 }
 
