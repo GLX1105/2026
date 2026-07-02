@@ -1592,26 +1592,23 @@ function parseTeMaSegment(content) {
   if (!line.trim()) return [];
   let remaining = line.trim();
   const results = [];
+  const ZODIAC_CHARS = '鼠牛虎兔龙蛇马羊猴鸡狗猪';
   
-  // 循环逐段解析，直到剩余字符串为空
   while (remaining.length > 0) {
     let matched = false;
     
-    // 1. 尝试匹配玩法标签开头的片段（连肖、平特肖等）
-    const specMatches = collectSpecialMatches(remaining);
-    if (specMatches.length > 0) {
-      const firstMatch = specMatches[0];
-      if (firstMatch.start === 0) {
-        // 匹配从开头开始，直接提取
-        results.push(firstMatch.result);
-        remaining = remaining.substring(firstMatch.end).trim();
-        matched = true;
-        continue;
-      }
+    // 1. 优先匹配玩法标签（连肖、平特肖等），只有当匹配从字符串开头开始时才提取
+    const specialMatches = collectSpecialMatches(remaining);
+    if (specialMatches.length > 0 && specialMatches[0].start === 0) {
+      results.push(specialMatches[0].result);
+      remaining = remaining.substring(specialMatches[0].end).trim();
+      matched = true;
+      continue;
     }
     
-    // 2. 尝试匹配特肖：纯生肖 + 各 + 金额
-    const teXiaoMatch = remaining.match(/^([鼠牛虎兔龙蛇马羊猴鸡狗猪]+)\s*各\s*(\d+)/);
+    // 2. 特肖：纯生肖 + 各（后面不能紧跟“号”或“数”） + 金额
+    const teXiaoRe = new RegExp(`^([${ZODIAC_CHARS}]+)\\s*各\\s*(\\d+)(?![号数])`);
+    const teXiaoMatch = remaining.match(teXiaoRe);
     if (teXiaoMatch) {
       const zodiacs = teXiaoMatch[1].split('').filter(z => z);
       const amt = parseInt(teXiaoMatch[2]) || 0;
@@ -1630,8 +1627,9 @@ function parseTeMaSegment(content) {
       }
     }
     
-    // 3. 尝试匹配特码：内容 + 关键字(各号/各数/各) + 金额
-    const teMaMatch = remaining.match(/^(.+?)(各号|各数|各)\s*(\d+)/);
+    // 3. 特码：内容 + 关键字（各号/各数/各） + 金额
+    const teMaRe = /^(.+?)(各号|各数|各)\s*(\d+)/;
+    const teMaMatch = remaining.match(teMaRe);
     if (teMaMatch) {
       const content = teMaMatch[1].trim();
       const kw = teMaMatch[2];
@@ -1655,7 +1653,7 @@ function parseTeMaSegment(content) {
       }
     }
     
-    // 如果没有任何匹配，跳过第一个字符（防止死循环，例如无法识别的碎片）
+    // 无法识别当前片段，移除第一个字符（避免死循环）
     if (!matched) {
       remaining = remaining.substring(1).trim();
     }
