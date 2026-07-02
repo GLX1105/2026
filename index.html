@@ -1600,9 +1600,8 @@ function parseTeMaSegment(content) {
   if (specialMatchesCheck.length === 0) {
     // 没有其他玩法匹配，检查是否符合特肖条件
     const ZODIAC_SET = new Set('鼠牛虎兔龙蛇马羊猴鸡狗猪'.split(''));
-    const AMTS = '(?:元|米|块|角|分|毛|¥|￥|\\$)';
-    // 只匹配单独的"各"（后不跟数/号/组/码/注/下/买）或"各肖"
-    const shxMatch = line.match(new RegExp(`^(.+?)(各肖|各(?!数|号|组|码|注|下|买))\\s*(\\d+)${AMTS}?$`));
+    // 只匹配单独的"各"（后不跟数/号/组/码/注/下/买）或"各肖"，后面只跟数字，不限制数字后是什么
+    const shxMatch = line.match(new RegExp(`^(.+?)(各肖|各(?!数|号|组|码|注|下|买))\\s*(\\d+)`));
     if (shxMatch) {
       const rawContent = shxMatch[1];
       const amtRaw = parseInt(shxMatch[3]) || 0;
