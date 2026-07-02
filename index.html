@@ -1588,7 +1588,7 @@ function parseTeMaSegment(content) {
   }
   return deduped;
 }
-   function processOneLine(line) {
+  function processOneLine(line) {
   if (!line.trim()) return [];
   let remaining = line.trim();
   const results = [];
@@ -1597,7 +1597,9 @@ function parseTeMaSegment(content) {
   while (remaining.length > 0) {
     let matched = false;
     
-    // 1. 优先匹配玩法标签（连肖、平特肖等），只有当匹配从字符串开头开始时才提取
+    // 1. 优先匹配玩法标签（连肖、平特肖等）
+    // 注意：collectSpecialMatches 内部使用了全局正则 /g
+    // 需要在每次调用前手动将正则的 lastIndex 重置为 0
     const specialMatches = collectSpecialMatches(remaining);
     if (specialMatches.length > 0 && specialMatches[0].start === 0) {
       results.push(specialMatches[0].result);
@@ -1606,7 +1608,7 @@ function parseTeMaSegment(content) {
       continue;
     }
     
-    // 2. 特肖：纯生肖 + 各（后面不能紧跟“号”或“数”） + 金额
+    // 2. 特肖：纯生肖 + 各（后面不能跟"号"或"数"） + 金额
     const teXiaoRe = new RegExp(`^([${ZODIAC_CHARS}]+)\\s*各\\s*(\\d+)(?![号数])`);
     const teXiaoMatch = remaining.match(teXiaoRe);
     if (teXiaoMatch) {
@@ -1653,7 +1655,7 @@ function parseTeMaSegment(content) {
       }
     }
     
-    // 无法识别当前片段，移除第一个字符（避免死循环）
+    // 无法识别当前片段，跳过第一个字符（避免死循环）
     if (!matched) {
       remaining = remaining.substring(1).trim();
     }
