@@ -1588,26 +1588,30 @@ function parseTeMaSegment(content) {
   }
   return deduped;
 }
-    function processOneLine(line) {
+   function processOneLine(line) {
   if (!line.trim()) return [];
+  let remaining = line.trim();
   const results = [];
-  // 按多个空格或标点拆分成独立片段
-  const segments = line.split(/[\s]{2,}|[,，。.、；;]+/).filter(s => s.trim());
   
-  for (const seg of segments) {
-    const s = seg.trim();
-    if (!s) continue;
+  // 循环逐段解析，直到剩余字符串为空
+  while (remaining.length > 0) {
+    let matched = false;
     
-    // 1. 尝试用 collectSpecialMatches 匹配玩法（连肖、平特肖等）
-    const specMatches = collectSpecialMatches(s);
+    // 1. 尝试匹配玩法标签开头的片段（连肖、平特肖等）
+    const specMatches = collectSpecialMatches(remaining);
     if (specMatches.length > 0) {
-      // 取第一个匹配结果（通常只有一个）
-      results.push(specMatches[0].result);
-      continue;
+      const firstMatch = specMatches[0];
+      if (firstMatch.start === 0) {
+        // 匹配从开头开始，直接提取
+        results.push(firstMatch.result);
+        remaining = remaining.substring(firstMatch.end).trim();
+        matched = true;
+        continue;
+      }
     }
     
-    // 2. 特肖：纯生肖 + 各 + 金额
-    const teXiaoMatch = s.match(/^([鼠牛虎兔龙蛇马羊猴鸡狗猪]+)\s*各\s*(\d+)$/);
+    // 2. 尝试匹配特肖：纯生肖 + 各 + 金额
+    const teXiaoMatch = remaining.match(/^([鼠牛虎兔龙蛇马羊猴鸡狗猪]+)\s*各\s*(\d+)/);
     if (teXiaoMatch) {
       const zodiacs = teXiaoMatch[1].split('').filter(z => z);
       const amt = parseInt(teXiaoMatch[2]) || 0;
@@ -1620,91 +1624,44 @@ function parseTeMaSegment(content) {
           total: amt * zodiacs.length,
           kw: '各'
         });
+        remaining = remaining.substring(teXiaoMatch[0].length).trim();
+        matched = true;
         continue;
       }
     }
     
-    // 3. 特码：提取关键字和金额，解析内容
-    const { amt, kw } = extractAmtAndKw(s);
-    if (amt > 0) {
-      const kwIdx = s.lastIndexOf(kw);
-      const content = s.substring(0, kwIdx).trim();
-      const segResult = parseTeMaSegment(content);
-      if (segResult && segResult.allNumsArr && segResult.allNumsArr.length > 0) {
-        const cnt = segResult.allNumsArr.length;
-        results.push({
-          cat: '特码',
-          nums: segResult.displayItems,
-          amt,
-          cnt,
-          total: amt * cnt,
-          kw,
-          warnings: segResult.warnings || []
-        });
+    // 3. 尝试匹配特码：内容 + 关键字(各号/各数/各) + 金额
+    const teMaMatch = remaining.match(/^(.+?)(各号|各数|各)\s*(\d+)/);
+    if (teMaMatch) {
+      const content = teMaMatch[1].trim();
+      const kw = teMaMatch[2];
+      const amt = parseInt(teMaMatch[3]) || 0;
+      if (amt > 0) {
+        const segResult = parseTeMaSegment(content);
+        if (segResult && segResult.allNumsArr && segResult.allNumsArr.length > 0) {
+          results.push({
+            cat: '特码',
+            nums: segResult.displayItems,
+            amt,
+            cnt: segResult.allNumsArr.length,
+            total: amt * segResult.allNumsArr.length,
+            kw,
+            warnings: segResult.warnings || []
+          });
+        }
+        remaining = remaining.substring(teMaMatch[0].length).trim();
+        matched = true;
+        continue;
       }
+    }
+    
+    // 如果没有任何匹配，跳过第一个字符（防止死循环，例如无法识别的碎片）
+    if (!matched) {
+      remaining = remaining.substring(1).trim();
     }
   }
   
   return results;
-}
-
-function performRecognition(text) {
-  const resultDiv = document.getElementById('orderResult');
-  if (!text || !text.trim()) {
-    if (resultDiv) resultDiv.innerHTML = '';
-    updateOrderTotalDisplay();
-    window._pureOrderLines = [];
-    return;
-  }
-  let processedText = preprocess(text);
-  const lines = processedText.split('\n');
-  const allResults = [];
-  for (const line of lines) { if (!line.trim()) continue; allResults.push(...processOneLine(line)); }
-  
-  const mergedArray = allResults.map(r => ({
-    category: r.cat, numbers: r.nums, unitAmount: r.amt,
-    totalCount: r.cnt, totalAmount: r.total, kw: r.kw || '', warnings: r.warnings || []
-  }));
-  
-  if (resultDiv) {
-    if (mergedArray.length === 0) {
-      resultDiv.innerHTML = text ? `<div class="result-line">${text}</div>` : '';
-      window._pureOrderLines = [];
-    } else {
-      displayResults(mergedArray, resultDiv);
-    }
-  }
-  updateOrderTotalDisplay();
-  updateMaxLossDisplay();
-}
-
-function displayResults(rs, container) {
-  if (!container) container = document.getElementById('orderResult');
-  if (!container) return;
-  if (rs.length === 0) { container.innerHTML = ''; window._pureOrderLines = []; return; }
-  let total = 0; let html = '';
-  const pureLines = [];
-  for (const r of rs) {
-    total += r.totalAmount;
-    const kwDisplay = (r.category === '特码') ? '各数' : '各';
-    const amountStr = `${kwDisplay}${Math.round(r.unitAmount)}`;
-    const info = r.totalCount > 1 ? `(${r.totalCount}注, 共${Math.round(r.totalAmount)})` : `(共${Math.round(r.totalAmount)})`;
-    const numStr = formatNums(r.category, r.numbers);
-    let line = `${r.category}:${numStr}${amountStr} ${info}`;
-    if (r.warnings && r.warnings.length) { line += ` <span style="color:red;">[${r.warnings.join('；')}]</span>`; }
-    html += `<div class="result-line">${line}</div>`;
-    const pureNumStr = formatNums(r.category, r.numbers);
-    pureLines.push(`${r.category}:${pureNumStr} ${kwDisplay} ${Math.round(r.unitAmount)}`);
-  }
-  container.innerHTML = html;
-  window._pureOrderLines = pureLines;
-}
-
-function formatNums(cat, numsArr) {
-  const simpleCats = ['特码', '特肖', '平特肖', '平码', '平特尾'];
-  if (simpleCats.includes(cat)) return numsArr.join('-');
-  if (cat.includes('连肖')) return numsArr.map(g => '(' + g.split('').join('-') + ')').join(' ');
-  return numsArr.map(g => `(` + g + `)`).join(' ');
 }
     // ===== countItemsInLine 适配新版识别格式（不去重，增加特肖识别，修复属性肖双重统计和单个生肖判断） =====
 function countItemsInLine(line) {
