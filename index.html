@@ -1927,9 +1927,11 @@ function performRecognition(text) {
   const resultDiv = document.getElementById('orderResult');
   if (!text || !text.trim()) {
     if (resultDiv) resultDiv.innerHTML = '';
-    updateOrderTotalDisplay();
+    // 先清空数据，再更新显示，确保合计归零
     window._pureOrderLines = [];
     window._cachedMaxLossData = [];
+    updateOrderTotalDisplay();
+    updateMaxLossDisplay();
     return;
   }
   let processedText = preprocess(text);
@@ -2108,8 +2110,6 @@ function countItemsInLine(line) {
 
 // processCurrentOrder 修改后：不再做即时统计，只调用 updateTableFromRecords 刷新
 function processCurrentOrder(input, user, isNormal, date = null) {
-  // 不再做任何即时统计，统一通过 updateTableFromRecords 刷新
-  // 只保留订单计数
   const lines = input.split('\n').filter(l => l.trim());
   lines.forEach(line => {
     if (/^特肖:(.+?)\s+各\s*(\d+)$/.test(line)) orderCountAll++;
@@ -2119,7 +2119,6 @@ function processCurrentOrder(input, user, isNormal, date = null) {
       if (amount > 0 && (!playType || playType === '特码')) orderCountAll++;
     }
   });
-  // 触发全局刷新
   updateTableFromRecords();
 }
     // ===== 连肖统计弹窗 =====
