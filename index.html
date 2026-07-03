@@ -1659,12 +1659,14 @@ function parseTeMaSegment(content) {
   }
   return deduped;
 }
-    function processOneLine(line) {
+   function processOneLine(line) {
   if (!line.trim()) return [];
 
   // ===== 号码-金额对识别（优先处理） =====
-  const amountSuffixes = getCustomAmountSuffixes();
-  const suffixList = amountSuffixes.length ? amountSuffixes.join('|') : '';
+  const defaultSuffixes = ['米', '元', '块', '角', '分', '厘'];
+  const userSuffixes = getCustomAmountSuffixes();
+  const combinedSuffixes = [...new Set([...defaultSuffixes, ...userSuffixes])];
+  const suffixList = combinedSuffixes.length ? combinedSuffixes.join('|') : '';
   const suffixPattern = suffixList ? `(?:${suffixList})?` : '';
   const amtPart = `((?:\\d+|[一二三四五六七八九十百千两]+)${suffixPattern})`;
   const numPart = '(\\d{1,2})';
@@ -1759,22 +1761,21 @@ function parseTeMaSegment(content) {
       }
       subLast = subMatch.index + subMatch[0].length;
     }
-    // 关键修复：如果还有残留内容无法解析，包装成待定对象返回
     if (subLast < content.length) {
       const remaining = content.substring(subLast).trim();
       if (remaining && containsDictElement(remaining)) {
-        const hasAmount = /\d+|[一二三四五六七八九十百千两]+/.test(remaining);
-        if (hasAmount) {
-          results.push({
-            cat: '__unrecognized__',
-            nums: [],
-            amt: 0,
-            cnt: 0,
-            total: 0,
-            kw: '',
-            warnings: ['缺少金额关键字或有效玩法'],
-            rawLine: remaining
-          });
+        const parts = remaining.split(/[\s,，.。、+]+/).filter(p => p.trim());
+        for (const part of parts) {
+          const p = part.trim();
+          if (containsDictElement(p) && /\d+|[一二三四五六七八九十百千两]+/.test(p)) {
+            results.push({
+              cat: '__unrecognized__',
+              nums: [],
+              amt: 0, cnt: 0, total: 0, kw: '',
+              warnings: ['缺少金额关键字或有效玩法'],
+              rawLine: p
+            });
+          }
         }
       }
     }
@@ -1802,18 +1803,18 @@ function parseTeMaSegment(content) {
     if (subLast < line.length) {
       const remaining = line.substring(subLast).trim();
       if (remaining && containsDictElement(remaining)) {
-        const hasAmount = /\d+|[一二三四五六七八九十百千两]+/.test(remaining);
-        if (hasAmount) {
-          results.push({
-            cat: '__unrecognized__',
-            nums: [],
-            amt: 0,
-            cnt: 0,
-            total: 0,
-            kw: '',
-            warnings: ['缺少金额关键字或有效玩法'],
-            rawLine: remaining
-          });
+        const parts = remaining.split(/[\s,，.。、+]+/).filter(p => p.trim());
+        for (const part of parts) {
+          const p = part.trim();
+          if (containsDictElement(p) && /\d+|[一二三四五六七八九十百千两]+/.test(p)) {
+            results.push({
+              cat: '__unrecognized__',
+              nums: [],
+              amt: 0, cnt: 0, total: 0, kw: '',
+              warnings: ['缺少金额关键字或有效玩法'],
+              rawLine: p
+            });
+          }
         }
       }
     }
@@ -1825,7 +1826,6 @@ function parseTeMaSegment(content) {
 // ===== 判断一行是否包含字典元素 =====
 function containsDictElement(str) {
   if (!str) return false;
-  // 检查是否包含1-49的数字（独立出现）
   const nums = str.match(/\d+/g);
   if (nums) {
     for (const n of nums) {
@@ -1833,11 +1833,8 @@ function containsDictElement(str) {
       if (intVal >= 1 && intVal <= 49) return true;
     }
   }
-  // 检查是否包含生肖
   if (/[鼠牛虎兔龙蛇马羊猴鸡狗猪]/.test(str)) return true;
-  // 检查是否包含尾数关键字（如 1尾、2尾）
   if (/\d+尾/.test(str)) return true;
-  // 检查是否包含字典关键字
   const dictKeywords = ['金','木','水','火','土','红波','蓝波','绿波','红单','红双','蓝单','蓝双','绿单','绿双',
     '单数','双数','家禽','野兽','平特肖','平特尾','连肖','连尾','二中二','三中三','不中','特码','特肖',
     '红','蓝','绿','单','双','大','小','各','各数','各号','各组'];
@@ -1851,18 +1848,15 @@ function containsDictElement(str) {
 function applyInlineInheritance(lineResults) {
   if (!lineResults || lineResults.length === 0) return lineResults;
 
-  // 可继承的玩法类型及其元素要求
   const inheritableCats = {
     '平特肖': { type: 'zodiac', count: 1 },
     '平特尾': { type: 'tail', count: 1 }
   };
-  // 连肖 (二连肖~五连肖)
   for (let i = 2; i <= 5; i++) {
     inheritableCats[i + '连肖'] = { type: 'zodiac', count: i };
     inheritableCats[i + '连尾'] = { type: 'tail', count: i };
   }
 
-  // 找到该行第一个可继承的玩法
   let inheritedPlay = null;
   for (const r of lineResults) {
     if (r.cat !== '__unrecognized__' && inheritableCats[r.cat]) {
@@ -1880,7 +1874,6 @@ function applyInlineInheritance(lineResults) {
       continue;
     }
 
-    // 尝试用继承玩法解析 rawLine
     const amtMatch = r.rawLine.match(new RegExp(`(.+?)\\s*(${AMT_RE_STR})\\s*$`));
     if (!amtMatch) {
       processed.push(r);
@@ -1896,7 +1889,6 @@ function applyInlineInheritance(lineResults) {
 
     let matched = false;
     if (inheritedPlay.type === 'zodiac') {
-      // 提取生肖
       const zs = content.replace(/[^鼠牛虎兔龙蛇马羊猴鸡狗猪]/g, '');
       if (zs.length === inheritedPlay.count) {
         const combos = zCombosKeepOrder(zs, inheritedPlay.count);
@@ -1908,7 +1900,6 @@ function applyInlineInheritance(lineResults) {
         matched = true;
       }
     } else if (inheritedPlay.type === 'tail') {
-      // 提取尾数
       const tails = (content.match(/\d+尾/g) || []).map(t => t.trim());
       const digits = tails.map(t => t.replace('尾', ''));
       if (digits.length === inheritedPlay.count) {
@@ -1923,7 +1914,6 @@ function applyInlineInheritance(lineResults) {
     }
 
     if (!matched) {
-      // 继承失败，保留报警
       const expectedDesc = inheritedPlay.type === 'zodiac' ? `${inheritedPlay.count}个生肖` : `${inheritedPlay.count}个尾数`;
       r.warnings = [`格式不匹配，无法继承：需要${expectedDesc}`];
       processed.push(r);
@@ -1950,15 +1940,11 @@ function performRecognition(text) {
     const parsed = processOneLine(line);
     let lineResults = [];
     if (parsed.length === 0) {
-      // 报警过滤：只有包含字典元素的输入才报警
       if (containsDictElement(line)) {
         lineResults.push({
           cat: '__unrecognized__',
           nums: [],
-          amt: 0,
-          cnt: 0,
-          total: 0,
-          kw: '',
+          amt: 0, cnt: 0, total: 0, kw: '',
           warnings: ['缺少金额关键字或有效玩法'],
           rawLine: line.trim()
         });
@@ -1966,7 +1952,6 @@ function performRecognition(text) {
     } else {
       lineResults.push(...parsed);
     }
-    // 行内上下文玩法继承
     if (lineResults.length > 0) {
       lineResults = applyInlineInheritance(lineResults);
       allResults.push(...lineResults);
@@ -4419,7 +4404,59 @@ let zodiacRankVisible = false;
 function toggleZodiacRank() { zodiacRankVisible = !zodiacRankVisible; updateCardA(); showToast(zodiacRankVisible ? '生肖排行已展开' : '生肖排行已收起'); }
 let singleBetVisible = false;
 function toggleSingleBet() { singleBetVisible = !singleBetVisible; const row = document.getElementById('singleBetRow'); if (row) { if (singleBetVisible) { updateSingleBetDisplay(); } else { row.style.display = 'none'; } } showToast(singleBetVisible ? '单挑已展开' : '单挑已收起'); }
-async function updateSingleBetDisplay() { const row = document.getElementById('singleBetRow'); const display = document.getElementById('singleBetDisplay'); if (!row || !display) return; if (!singleBetVisible) { row.style.display = 'none'; return; } const orders = await getOrderRecords(); const fd = document.getElementById('filterDate')?.value || getTodayCST(); const filteredOrders = orders.filter(r => r.date === fd); const singleCount = {}; filteredOrders.forEach(order => { const lines = order.content.split('\n').filter(l => l.trim()); lines.forEach(l => { const m = l.match(/^(\d{2})\s+各(?:数|)\s*(\d+)$/); if (m && parseInt(m[2]) > 0) { singleCount[m[1]] = (singleCount[m[1]] || 0) + 1; } }); }); const singleNums = Object.keys(singleCount); if (singleNums.length > 0) { const sorted = singleNums.sort((a, b) => parseInt(a) - parseInt(b)); function getNumCls(n) { if (redNumbers.includes(n)) return 'red-text'; if (blueNumbers.includes(n)) return 'blue-text'; if (greenNumbers.includes(n)) return 'green-text'; return ''; } display.innerHTML = sorted.map(n => { const cnt = singleCount[n]; return `<span class="${getNumCls(n)}">${n}${cnt >= 2 ? '(' + cnt + '次)' : ''}</span>`; }).join(' '); row.style.display = ''; } else { display.innerHTML = '<span style="color:#888;">暂无</span>'; row.style.display = ''; } }
+// 修改后的单挑显示函数：只筛选特码类型中单个数字号码+金额的行
+async function updateSingleBetDisplay() {
+  const row = document.getElementById('singleBetRow');
+  const display = document.getElementById('singleBetDisplay');
+  if (!row || !display) return;
+  if (!singleBetVisible) { row.style.display = 'none'; return; }
+
+  const orders = await getOrderRecords();
+  const fd = document.getElementById('filterDate')?.value || getTodayCST();
+  const filteredOrders = orders.filter(r => r.date === fd);
+  const singleCount = {};
+
+  filteredOrders.forEach(order => {
+    const lines = order.content.split('\n').filter(l => l.trim());
+    lines.forEach(l => {
+      // 匹配特码行：特码:内容 各数 金额
+      const newMatch = l.match(/^特码:(.+?)\s+各(?:数|)\s*(\d+)$/);
+      if (newMatch) {
+        const content = newMatch[1];
+        const amt = parseInt(newMatch[2]) || 0;
+        if (amt <= 0) return;
+        // 只统计单个数字号码（非生肖、非属性词）
+        const items = content.split('-').map(i => i.trim()).filter(i => i);
+        if (items.length === 1 && /^\d{1,2}$/.test(items[0])) {
+          const num = items[0].padStart(2, '0');
+          if (parseInt(num) >= 1 && parseInt(num) <= 49) {
+            singleCount[num] = (singleCount[num] || 0) + 1;
+          }
+        }
+        return;
+      }
+      // 兼容旧格式：号码 各数 金额
+      const oldMatch = l.match(/^(\d{2})\s+各(?:数|)\s*(\d+)$/);
+      if (oldMatch && parseInt(oldMatch[2]) > 0) {
+        singleCount[oldMatch[1]] = (singleCount[oldMatch[1]] || 0) + 1;
+      }
+    });
+  });
+
+  const singleNums = Object.keys(singleCount);
+  if (singleNums.length > 0) {
+    const sorted = singleNums.sort((a, b) => parseInt(a) - parseInt(b));
+    function getNumCls(n) { if (redNumbers.includes(n)) return 'red-text'; if (blueNumbers.includes(n)) return 'blue-text'; if (greenNumbers.includes(n)) return 'green-text'; return ''; }
+    display.innerHTML = sorted.map(n => {
+      const cnt = singleCount[n];
+      return `<span class="${getNumCls(n)}">${n}${cnt >= 2 ? '(' + cnt + '次)' : ''}</span>`;
+    }).join(' ');
+    row.style.display = '';
+  } else {
+    display.innerHTML = '<span style="color:#888;">暂无</span>';
+    row.style.display = '';
+  }
+}
 function copySingleBetNums() { const display = document.getElementById('singleBetDisplay'); if (!display) return; const spans = display.querySelectorAll('span'); const nums = Array.from(spans).map(s => s.textContent.replace(/\(\d+次\)/, '').trim()).filter(t => /^\d{2}$/.test(t)); if (nums.length === 0) { showToast('暂无号码'); return; } navigator.clipboard.writeText(nums.join('-')).then(() => { showToast('已复制：' + nums.join('-')); }).catch(() => { showToast('复制失败'); }); }
 
 function updateCardA() { const contentEl = document.getElementById('cardAContent'); if (!contentEl) return; let html = ''; const filterInput = document.getElementById('filterInputCardA'); const filterText = filterInput ? filterInput.value.trim() : ''; if (filterText) { const tokens = filterText.split(/\s+/).filter(t => t); let targetNums = new Set(); tokens.forEach(token => { if (/^\d{1,2}$/.test(token)) { const n = token.padStart(2, '0'); if (parseInt(n) >= 1 && parseInt(n) <= 49) targetNums.add(n); } else if (ZODIAC_NUMS[token]) { ZODIAC_NUMS[token].split(/[\s,，]+/).forEach(n => targetNums.add(n.padStart(2, '0'))); } else if (D[token]) { const nums = keyToAllNums(token); nums.forEach(n => targetNums.add(n.padStart(2, '0'))); } }); if (targetNums.size > 0) { const negativeNums = []; for (const num of targetNums) { if (reportRiskData[num] !== undefined && reportRiskData[num] < 0) { negativeNums.push(num); } } if (negativeNums.length > 0) { html += '<div style="margin-bottom:4px;"><b>添加筛选：</b>'; negativeNums.sort((a, b) => parseInt(a) - parseInt(b)); negativeNums.forEach((num, idx) => { const cls = redNumbers.includes(num) ? 'red-text' : (blueNumbers.includes(num) ? 'blue-text' : 'green-text'); html += `<span class="${cls}">${num}</span>`; if (idx < negativeNums.length - 1) html += '-'; }); html += '</div>'; } } } const topNInput = document.getElementById('topNInput'); const nVal = topNInput ? parseInt(topNInput.value) : NaN; if (!isNaN(nVal) && nVal > 0) { const entries = Object.entries(numberAmountCount).map(([num, cnt]) => ({ num, cnt: cnt || 0 })); for (let i = 1; i <= 49; i++) { const n = i.toString().padStart(2, '0'); if (!numberAmountCount[n]) entries.push({ num: n, cnt: 0 }); } const sortedDesc = [...entries].sort((a, b) => b.cnt - a.cnt || parseInt(a.num) - parseInt(b.num)); const idxDesc = Math.min(nVal - 1, sortedDesc.length - 1); const cutoffDesc = sortedDesc[idxDesc]?.cnt ?? 0; const activeNums = sortedDesc.filter(e => e.cnt >= cutoffDesc && e.cnt > 0); activeNums.sort((a, b) => b.cnt - a.cnt || parseInt(a.num) - parseInt(b.num)); const sortedAsc = [...entries].sort((a, b) => a.cnt - b.cnt || parseInt(a.num) - parseInt(b.num)); const idxAsc = Math.min(nVal - 1, sortedAsc.length - 1); const cutoffAsc = sortedAsc[idxAsc]?.cnt ?? 0; let inactiveNums = sortedAsc.filter(e => e.cnt <= cutoffAsc); inactiveNums.sort((a, b) => b.cnt - a.cnt || parseInt(a.num) - parseInt(b.num)); if (activeNums.length > 0) { html += '<div style="margin-bottom:4px;"><b>活跃次数：</b>'; activeNums.forEach((e, idx) => { const cls = redNumbers.includes(e.num) ? 'red-text' : (blueNumbers.includes(e.num) ? 'blue-text' : 'green-text'); html += `<span class="${cls}">${e.num}</span>`; if (idx < activeNums.length - 1) html += '-'; }); html += '</div>'; } if (inactiveNums.length > 0) { html += '<div style="margin-bottom:4px;"><b>不活跃次数：</b>'; inactiveNums.forEach((e, idx) => { const cls = redNumbers.includes(e.num) ? 'red-text' : (blueNumbers.includes(e.num) ? 'blue-text' : 'green-text'); html += `<span class="${cls}">${e.num}</span>`; if (idx < inactiveNums.length - 1) html += '-'; }); html += '</div>'; } } if (zodiacRankVisible) { const zodiacOrderFixed = ['鼠','牛','虎','兔','龙','蛇','马','羊','猴','鸡','狗','猪']; const zcm = {'鼠':'red-text','兔':'red-text','马':'red-text','鸡':'red-text','虎':'blue-text','蛇':'blue-text','猴':'blue-text','猪':'blue-text','牛':'green-text','龙':'green-text','羊':'green-text','狗':'green-text'}; const zCountEntries = zodiacOrderFixed.map(z => ({ zodiac: z, cnt: zodiacAmountCount[z] || 0 })); zCountEntries.sort((a, b) => b.cnt - a.cnt); html += '<div style="margin-bottom:4px;"><b>生肖活跃：</b>'; zCountEntries.forEach((e, idx) => { html += `<span class="${zcm[e.zodiac] || ''}">${e.zodiac}</span>`; if (idx < zCountEntries.length - 1) html += '、'; }); html += '</div>'; const zAmtEntries = zodiacOrderFixed.map(z => ({ zodiac: z, amt: zodiacFilteredAmount[z] || 0 })); zAmtEntries.sort((a, b) => b.amt - a.amt); html += '<div style="margin-bottom:4px;"><b>金额排行：</b>'; zAmtEntries.forEach((e, idx) => { html += `<span class="${zcm[e.zodiac] || ''}">${e.zodiac}</span>`; if (idx < zAmtEntries.length - 1) html += '、'; }); html += '</div>'; } contentEl.innerHTML = html; if (singleBetVisible) updateSingleBetDisplay(); }
