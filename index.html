@@ -1659,7 +1659,7 @@ function parseTeMaSegment(content) {
   }
   return deduped;
 }
-    function processOneLine(line) {
+   function processOneLine(line) {
   if (!line.trim()) return [];
 
   // ===== 号码-金额对识别（优先处理） =====
@@ -1761,22 +1761,17 @@ function parseTeMaSegment(content) {
       }
       subLast = subMatch.index + subMatch[0].length;
     }
+    // 关键修复：残留内容不拆分，直接作为整体报警
     if (subLast < content.length) {
       const remaining = content.substring(subLast).trim();
       if (remaining && containsDictElement(remaining)) {
-        const parts = remaining.split(/[\s,，.。、+]+/).filter(p => p.trim());
-        for (const part of parts) {
-          const p = part.trim();
-          if (containsDictElement(p) && /\d+|[一二三四五六七八九十百千两]+/.test(p)) {
-            results.push({
-              cat: '__unrecognized__',
-              nums: [],
-              amt: 0, cnt: 0, total: 0, kw: '',
-              warnings: ['缺少金额关键字或有效玩法'],
-              rawLine: p
-            });
-          }
-        }
+        results.push({
+          cat: '__unrecognized__',
+          nums: [],
+          amt: 0, cnt: 0, total: 0, kw: '',
+          warnings: ['缺少金额关键字或有效玩法'],
+          rawLine: remaining
+        });
       }
     }
   }
@@ -1800,22 +1795,17 @@ function parseTeMaSegment(content) {
       }
       subLast = subMatch.index + subMatch[0].length;
     }
+    // 关键修复：残留内容不拆分，直接作为整体报警
     if (subLast < line.length) {
       const remaining = line.substring(subLast).trim();
       if (remaining && containsDictElement(remaining)) {
-        const parts = remaining.split(/[\s,，.。、+]+/).filter(p => p.trim());
-        for (const part of parts) {
-          const p = part.trim();
-          if (containsDictElement(p) && /\d+|[一二三四五六七八九十百千两]+/.test(p)) {
-            results.push({
-              cat: '__unrecognized__',
-              nums: [],
-              amt: 0, cnt: 0, total: 0, kw: '',
-              warnings: ['缺少金额关键字或有效玩法'],
-              rawLine: p
-            });
-          }
-        }
+        results.push({
+          cat: '__unrecognized__',
+          nums: [],
+          amt: 0, cnt: 0, total: 0, kw: '',
+          warnings: ['缺少金额关键字或有效玩法'],
+          rawLine: remaining
+        });
       }
     }
   }
