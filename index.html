@@ -1016,7 +1016,13 @@ function showOddsWin() {
     '四连尾':{odds:'14',rebate:'4'},'四连尾零尾':{odds:'15',rebate:'4'},'五连尾':{odds:'28',rebate:'4'},'五连尾零尾':{odds:'30',rebate:'4'},
     '五不中':{odds:'2',rebate:'4'},'六不中':{odds:'2.5',rebate:'4'},'七不中':{odds:'3',rebate:'4'},'八不中':{odds:'3.5',rebate:'4'},
     '九不中':{odds:'4',rebate:'4'},'十不中':{odds:'5',rebate:'4'},'十一不中':{odds:'6',rebate:'4'},'十二不中':{odds:'7',rebate:'4'},
-    '二中二':{odds:'60',rebate:'4'},'三中三':{odds:'600',rebate:'4'},'平码':{odds:'7',rebate:'4'}
+    '二中二':{odds:'60',rebate:'4'},'三中三':{odds:'600',rebate:'4'},'平码':{odds:'7',rebate:'4'},
+    '包红波':{odds:'2.6',rebate:'4'},'包蓝波':{odds:'2.7',rebate:'4'},'包绿波':{odds:'2.7',rebate:'4'},
+    '包红单':{odds:'5',rebate:'4'},'包红双':{odds:'4.7',rebate:'4'},'包红大':{odds:'6',rebate:'4'},'包红小':{odds:'4',rebate:'4'},
+    '包蓝单':{odds:'5',rebate:'4'},'包蓝双':{odds:'5',rebate:'4'},'包蓝大':{odds:'4.7',rebate:'4'},'包蓝小':{odds:'6',rebate:'4'},
+    '包绿单':{odds:'5',rebate:'4'},'包绿双':{odds:'5',rebate:'4'},'包绿大':{odds:'5',rebate:'4'},'包绿小':{odds:'6',rebate:'4'},
+    '包单':{odds:'1.8',rebate:'4'},'包双':{odds:'1.8',rebate:'4'},'包大':{odds:'1.8',rebate:'4'},'包小':{odds:'1.8',rebate:'4'},
+    '包家禽':{odds:'1.8',rebate:'4'},'包野兽':{odds:'1.8',rebate:'4'}
   };
   const types = Object.keys(defaults);
   let rows = '';
@@ -1055,7 +1061,13 @@ function resetOddsToDefault() {
     '四连尾':{odds:'14',rebate:'4'},'四连尾零尾':{odds:'15',rebate:'4'},'五连尾':{odds:'28',rebate:'4'},'五连尾零尾':{odds:'30',rebate:'4'},
     '五不中':{odds:'2',rebate:'4'},'六不中':{odds:'2.5',rebate:'4'},'七不中':{odds:'3',rebate:'4'},'八不中':{odds:'3.5',rebate:'4'},
     '九不中':{odds:'4',rebate:'4'},'十不中':{odds:'5',rebate:'4'},'十一不中':{odds:'6',rebate:'4'},'十二不中':{odds:'7',rebate:'4'},
-    '二中二':{odds:'60',rebate:'4'},'三中三':{odds:'600',rebate:'4'},'平码':{odds:'7',rebate:'4'}
+    '二中二':{odds:'60',rebate:'4'},'三中三':{odds:'600',rebate:'4'},'平码':{odds:'7',rebate:'4'},
+    '包红波':{odds:'2.6',rebate:'4'},'包蓝波':{odds:'2.7',rebate:'4'},'包绿波':{odds:'2.7',rebate:'4'},
+    '包红单':{odds:'5',rebate:'4'},'包红双':{odds:'4.7',rebate:'4'},'包红大':{odds:'6',rebate:'4'},'包红小':{odds:'4',rebate:'4'},
+    '包蓝单':{odds:'5',rebate:'4'},'包蓝双':{odds:'5',rebate:'4'},'包蓝大':{odds:'4.7',rebate:'4'},'包蓝小':{odds:'6',rebate:'4'},
+    '包绿单':{odds:'5',rebate:'4'},'包绿双':{odds:'5',rebate:'4'},'包绿大':{odds:'5',rebate:'4'},'包绿小':{odds:'6',rebate:'4'},
+    '包单':{odds:'1.8',rebate:'4'},'包双':{odds:'1.8',rebate:'4'},'包大':{odds:'1.8',rebate:'4'},'包小':{odds:'1.8',rebate:'4'},
+    '包家禽':{odds:'1.8',rebate:'4'},'包野兽':{odds:'1.8',rebate:'4'}
   };
   document.querySelectorAll('.odds-input[data-field="odds"]').forEach(inp => {
     const type = inp.dataset.type;
@@ -1180,7 +1192,7 @@ function zodiacToNums(zStr) { const ns = []; for (const z of zStr) { if (D[z]) D
 function extractNums(txt) { return (txt.match(/\d+/g) || []).map(n => parseInt(n)).filter(n => n >= 1 && n <= 49).map(n => String(n).padStart(2, '0')); }
 function extractZodiacs(txt) { return (txt.match(new RegExp(`[${ZODIAC}]`, 'g')) || []); }
 function findInvalidNums(txt) { if (!txt) return []; const allNums = (txt.match(/\d+/g) || []).map(n => parseInt(n)); return allNums.filter(n => n > 49); }
-   function preprocess(txt) {
+    function preprocess(txt) {
   let c = txt;
   c = c.replace(/[\uFF01-\uFF5E]/g, ch => String.fromCharCode(ch.charCodeAt(0) - 0xFEE0));
   c = c.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
@@ -1309,8 +1321,8 @@ function parseTeMaSegment(content) {
   const cnt = allNumsArr.length;
   const warnings = invalidNums.length ? ['无效号码: ' + invalidNums.join(', ')] : [];
   return { displayItems, totalCount: cnt, warnings, allNumsArr: allNumsArr };
-} 
-   function collectSpecialMatches(text) {
+}
+    function collectSpecialMatches(text) {
   const Z = ZODIAC;
   const allMatches = [];
 
@@ -1418,6 +1430,25 @@ function parseTeMaSegment(content) {
       }
     }
   };
+
+  // ===== 新增：特肖前缀识别 =====
+  addMatch(new RegExp(`特肖${SEP}((?:[${Z}]+${SEP_CHARS}*)+?)[\\s]*${END_AMT_RE}`, 'g'), m => {
+    const full = m[0]; const { amt, kw } = extractAmtAndKw(full);
+    if (!amt || amt <= 0) return null;
+    const zPart = m[1]; const zodiacs = (zPart.match(new RegExp(`[${Z}]`, 'g')) || []);
+    if (zodiacs.length === 0) return null;
+    return { cat: '特肖', nums: zodiacs, amt, cnt: zodiacs.length, total: amt * zodiacs.length, kw: kw || '各' };
+  });
+
+  // ===== 新增：包玩法识别 =====
+  const BAO_ATTRS = ['红波','蓝波','绿波','红单','红双','蓝单','蓝双','绿单','绿双','红大','红小','蓝大','蓝小','绿大','绿小','单','双','大','小','家禽','野兽'];
+  const BAO_ATTRS_SORTED = [...BAO_ATTRS].sort((a, b) => b.length - a.length);
+  addMatch(new RegExp(`包${SEP}(${BAO_ATTRS_SORTED.join('|')})\\s*(\\d+)`, 'g'), m => {
+    const full = m[0]; const attr = m[1]; const amt = toNum(m[2]);
+    if (!amt || amt <= 0) return null;
+    if (full.includes('各')) return { cat: '__unrecognized__', nums: [], amt: 0, cnt: 0, total: 0, kw: '', warnings: ['包玩法不允许使用"各"关键字'], rawLine: full };
+    return { cat: '包' + attr, nums: [attr], amt, cnt: 1, total: amt, kw: '各' };
+  });
 
   // 拖法正则
   addMatch(new RegExp(`[二2]中[二2]${SEP}((?:[${Z}]+|\\d+尾|\\d{1,2})(?:${SEP_CHARS}+(?:[${Z}]+|\\d+尾|\\d{1,2}))*)${SEP_CHARS}*(?:拖|托)${SEP_CHARS}*((?:[${Z}]+|\\d+尾|\\d{1,2})(?:${SEP_CHARS}+(?:[${Z}]+|\\d+尾|\\d{1,2}))*?)[\\s]*${END_AMT_RE}`, 'g'), m => {
@@ -1663,7 +1694,7 @@ function parseTeMaSegment(content) {
   }
   return deduped;
 }
-   function processOneLine(line) {
+    function processOneLine(line) {
   if (!line.trim()) return [];
 
   // ===== 号码-金额对识别（优先处理） =====
@@ -1693,19 +1724,26 @@ function parseTeMaSegment(content) {
 
   const ZODIAC_SET = new Set('鼠牛虎兔龙蛇马羊猴鸡狗猪'.split(''));
 
+  // ===== 放宽 tryMatchTeXiao：去掉^锚定，去掉nonZodiacChars严格检查，向前扫描合并生肖 =====
   function tryMatchTeXiao(content) {
     if (!content || !content.trim()) return null;
+    // 检查是否包含"特码"完整词，如果包含则不触发
+    if (/特码/.test(content)) return null;
     const trimmed = content.trim();
-    const shxMatch = trimmed.match(new RegExp(`^(.+?)(各肖|各(?!数|号|组|码|注|下|买))\\s*(\\d+)`));
+    // 去掉^锚定，在字符串中任意位置匹配
+    const shxMatch = trimmed.match(new RegExp(`(.+?)(各肖|各(?!数|号|组|码|注|下|买))\\s*(\\d+)`));
     if (!shxMatch) return null;
     const rawContent = shxMatch[1];
     const amtRaw = parseInt(shxMatch[3]) || 0;
+    if (amtRaw <= 0) return null;
+    // 向前扫描：提取rawContent中所有生肖字符（支持任意标点分隔）
     const zodiacChars = [];
     for (const ch of rawContent) {
       if (ZODIAC_SET.has(ch)) zodiacChars.push(ch);
     }
-    const nonZodiacChars = rawContent.replace(/[鼠牛虎兔龙蛇马羊猴鸡狗猪\s,，.。、+\-*＊\/\\|]+/g, '');
-    if (zodiacChars.length > 0 && nonZodiacChars.length === 0) {
+    // 也提取shxMatch[2]之前可能紧邻的生肖
+    // 只要有生肖就触发，不再检查nonZodiacChars
+    if (zodiacChars.length > 0) {
       const cnt = zodiacChars.length;
       const total = amtRaw * cnt;
       return { cat: '特肖', nums: zodiacChars, amt: amtRaw, cnt: cnt, total: total, kw: '各', warnings: [] };
@@ -1769,13 +1807,19 @@ function parseTeMaSegment(content) {
     if (subLast < content.length) {
       const remaining = content.substring(subLast).trim();
       if (remaining && containsDictElement(remaining)) {
-        results.push({
-          cat: '__unrecognized__',
-          nums: [],
-          amt: 0, cnt: 0, total: 0, kw: '',
-          warnings: ['缺少金额关键字或有效玩法'],
-          rawLine: remaining
-        });
+        // 尝试用放宽的tryMatchTeXiao兜底
+        const teXiaoResult = tryMatchTeXiao(remaining);
+        if (teXiaoResult) {
+          results.push(teXiaoResult);
+        } else {
+          results.push({
+            cat: '__unrecognized__',
+            nums: [],
+            amt: 0, cnt: 0, total: 0, kw: '',
+            warnings: ['缺少金额关键字或有效玩法'],
+            rawLine: remaining
+          });
+        }
       }
     }
   }
@@ -1803,13 +1847,18 @@ function parseTeMaSegment(content) {
     if (subLast < line.length) {
       const remaining = line.substring(subLast).trim();
       if (remaining && containsDictElement(remaining)) {
-        results.push({
-          cat: '__unrecognized__',
-          nums: [],
-          amt: 0, cnt: 0, total: 0, kw: '',
-          warnings: ['缺少金额关键字或有效玩法'],
-          rawLine: remaining
-        });
+        const teXiaoResult = tryMatchTeXiao(remaining);
+        if (teXiaoResult) {
+          results.push(teXiaoResult);
+        } else {
+          results.push({
+            cat: '__unrecognized__',
+            nums: [],
+            amt: 0, cnt: 0, total: 0, kw: '',
+            warnings: ['缺少金额关键字或有效玩法'],
+            rawLine: remaining
+          });
+        }
       }
     }
   }
@@ -2015,6 +2064,8 @@ function displayResults(rs, container) {
 function formatNums(cat, numsArr) {
   const simpleCats = ['特码', '特肖', '平特肖', '平码', '平特尾'];
   if (simpleCats.includes(cat)) return numsArr.join('-');
+  // 包玩法也使用简单格式
+  if (cat.startsWith('包')) return numsArr.join('-');
   if (cat.includes('连肖')) return numsArr.map(g => '(' + g.split('').join('-') + ')').join(' ');
   return numsArr.map(g => `(` + g + `)`).join(' ');
 }
@@ -2027,6 +2078,14 @@ function countItemsInLine(line) {
     const amt = parseInt(teXiaoMatch[2]) || 0;
     const zodiacs = zodiacsStr.split('-').map(z => z.trim()).filter(z => z);
     return { numbers: [], zodiacs: zodiacs, amount: amt, playType: '特肖', zodiacCount: zodiacs.length };
+  }
+  
+  // 包玩法识别
+  const baoMatch = line.match(/^包(.+?):(.+?)\s+各\s*(\d+)$/);
+  if (baoMatch) {
+    const attr = baoMatch[2].trim();
+    const amt = parseInt(baoMatch[3]) || 0;
+    return { numbers: [], zodiacs: [], amount: amt, playType: '包' + attr };
   }
   
   const newMatch = line.match(/^(.+?):(.+?)\s+(各(?:数|))\s*(\d+)$/);
@@ -2108,6 +2167,7 @@ function processCurrentOrder(input, user, isNormal, date = null) {
   lines.forEach(line => {
     if (/^特肖:(.+?)\s+各\s*(\d+)$/.test(line)) orderCountAll++;
     else if (/^特码:(.+?)\s+各(?:数|)\s*(\d+)$/.test(line)) orderCountAll++;
+    else if (/^包.+?:(.+?)\s+各\s*(\d+)$/.test(line)) orderCountAll++;
     else {
       const { amount, playType } = countItemsInLine(line);
       if (amount > 0 && (!playType || playType === '特码')) orderCountAll++;
@@ -2339,8 +2399,7 @@ function normalizePlayType(playType) {
   };
   return map[playType] || playType;
 }
-
-// ===== 兑奖统计核心函数（增加特肖玩法处理） =====
+    // ===== 兑奖统计核心函数（增加特肖玩法处理） =====
 function refreshDuiJiangStats() {
   const orderBody = document.getElementById('duiJiangOrderBody');
   const reportBody = document.getElementById('duiJiangReportBody');
@@ -2392,6 +2451,8 @@ function refreshDuiJiangStats() {
             processTexiaoLineDuijiang(userStats[user], content, amt, drawTeMaZodiac, drawTeMa, hasValidDraw);
           } else if (playType === '特码') {
             processNormalLineDuijiangNew(userStats[user], content, amt, drawTeMa, hasValidDraw);
+          } else if (playType.startsWith('包')) {
+            processBaoLineDuijiang(userStats[user], playType, content, amt, drawTeMa, hasValidDraw);
           } else {
             processComboLineDuijiangNew(userStats[user], playType, content, amt, drawZodiacsSet, drawNumbersSet, drawNumbersZhengma, hasValidDraw);
           }
@@ -2419,6 +2480,8 @@ function refreshDuiJiangStats() {
             processTexiaoLineDuijiangReport(userStats[user], content, amt, drawTeMaZodiac, drawTeMa, hasValidDraw);
           } else if (playType === '特码') {
             processReportLineDuijiangNew(userStats[user], content, amt, drawTeMa, hasValidDraw);
+          } else if (playType.startsWith('包')) {
+            processBaoLineDuijiangReport(userStats[user], playType, content, amt, drawTeMa, hasValidDraw);
           } else {
             processComboLineDuijiangNewReport(userStats[user], playType, content, amt, drawZodiacsSet, drawNumbersSet, drawNumbersZhengma, hasValidDraw);
           }
@@ -2483,7 +2546,10 @@ function refreshDuiJiangStats() {
 function buildHitDetail(hitByType) {
   const parts = [];
   const orderedTypes = ['特码','特肖','特肖本年肖','平特肖','平特肖带主肖','二连肖','二连肖带主肖','三连肖','三连肖带主肖','四连肖','四连肖带主肖','五连肖','五连肖带主肖','平特尾','平特尾零尾','二连尾','二连尾零尾','三连尾','三连尾零尾','四连尾','四连尾零尾','五连尾','五连尾零尾','五不中','六不中','七不中','八不中','九不中','十不中','十一不中','十二不中','二中二','三中三','平码'];
-  for (const type of orderedTypes) {
+  // 包玩法类型也加入排序
+  const baoTypes = ['包红波','包蓝波','包绿波','包红单','包红双','包蓝单','包蓝双','包绿单','包绿双','包红大','包红小','包蓝大','包蓝小','包绿大','包绿小','包单','包双','包大','包小','包家禽','包野兽'];
+  const allOrderedTypes = [...orderedTypes, ...baoTypes];
+  for (const type of allOrderedTypes) {
     if (hitByType[type] && hitByType[type] > 0) {
       parts.push(type + Math.round(hitByType[type]));
     }
@@ -2540,6 +2606,48 @@ function processTexiaoLineDuijiangReport(stats, content, amt, drawTeMaZodiac, dr
       const odds = isBenming ? 10 : 11;
       stats.reportHitByType[playType] = (stats.reportHitByType[playType] || 0) + hitAmt;
       stats.reportPL += totalAmt - totalAmt * (rebate / 100) - hitAmt * odds;
+    } else {
+      stats.reportPL += totalAmt - totalAmt * (rebate / 100);
+    }
+  }
+}
+
+// ===== 包玩法兑奖处理函数（下单，和特肖逻辑一致） =====
+function processBaoLineDuijiang(stats, playType, content, amt, drawTeMa, hasValidDraw) {
+  const attr = content.trim();
+  if (!attr || !D[attr]) return;
+  const baoType = '包' + attr;
+  const { odds, rebate } = getOddsForType(baoType, getOddsData());
+  const totalAmt = amt;
+  stats.orderTotal += totalAmt;
+  stats.orderRebate += totalAmt * (rebate / 100);
+  if (hasValidDraw && drawTeMa) {
+    const attrNums = (D[attr] || '').split(/[\s,，]+/).filter(n => n.trim());
+    const hit = attrNums.includes(drawTeMa);
+    if (hit) {
+      stats.orderHitByType[baoType] = (stats.orderHitByType[baoType] || 0) + amt;
+      stats.orderPL += totalAmt - totalAmt * (rebate / 100) - amt * odds;
+    } else {
+      stats.orderPL += totalAmt - totalAmt * (rebate / 100);
+    }
+  }
+}
+
+// ===== 包玩法兑奖处理函数（上报，和特肖逻辑一致） =====
+function processBaoLineDuijiangReport(stats, playType, content, amt, drawTeMa, hasValidDraw) {
+  const attr = content.trim();
+  if (!attr || !D[attr]) return;
+  const baoType = '包' + attr;
+  const { odds, rebate } = getOddsForType(baoType, getOddsData());
+  const totalAmt = amt;
+  stats.reportTotal += totalAmt;
+  stats.reportRebate += totalAmt * (rebate / 100);
+  if (hasValidDraw && drawTeMa) {
+    const attrNums = (D[attr] || '').split(/[\s,，]+/).filter(n => n.trim());
+    const hit = attrNums.includes(drawTeMa);
+    if (hit) {
+      stats.reportHitByType[baoType] = (stats.reportHitByType[baoType] || 0) + amt;
+      stats.reportPL += totalAmt - totalAmt * (rebate / 100) - amt * odds;
     } else {
       stats.reportPL += totalAmt - totalAmt * (rebate / 100);
     }
@@ -2633,8 +2741,7 @@ function processComboLineDuijiangNew(stats, playType, content, amt, drawZodiacsS
     }
   });
 }
-
-// ===== 上报兑奖处理函数（下单用order字段，上报用report字段） =====
+    // ===== 上报兑奖处理函数（下单用order字段，上报用report字段） =====
 function processComboLineDuijiangNewReport(stats, playType, content, amt, drawZodiacsSet, drawNumbersSet, drawNumbersZhengma, hasValidDraw) {
   playType = normalizePlayType(playType);
   const cleaned = content.replace(/[()]/g, '');
@@ -2930,7 +3037,13 @@ function getOddsForType(type, oddsData) {
     '四连尾':{odds:14,rebate:4},'四连尾零尾':{odds:15,rebate:4},'五连尾':{odds:28,rebate:4},'五连尾零尾':{odds:30,rebate:4},
     '五不中':{odds:2,rebate:4},'六不中':{odds:2.5,rebate:4},'七不中':{odds:3,rebate:4},'八不中':{odds:3.5,rebate:4},
     '九不中':{odds:4,rebate:4},'十不中':{odds:5,rebate:4},'十一不中':{odds:6,rebate:4},'十二不中':{odds:7,rebate:4},
-    '二中二':{odds:60,rebate:4},'三中三':{odds:600,rebate:4},'平码':{odds:7,rebate:4}
+    '二中二':{odds:60,rebate:4},'三中三':{odds:600,rebate:4},'平码':{odds:7,rebate:4},
+    '包红波':{odds:2.6,rebate:4},'包蓝波':{odds:2.7,rebate:4},'包绿波':{odds:2.7,rebate:4},
+    '包红单':{odds:5,rebate:4},'包红双':{odds:4.7,rebate:4},'包红大':{odds:6,rebate:4},'包红小':{odds:4,rebate:4},
+    '包蓝单':{odds:5,rebate:4},'包蓝双':{odds:5,rebate:4},'包蓝大':{odds:4.7,rebate:4},'包蓝小':{odds:6,rebate:4},
+    '包绿单':{odds:5,rebate:4},'包绿双':{odds:5,rebate:4},'包绿大':{odds:5,rebate:4},'包绿小':{odds:6,rebate:4},
+    '包单':{odds:1.8,rebate:4},'包双':{odds:1.8,rebate:4},'包大':{odds:1.8,rebate:4},'包小':{odds:1.8,rebate:4},
+    '包家禽':{odds:1.8,rebate:4},'包野兽':{odds:1.8,rebate:4}
   };
   const saved = oddsData[type] || {};
   return {
@@ -3338,8 +3451,7 @@ async function clearAllComboOrders() {
   refreshLianxiaoStats();
   showToast('已清空全部其他订单');
 }
-
-function initIndexedDB() { return new Promise((resolve) => { const request = indexedDB.open(DB_NAME, DB_VERSION); request.onerror = () => { dbAvailable = false; document.getElementById('dbWarning').style.display = 'block'; const dbStatusEl = document.getElementById('dbStatus'); if (dbStatusEl) { dbStatusEl.textContent = '异常'; dbStatusEl.style.color = '#e74c3c'; } resolve(false); }; request.onsuccess = (event) => { db = event.target.result; dbAvailable = true; document.getElementById('dbWarning').style.display = 'none'; const dbStatusEl = document.getElementById('dbStatus'); if (dbStatusEl) { dbStatusEl.textContent = '正常'; dbStatusEl.style.color = '#27ae60'; } resolve(true); }; request.onupgradeneeded = (event) => { db = event.target.result; if (!db.objectStoreNames.contains(STORE_NAME)) { db.createObjectStore(STORE_NAME, { keyPath: 'id' }); } if (!db.objectStoreNames.contains(REPORT_STORE_NAME)) { db.createObjectStore(REPORT_STORE_NAME, { keyPath: 'id' }); } if (!db.objectStoreNames.contains(RECYCLE_STORE_NAME)) { db.createObjectStore(RECYCLE_STORE_NAME, { keyPath: 'id' }); } if (!db.objectStoreNames.contains(LOG_STORE_NAME)) { db.createObjectStore(LOG_STORE_NAME, { keyPath: 'id' }); } if (!db.objectStoreNames.contains(COMBO_STORE_NAME)) { db.createObjectStore(COMBO_STORE_NAME, { keyPath: 'id' }); } const tx = event.target.transaction; const orderStore = tx.objectStore(STORE_NAME); const reportStore = tx.objectStore(REPORT_STORE_NAME); const addRegion = (store) => { const allReq = store.getAll(); allReq.onsuccess = () => { const records = allReq.result; records.forEach(r => { if (!r.region) { r.region = 'macau'; store.put(r); } }); }; }; addRegion(orderStore); addRegion(reportStore); }; }); }
+    function initIndexedDB() { return new Promise((resolve) => { const request = indexedDB.open(DB_NAME, DB_VERSION); request.onerror = () => { dbAvailable = false; document.getElementById('dbWarning').style.display = 'block'; const dbStatusEl = document.getElementById('dbStatus'); if (dbStatusEl) { dbStatusEl.textContent = '异常'; dbStatusEl.style.color = '#e74c3c'; } resolve(false); }; request.onsuccess = (event) => { db = event.target.result; dbAvailable = true; document.getElementById('dbWarning').style.display = 'none'; const dbStatusEl = document.getElementById('dbStatus'); if (dbStatusEl) { dbStatusEl.textContent = '正常'; dbStatusEl.style.color = '#27ae60'; } resolve(true); }; request.onupgradeneeded = (event) => { db = event.target.result; if (!db.objectStoreNames.contains(STORE_NAME)) { db.createObjectStore(STORE_NAME, { keyPath: 'id' }); } if (!db.objectStoreNames.contains(REPORT_STORE_NAME)) { db.createObjectStore(REPORT_STORE_NAME, { keyPath: 'id' }); } if (!db.objectStoreNames.contains(RECYCLE_STORE_NAME)) { db.createObjectStore(RECYCLE_STORE_NAME, { keyPath: 'id' }); } if (!db.objectStoreNames.contains(LOG_STORE_NAME)) { db.createObjectStore(LOG_STORE_NAME, { keyPath: 'id' }); } if (!db.objectStoreNames.contains(COMBO_STORE_NAME)) { db.createObjectStore(COMBO_STORE_NAME, { keyPath: 'id' }); } const tx = event.target.transaction; const orderStore = tx.objectStore(STORE_NAME); const reportStore = tx.objectStore(REPORT_STORE_NAME); const addRegion = (store) => { const allReq = store.getAll(); allReq.onsuccess = () => { const records = allReq.result; records.forEach(r => { if (!r.region) { r.region = 'macau'; store.put(r); } }); }; }; addRegion(orderStore); addRegion(reportStore); }; }); }
 async function getAllOrdersUnfiltered() { return new Promise((resolve) => { if (!db) resolve([]); const tx = db.transaction([STORE_NAME], 'readonly'); const store = tx.objectStore(STORE_NAME); const req = store.getAll(); req.onsuccess = (e) => resolve(e.target.result || []); }); }
 async function getAllReportsUnfiltered() { return new Promise((resolve) => { if (!db) resolve([]); const tx = db.transaction([REPORT_STORE_NAME], 'readonly'); const store = tx.objectStore(REPORT_STORE_NAME); const req = store.getAll(); req.onsuccess = (e) => resolve(e.target.result || []); }); }
 async function getOrderRecords() { const all = await getAllOrdersUnfiltered(); return all.filter(r => r.region === currentRegion); }
@@ -3370,7 +3482,8 @@ async function saveComboOrderRecordToIDB(content, user, date, totalAmount = 0, c
   if (!success) { showToast('保存失败，请重试'); return false; }
   return true;
 }
-    // ===== 操作日志函数 =====
+
+// ===== 操作日志函数 =====
 async function addOperationLog(action, detail, regionOverride = null, orderUser = null, orderTotal = 0) {
   if (!db) return;
   const session = getAuthSession();
@@ -3555,7 +3668,8 @@ async function deleteUser(name) { let users = getUsers(); users = users.filter(u
 function rebuildTotal() { tableBetData = {}; for (const u in userBetData) for (const n in userBetData[u]) tableBetData[n] = (tableBetData[n]||0) + userBetData[u][n]; }
 function refreshAll() { updateSelects(); updateTableFromRecords(); }
 function updateSelects() { const users = getUsers(); const orderSel = document.getElementById('orderUserSelect'); if (orderSel) { orderSel.innerHTML = ''; users.forEach(u => { const o = document.createElement('option'); o.value = u; o.textContent = u; orderSel.appendChild(o); }); } const comboUserSel = document.getElementById('comboUserSelect'); if (comboUserSel) { comboUserSel.innerHTML = ''; users.forEach(u => { const o = document.createElement('option'); o.value = u; o.textContent = u; comboUserSel.appendChild(o); }); } const viewSel = document.getElementById('viewUserSelect'); if (viewSel) { viewSel.innerHTML = ''; users.forEach(u => { const o = document.createElement('option'); o.value = u; o.textContent = u; viewSel.appendChild(o); }); } }
-    //===== 快捷添加与分词 =====
+
+//===== 快捷添加与分词 =====
 function quickAddWithAmount(text, button) { const input = document.querySelector('.source-order-input'); if (!input) return; const lines = input.value.trim().split('\n').filter(l=>l.trim()); const idx = lines.findIndex(l=> l.includes(text) && (l.includes('各数')||l.includes('各号'))); if (idx !== -1) { lines.splice(idx,1); button.classList.remove('active'); } else { lines.push(`${text} 各数 `); button.classList.add('active'); } input.value = lines.join('\n'); performRecognition(input.value); const lastIndex = input.value.lastIndexOf('各数'); if (lastIndex !== -1) { const pos = lastIndex + 2; input.focus(); input.setSelectionRange(pos, pos); } }
 function getReplacePresets() { try { return JSON.parse(localStorage.getItem('replacePresets') || '[]'); } catch (e) { return []; } }
 function getCategoryAliases() { try { return JSON.parse(localStorage.getItem('categoryAliases') || '[]'); } catch (e) { return []; } }
@@ -3651,6 +3765,12 @@ async function saveOrder(){
         const amtRaw = parseInt(match[2]) || 0;
         totalAmount += zodiacs.length * amtRaw;
       }
+    } else if(line.startsWith('包')){
+      const match = line.match(/^包(.+?):(.+?)\s+各\s*(\d+)$/);
+      if(match){
+        const amtRaw = parseInt(match[3]) || 0;
+        totalAmount += amtRaw;
+      }
     } else if(line.startsWith('特码:')){
       const{numbers,zodiacs,amount}=countItemsInLine(line);
       let cnt=numbers.length; zodiacs.forEach(z=>{cnt+=(ZODIAC_NUMS[z]||'').split(/[\s,，]+/).length;});
@@ -3739,6 +3859,12 @@ async function saveReportOrder(){
         const amtRaw = parseInt(match[2]) || 0;
         totalAmount += zodiacs.length * amtRaw;
       }
+    } else if(line.startsWith('包')){
+      const match = line.match(/^包(.+?):(.+?)\s+各\s*(\d+)$/);
+      if(match){
+        const amtRaw = parseInt(match[3]) || 0;
+        totalAmount += amtRaw;
+      }
     } else if(line.startsWith('特码:')){
       const{numbers,zodiacs,amount}=countItemsInLine(line);
       let cnt=numbers.length; zodiacs.forEach(z=>{cnt+=(ZODIAC_NUMS[z]||'').split(/[\s,，]+/).length;});
@@ -3808,8 +3934,7 @@ async function saveReportOrder(){
   calculateStorageUsage(); showStorageDrawerTemporary(5000); renderSmartDecision(); 
   showToast('已上报成功'); setTimeout(() => { const toast = document.querySelector('.toast-message.show'); if (toast) toast.style.color = '#ff0000'; }, 10); 
 }
-
-function updateOrderCountDisplay() {
+    function updateOrderCountDisplay() {
   const fd = document.getElementById('filterDate')?.value || getTodayCST();
   getOrderRecords().then(orders => {
     const todayOrders = orders.filter(r => r.date === fd);
@@ -3907,6 +4032,49 @@ async function updateTableFromRecords(){
           return;
         }
         
+        // 包玩法行处理
+        const baoMatch = line.match(/^包(.+?):(.+?)\s+各\s*(\d+)$/);
+        if (baoMatch) {
+          const attr = baoMatch[2].trim();
+          const amt = parseInt(baoMatch[3]) || 0;
+          if (amt <= 0 || !D[attr]) return;
+          orderCountAll++;
+          if (attr === '家禽' || attr === '野兽') {
+            const zodiacList = expandKeyToZodiacs(attr);
+            if (zodiacList.length === 0) return;
+            const perZodiacAmt = Math.round(amt / zodiacList.length);
+            zodiacList.forEach(z => {
+              zodiacCount[z] = (zodiacCount[z] || 0) + 1;
+              zodiacDirectAmount[z] = (zodiacDirectAmount[z] || 0) + perZodiacAmt;
+              const nums = (ZODIAC_NUMS[z] || '').split(/[\s,，]+/);
+              const perNumAmt = Math.round(perZodiacAmt / nums.length);
+              nums.forEach(num => {
+                const numPadded = num.padStart(2, '0');
+                userBetData[rec.user][numPadded] = (userBetData[rec.user][numPadded] || 0) + perNumAmt;
+                tableBetData[numPadded] = (tableBetData[numPadded] || 0) + perNumAmt;
+                reportBetData[numPadded] = (reportBetData[numPadded] || 0) + perNumAmt;
+                originalOrderAmount[numPadded] = (originalOrderAmount[numPadded] || 0) + perNumAmt;
+              });
+            });
+          } else {
+            const numList = (D[attr] || '').split(/[\s,，]+/).filter(n => n.trim());
+            if (numList.length === 0) return;
+            const perNumAmt = Math.round(amt / numList.length);
+            numList.forEach(n => {
+              const numPadded = n.padStart(2, '0');
+              numberCount[numPadded] = (numberCount[numPadded] || 0) + 1;
+              if (perNumAmt >= nMin && perNumAmt <= nMax) numberAmountCount[numPadded] = (numberAmountCount[numPadded] || 0) + 1;
+              userBetData[rec.user][numPadded] = (userBetData[rec.user][numPadded] || 0) + perNumAmt;
+              tableBetData[numPadded] = (tableBetData[numPadded] || 0) + perNumAmt;
+              reportBetData[numPadded] = (reportBetData[numPadded] || 0) + perNumAmt;
+              originalOrderAmount[numPadded] = (originalOrderAmount[numPadded] || 0) + perNumAmt;
+              directOrderAmount[numPadded] = (directOrderAmount[numPadded] || 0) + perNumAmt;
+              numberOrderTotal += perNumAmt;
+            });
+          }
+          return;
+        }
+        
         // 特码行处理（支持 "特码:内容 各数 金额" 和 "内容 各数 金额" 两种格式）
         let content, amt;
         const teMaMatch = line.match(/^特码:(.+?)\s+各(?:数|)\s*(\d+)$/);
@@ -3914,9 +4082,8 @@ async function updateTableFromRecords(){
           content = teMaMatch[1];
           amt = parseInt(teMaMatch[2]) || 0;
         } else {
-          // 兼容旧格式：内容 各数 金额（不含 "特码:" 前缀）
           const oldMatch = line.match(/^(.+?)\s+各(?:数|)\s*(\d+)$/);
-          if (oldMatch && !/^特肖:/.test(line) && !/[:：]/.test(line)) {
+          if (oldMatch && !/^特肖:/.test(line) && !/^包/.test(line) && !/[:：]/.test(line)) {
             content = oldMatch[1];
             amt = parseInt(oldMatch[2]) || 0;
           } else {
@@ -4028,6 +4195,42 @@ async function updateTableFromRecords(){
           return;
         }
 
+        // 包玩法上报处理
+        const baoMatch = line.match(/^包(.+?):(.+?)\s+各\s*(\d+)$/);
+        if (baoMatch) {
+          const attr = baoMatch[2].trim();
+          const amt = parseInt(baoMatch[3]) || 0;
+          if (amt <= 0 || !D[attr]) return;
+          if (attr === '家禽' || attr === '野兽') {
+            const zodiacList = expandKeyToZodiacs(attr);
+            if (zodiacList.length === 0) return;
+            const perZodiacAmt = Math.round(amt / zodiacList.length);
+            zodiacList.forEach(z => {
+              zodiacReportAmount[z] = (zodiacReportAmount[z] || 0) + perZodiacAmt;
+              const nums = (ZODIAC_NUMS[z] || '').split(/[\s,，]+/);
+              const perNumAmt = Math.round(perZodiacAmt / nums.length);
+              nums.forEach(num => {
+                const numPadded = num.padStart(2, '0');
+                reportBetData[numPadded] = (reportBetData[numPadded] || 0) - perNumAmt;
+                reportAmountData[numPadded] = (reportAmountData[numPadded] || 0) + perNumAmt;
+                if (user && userBetData[user]) userBetData[user][numPadded] = (userBetData[user][numPadded] || 0) - perNumAmt;
+              });
+            });
+          } else {
+            const numList = (D[attr] || '').split(/[\s,，]+/).filter(n => n.trim());
+            if (numList.length === 0) return;
+            const perNumAmt = Math.round(amt / numList.length);
+            numList.forEach(n => {
+              const numPadded = n.padStart(2, '0');
+              reportBetData[numPadded] = (reportBetData[numPadded] || 0) - perNumAmt;
+              reportAmountData[numPadded] = (reportAmountData[numPadded] || 0) + perNumAmt;
+              if (user && userBetData[user]) userBetData[user][numPadded] = (userBetData[user][numPadded] || 0) - perNumAmt;
+              directReportAmount[numPadded] = (directReportAmount[numPadded] || 0) + perNumAmt;
+            });
+          }
+          return;
+        }
+
         const { numbers, zodiacs, amount, playType } = countItemsInLine(line);
         if (!amount || amount <= 0) return;
         if (playType && playType !== '特码') return;
@@ -4059,7 +4262,8 @@ async function updateTableFromRecords(){
     calculateStorageUsage(); renderSmartDecision(); updateSingleBetDisplay(); updateOrderCountDisplay();
   } catch(e) {}
 }
-    function updateDirectAmountTotals() {
+
+function updateDirectAmountTotals() {
   let orderTotal = 0; let reportTotal = 0;
   for (let n in directOrderAmount) { orderTotal += directOrderAmount[n] || 0; }
   for (let n in directReportAmount) { reportTotal += directReportAmount[n] || 0; }
@@ -4084,6 +4288,12 @@ function updateOrderTotalDisplay(){
         const zodiacs = match[1].split('-').filter(z => z.trim());
         const amt = parseInt(match[2]) || 0;
         total += zodiacs.length * amt;
+      }
+    } else if(line.startsWith('包')){
+      const match = line.match(/^包(.+?):(.+?)\s+各\s*(\d+)$/);
+      if(match){
+        const amtRaw = parseInt(match[3]) || 0;
+        total += amtRaw;
       }
     } else if(line.startsWith('特码:')){
       const{numbers,zodiacs,amount}=countItemsInLine(line);
@@ -4119,6 +4329,11 @@ function computeCurrentOrderTotal(){
         const amt = parseInt(match[2]) || 0;
         total += zodiacs.length * amt;
       }
+    } else if(line.startsWith('包')){
+      const match = line.match(/^包(.+?):(.+?)\s+各\s*(\d+)$/);
+      if(match){
+        total += parseInt(match[3]) || 0;
+      }
     } else if(line.startsWith('特码:')){
       const{numbers,zodiacs,amount}=countItemsInLine(line);
       let cnt=numbers.length; zodiacs.forEach(z=>{cnt+=(ZODIAC_NUMS[z]||'').split(/[\s,，]+/).length;});
@@ -4140,7 +4355,6 @@ function computeCurrentOrderTotal(){
   });
   return total; 
 }
-// 修改：生肖合计改为直接用 zodiacDirectAmount 的总和
 function updateAmountDisplays(){ 
   const nb=document.getElementById('numberTotalBox'); 
   const zb=document.getElementById('zodiacTotalBox'); 
@@ -4148,7 +4362,6 @@ function updateAmountDisplays(){
     document.getElementById('numberTotalAmount').textContent=numberOrderTotal;
     nb.style.display='inline-flex';
   } else { nb.style.display='none'; } 
-  // 用 zodiacDirectAmount 的总和作为生肖合计
   let zodiacTotal = 0;
   for (let z in zodiacDirectAmount) { zodiacTotal += zodiacDirectAmount[z] || 0; }
   if(zodiacTotal > 0){
@@ -4327,7 +4540,8 @@ function clearAllInput(){
   const box = document.getElementById('orderTotalAmountBox'); if(box) box.style.display='none';
   const lineCountSpan = document.getElementById('orderLineCount'); if(lineCountSpan) lineCountSpan.style.display='none';
 }
-    function deductPingtexiaoFromContent(content) {
+
+function deductPingtexiaoFromContent(content) {
   const pingtexiaoData = getPingtexiaoData();
   let changed = false;
   const lines = content.split('\n');
@@ -4411,7 +4625,7 @@ async function resetTable(){
     addOperationLog('reset', `清空${regionName}所有订单和上报记录`); showToast(`已清空${regionName}的所有订单和上报记录`);
   } catch(e) {} finally { resetLock = false; }
 }
-function clearAllInput(){ const si=document.querySelector('.source-order-input'); if(si)si.value=''; const re=document.getElementById('orderResult'); if(re)re.innerHTML=''; window._pureOrderLines = []; updateOrderTotalDisplay(); const md=document.getElementById('maxLossDisplay'); if(md){md.textContent='';md.style.display='none';} }
+
 async function pasteOrder(){ try{ const text=await navigator.clipboard.readText(); if(text){const si=document.querySelector('.source-order-input');if(si){si.value=text;performRecognition(text);}} } catch(err){showToast('无法访问剪贴板');} }
 
 function copySingleOrderById(id) { const el = document.querySelector(`.order-content[data-id="${id}"]`); if (!el) { showToast('未找到订单内容'); return; } navigator.clipboard.writeText(el.innerText).then(() => { showToast('已复制到剪贴板'); }).catch(() => { showToast('复制失败'); }); }
@@ -4496,7 +4710,6 @@ function getPingtexiaoKey() { const fd = document.getElementById('filterDate')?.
 function getPingtexiaoData() { try { return JSON.parse(localStorage.getItem(getPingtexiaoKey()) || '{}'); } catch (e) { return {}; } }
 function savePingtexiaoData(data) { localStorage.setItem(getPingtexiaoKey(), JSON.stringify(data)); }
 
-// ===== 平特肖渲染（只读，数据为0时显示为空） =====
 function renderPingtexiaoTable() { const container = document.getElementById('pingtexiaoTableContainer'); if (!container) return; const data = getPingtexiaoData(); const leftZodiacs = ['鼠','牛','虎','兔','龙','蛇']; const rightZodiacs = ['马','羊','猴','鸡','狗','猪']; const zcm = {'鼠':'red-text','兔':'red-text','马':'red-text','鸡':'red-text','虎':'blue-text','蛇':'blue-text','猴':'blue-text','猪':'blue-text','牛':'green-text','龙':'green-text','羊':'green-text','狗':'green-text'}; let html = '<table class="freq-table"><thead><tr>'; html += '<th>生肖</th><th>金额</th><th>上报</th><th>剩余</th>'; html += '<th>生肖</th><th>金额</th><th>上报</th><th>剩余</th>'; html += '</tr></thead><tbody>'; for (let r = 0; r < 6; r++) { html += '<tr>'; [leftZodiacs[r], rightZodiacs[r]].forEach(zodiac => { const d = data[zodiac] || { amount: '', report: '' }; const amountVal = d.amount !== undefined && d.amount !== '' && parseFloat(d.amount) !== 0 ? d.amount : ''; const reportVal = d.report !== undefined && d.report !== '' && parseFloat(d.report) !== 0 ? d.report : ''; const remainVal = (amountVal !== '') ? (parseFloat(amountVal) - (reportVal !== '' ? parseFloat(reportVal) : 0)) : 0; const remain = remainVal !== 0 ? remainVal : ''; html += `<td class="${zcm[zodiac] || ''}">${zodiac}</td>`; html += `<td><input type="number" class="pt-edit-input amount-red-text" data-zodiac="${zodiac}" data-field="amount" value="${amountVal}" readonly style="width:50px;padding:1px 2px;font-size:12px;text-align:center;border:1px solid transparent;background:transparent;"></td>`; html += `<td><input type="number" class="pt-edit-input pt-report-text" data-zodiac="${zodiac}" data-field="report" value="${reportVal}" readonly style="width:50px;padding:1px 2px;font-size:12px;text-align:center;border:1px solid transparent;background:transparent;"></td>`; html += `<td style="font-size:12px;">${remain !== '' ? remain : ''}</td>`; }); html += '</tr>'; } html += '</tbody></table>'; container.innerHTML = html; updatePingtexiaoTotal(); }
 function finishPtEdit(input) { if (input.hasAttribute('readonly')) return; input.setAttribute('readonly', 'readonly'); input.style.border = '1px solid transparent'; input.style.background = 'transparent'; updatePtRemain(input); savePingtexiaoCell(); }
 function updatePtRemain(input) { const row = input.closest('tr'); if (!row) return; const zodiac = input.dataset.zodiac; const cells = row.cells; let amountVal = '', reportVal = ''; for (let i = 0; i < cells.length; i++) { const amountInput = cells[i].querySelector(`.pt-edit-input[data-zodiac="${zodiac}"][data-field="amount"]`); if (amountInput) { amountVal = amountInput.value.trim(); const reportInput = cells[i+1].querySelector(`.pt-edit-input[data-zodiac="${zodiac}"][data-field="report"]`); if (reportInput) reportVal = reportInput.value.trim(); const remainCell = cells[i+2]; if (remainCell) { const a = amountVal !== '' ? parseFloat(amountVal) : 0; const r = reportVal !== '' ? parseFloat(reportVal) : 0; remainCell.textContent = amountVal !== '' ? (a - r) : ''; } break; } } updatePingtexiaoTotal(); }
@@ -4507,7 +4720,6 @@ let zodiacRankVisible = false;
 function toggleZodiacRank() { zodiacRankVisible = !zodiacRankVisible; updateCardA(); showToast(zodiacRankVisible ? '生肖排行已展开' : '生肖排行已收起'); }
 let singleBetVisible = false;
 function toggleSingleBet() { singleBetVisible = !singleBetVisible; const row = document.getElementById('singleBetRow'); if (row) { if (singleBetVisible) { updateSingleBetDisplay(); } else { row.style.display = 'none'; } } showToast(singleBetVisible ? '单挑已展开' : '单挑已收起'); }
-// 修改后的单挑显示函数：只筛选特码类型中单个数字号码+金额的行
 async function updateSingleBetDisplay() {
   const row = document.getElementById('singleBetRow');
   const display = document.getElementById('singleBetDisplay');
@@ -4522,13 +4734,11 @@ async function updateSingleBetDisplay() {
   filteredOrders.forEach(order => {
     const lines = order.content.split('\n').filter(l => l.trim());
     lines.forEach(l => {
-      // 匹配特码行：特码:内容 各数 金额
       const newMatch = l.match(/^特码:(.+?)\s+各(?:数|)\s*(\d+)$/);
       if (newMatch) {
         const content = newMatch[1];
         const amt = parseInt(newMatch[2]) || 0;
         if (amt <= 0) return;
-        // 只统计单个数字号码（非生肖、非属性词）
         const items = content.split('-').map(i => i.trim()).filter(i => i);
         if (items.length === 1 && /^\d{1,2}$/.test(items[0])) {
           const num = items[0].padStart(2, '0');
@@ -4538,7 +4748,6 @@ async function updateSingleBetDisplay() {
         }
         return;
       }
-      // 兼容旧格式：号码 各数 金额
       const oldMatch = l.match(/^(\d{2})\s+各(?:数|)\s*(\d+)$/);
       if (oldMatch && parseInt(oldMatch[2]) > 0) {
         singleCount[oldMatch[1]] = (singleCount[oldMatch[1]] || 0) + 1;
