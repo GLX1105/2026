@@ -3213,6 +3213,16 @@ async function refreshLianxiaoStats() {
         return;
       }
       
+      // ===== 包玩法：归入统一的 'bao' 卡片 =====
+      if (playType.startsWith('包')) {
+        const attr = content.trim();
+        if (!attr || !D[attr]) return;
+        if (!stats['bao']) stats['bao'] = { withYear: new Map(), withoutYear: new Map() };
+        stats['bao'].withYear.set(attr, (stats['bao'].withYear.get(attr) || 0) + amount);
+        grandTotal += amount;
+        return;
+      }
+      
       const groups = content.split(/\s+/);
       groups.forEach(group => {
         const rawGroup = group.replace(/^\(|\)$/g, '');
@@ -3327,32 +3337,47 @@ async function refreshLianxiaoStats() {
 
   let grandPL = 0;
   const cardsArray = [];
-  const order = ['特肖', 'pingtexiao', 'lianxiao2', 'lianxiao3', 'lianxiao4', 'lianxiao5', 'buzhong5', 'buzhong6', 'buzhong7', 'buzhong8', 'buzhong9', 'buzhong10', 'buzhong11', 'buzhong12', 'pingma', 'pingtewei', 'lianwei2', 'lianwei3', 'lianwei4', 'lianwei5', 'zhong2', 'zhong3'];
+  const order = ['特肖', 'pingtexiao', 'lianxiao2', 'lianxiao3', 'lianxiao4', 'lianxiao5', 'buzhong5', 'buzhong6', 'buzhong7', 'buzhong8', 'buzhong9', 'buzhong10', 'buzhong11', 'buzhong12', 'pingma', 'pingtewei', 'lianwei2', 'lianwei3', 'lianwei4', 'lianwei5', 'zhong2', 'zhong3', 'bao'];
 
   order.forEach((type) => {
     if (!stats[type]) return;
     const data = stats[type];
     const cardId = `comboCard_${type}`;
     let totalGroups = 0, totalAmount = 0, cardPL = 0, totalHitAmount = 0;
+    const isBao = (type === 'bao');
 
     let tablesHtml = '';
 
     function renderTable(map, hasSpecial) {
       if (map.size === 0) return '';
       let html2 = '';
-      const { odds, rebate } = getPlayOdds(type, hasSpecial);
-      html2 += '<table style="width:100%;"><tr><th style="text-align:center;">' + (type === '特肖' || type.startsWith('lianxiao') || type === 'pingtexiao' ? '生肖' : (type.includes('wei') ? '尾数' : '组合')) + '</th><th style="text-align:center;">金额</th><th style="text-align:center;">中奖</th><th style="text-align:center;">盈亏</th></tr>';
+      const headerLabel = isBao ? '属性' : (type === '特肖' || type.startsWith('lianxiao') || type === 'pingtexiao' ? '生肖' : (type.includes('wei') ? '尾数' : '组合'));
+      html2 += '<table style="width:100%;"><tr><th style="text-align:center;">' + headerLabel + '</th><th style="text-align:center;">金额</th><th style="text-align:center;">中奖</th><th style="text-align:center;">盈亏</th></tr>';
       map.forEach((v, k) => {
         const displayKey = k.replace(/^\(|\)$/g, '');
         const tokens = displayKey.split('-');
         let hit = false;
-        if (type === '特肖') { const teMaZodiac = drawZodiacs.length > 0 ? (currentZodiacMap[drawNumbers[6]] || '') : ''; hit = teMaZodiac === k; }
-        else if (type === 'pingtexiao') { hit = drawZodiacsSet.has(k); }
-        else if (type === 'pingtewei') { hit = drawZodiacs.length > 0 && tokens.some(t => { const d = t.replace('尾', ''); for (let i = 0; i <= 4; i++) { const n = (i * 10 + parseInt(d)).toString().padStart(2, '0'); if (drawNumbersSet.has(n)) return true; } return false; }); }
-        else if (type === 'pingma' || type === 'zhong2' || type === 'zhong3') { const zhengma = drawNumbers.slice(0, 6); hit = tokens.every(t => zhengma.includes(t)); }
-        else if (type.startsWith('buzhong')) { hit = !tokens.some(t => drawNumbersSet.has(t)); }
-        else if (type.startsWith('lianxiao')) { hit = tokens.every(t => drawZodiacsSet.has(t)); }
-        else if (type.startsWith('lianwei')) { hit = tokens.every(t => { const d = t.replace('尾', ''); for (let i = 0; i <= 4; i++) { const n = (i * 10 + parseInt(d)).toString().padStart(2, '0'); if (drawNumbersSet.has(n)) return true; } return false; }); }
+        let odds, rebate;
+        if (isBao) {
+          const baoType = '包' + displayKey;
+          const baoOdds = getOddsForType(baoType, oddsData);
+          odds = baoOdds.odds; rebate = baoOdds.rebate;
+          if (drawNumbers.length > 0 && D[displayKey]) {
+            const attrNums = (D[displayKey] || '').split(/[\s,，]+/).filter(n => n.trim());
+            const teMa = drawNumbers[6] || '';
+            hit = attrNums.includes(teMa);
+          }
+        } else {
+          const { odds: o, rebate: r } = getPlayOdds(type, hasSpecial);
+          odds = o; rebate = r;
+          if (type === '特肖') { const teMaZodiac = drawZodiacs.length > 0 ? (currentZodiacMap[drawNumbers[6]] || '') : ''; hit = teMaZodiac === k; }
+          else if (type === 'pingtexiao') { hit = drawZodiacsSet.has(k); }
+          else if (type === 'pingtewei') { hit = drawZodiacs.length > 0 && tokens.some(t => { const d = t.replace('尾', ''); for (let i = 0; i <= 4; i++) { const n = (i * 10 + parseInt(d)).toString().padStart(2, '0'); if (drawNumbersSet.has(n)) return true; } return false; }); }
+          else if (type === 'pingma' || type === 'zhong2' || type === 'zhong3') { const zhengma = drawNumbers.slice(0, 6); hit = tokens.every(t => zhengma.includes(t)); }
+          else if (type.startsWith('buzhong')) { hit = !tokens.some(t => drawNumbersSet.has(t)); }
+          else if (type.startsWith('lianxiao')) { hit = tokens.every(t => drawZodiacsSet.has(t)); }
+          else if (type.startsWith('lianwei')) { hit = tokens.every(t => { const d = t.replace('尾', ''); for (let i = 0; i <= 4; i++) { const n = (i * 10 + parseInt(d)).toString().padStart(2, '0'); if (drawNumbersSet.has(n)) return true; } return false; }); }
+        }
         let pl = 0;
         if (drawZodiacs.length > 0 || drawNumbers.length > 0) {
           if (type === '特肖') {
@@ -3400,8 +3425,9 @@ async function refreshLianxiaoStats() {
       else if (cardPL > 0) cardBgStyle = 'background:#f8fff8;';
     }
 
+    let cardLabel = isBao ? '包' : getComboTypeLabel(type);
     let cardHtml = `<div class="freq-card" id="${cardId}" style="break-inside:avoid; margin-bottom:10px; min-width:180px;${cardBgStyle}">`;
-    cardHtml += `<div class="freq-title" style="display:flex; align-items:center; justify-content:space-between;"><span>${getComboTypeLabel(type)}</span><button class="btn" style="background:#27ae60;color:#fff;padding:2px 8px;font-size:11px;min-height:auto;border-radius:20px;" onclick="screenshotSingleComboCard('${cardId}')">截图</button></div>`;
+    cardHtml += `<div class="freq-title" style="display:flex; align-items:center; justify-content:space-between;"><span>${cardLabel}</span><button class="btn" style="background:#27ae60;color:#fff;padding:2px 8px;font-size:11px;min-height:auto;border-radius:20px;" onclick="screenshotSingleComboCard('${cardId}')">截图</button></div>`;
 
     cardHtml += `<div style="max-height:400px;overflow-y:auto;">${tablesHtml}</div>`;
     cardHtml += `<div style="border-top:1px solid #ddd;margin-top:4px;padding-top:4px;font-size:11px;text-align:center;">小计：${totalGroups}组 金额：${totalAmount}`;
