@@ -4233,8 +4233,6 @@ function semanticReplace() {
     const beforeText = parts[0] || '';
     const afterText = parts.slice(1).join('不要') || '';
     
-    // 提取金额关键字后面的内容中"不要"前的部分
-    // 实际上整个选中文本格式为：属性词 不要 排除号码
     const includeNums = expandToNums(beforeText);
     const excludeNums = extractExcludeNums(afterText);
     
@@ -4314,6 +4312,7 @@ function semanticReplace() {
   showToast('语义转换完成：' + str);
 }
 
+// ===== 修复：saveOrder 取消时 return =====
 async function saveOrder(){ 
   const user=document.getElementById('orderUserSelect')?.value; 
   if(!user){showToast('请选择用户');return;} 
@@ -4393,11 +4392,10 @@ async function saveOrder(){
   const existingOrders = (await getOrderRecords()).filter(r => r.date === date && r.user === user);
   if (existingOrders.some(o => o.content === content)) {
     const confirmed = await confirm('该用户今天已保存过相同的订单，确定再次保存吗？');
-    if (!confirmed) { } else {
-      await saveOrderRecordToIDB(content,user,date,totalAmount);
-      clearStatsCache();
-      addOperationLog('save_order', content, currentRegion, user, totalAmount);
-    }
+    if (!confirmed) { return; }
+    await saveOrderRecordToIDB(content,user,date,totalAmount);
+    clearStatsCache();
+    addOperationLog('save_order', content, currentRegion, user, totalAmount);
   } else {
     await saveOrderRecordToIDB(content,user,date,totalAmount);
     clearStatsCache();
@@ -4416,6 +4414,7 @@ async function saveOrder(){
   showToast('已保存下单');
 }
 
+// ===== 修复：saveReportOrder 取消时 return =====
 async function saveReportOrder(){ 
   const user=document.getElementById('orderUserSelect')?.value; 
   if(!user){showToast('请选择用户');return;} 
@@ -4496,11 +4495,10 @@ async function saveReportOrder(){
   const existingReports = (await getReportOrderRecords()).filter(r => r.date === date && r.user === user);
   if (existingReports.some(o => o.content === content)) {
     const confirmed = await confirm('该用户今天已上报过相同的内容，确定再次上报吗？');
-    if (!confirmed) { } else {
-      await saveReportOrderRecordToIDB(content,user,date,totalAmount);
-      clearStatsCache();
-      addOperationLog('save_report', content, currentRegion, user, totalAmount);
-    }
+    if (!confirmed) { return; }
+    await saveReportOrderRecordToIDB(content,user,date,totalAmount);
+    clearStatsCache();
+    addOperationLog('save_report', content, currentRegion, user, totalAmount);
   } else {
     await saveReportOrderRecordToIDB(content,user,date,totalAmount);
     clearStatsCache();
@@ -4904,6 +4902,7 @@ function updateDirectAmountTotals() {
 
 function renderOriginalAmountTable() { const tbl = document.getElementById('originalAmountTable'); if (!tbl) return; const cols = [...Array(5)].map((_,c)=>Array.from({length:c===4?9:10},(_,r)=>(c*10+r+1).toString().padStart(2,'0'))); let th = '<thead><tr>'; for (let c=0;c<5;c++) th += '<th>号码</th><th>次数</th><th>金额</th><th>上报</th>'; th += '</tr></thead>'; let tb = '<tbody>'; for (let r=0;r<10;r++) { tb += '<tr>'; for (let c=0;c<5;c++) { const n = cols[c][r] || ''; if (n) { const cnt = numberCount[n] || 0; const amt = directOrderAmount[n] || 0; const rpt = directReportAmount[n] || 0; const cls = redNumbers.includes(n) ? 'red-text' : (blueNumbers.includes(n) ? 'blue-text' : 'green-text'); tb += `<td class="${cls}">${n}</td>`; tb += `<td class="black-text">${cnt > 0 ? cnt : ''}</td>`; tb += `<td class="amount-red-text">${amt > 0 ? amt : ''}</td>`; tb += `<td class="report-red-text">${rpt > 0 ? rpt : ''}</td>`; } else { tb += '<td></td><td></td><td></td><td></td>'; } } tb += '</tr>'; } tb += '</tbody>'; tbl.innerHTML = th + tb; updateDirectAmountTotals(); }
 
+// ===== 修复：updateOrderTotalDisplay 特码行不再重复计算生肖 =====
 function updateOrderTotalDisplay(){
   const re=document.getElementById('orderResult'); const box=document.getElementById('orderTotalAmountBox'); const span=document.getElementById('orderTotalAmount'); const lineCountSpan=document.getElementById('orderLineCount');
   if(!re||!box||!span)return;
@@ -4933,8 +4932,9 @@ function updateOrderTotalDisplay(){
         total += amtRaw;
       }
     } else if(line.startsWith('特码:')){
-      const{numbers,zodiacs,amount}=countItemsInLine(line);
-      let cnt=numbers.length; zodiacs.forEach(z=>{cnt+=(ZODIAC_NUMS[z]||'').split(/[\s,，]+/).length;});
+      const{numbers,amount}=countItemsInLine(line);
+      // 修复：直接用 numbers.length，不再叠加 zodiacs（numbers 已包含生肖展开的号码）
+      const cnt=numbers.length;
       if(cnt>0 && amount>0) total+=cnt*amount;
     } else {
       const match = line.match(/^(.+?):(.+?)\s+各\s*(\d+)$/);
@@ -4955,6 +4955,8 @@ function updateOrderTotalDisplay(){
   if(total>0){ box.style.display='inline-flex'; if(lineCountSpan){ lineCountSpan.innerHTML = '<span style="color:#000;">' + validLineCount + '</span>行'; lineCountSpan.style.display = 'inline'; } }
   else { box.style.display='none'; if(lineCountSpan) lineCountSpan.style.display='none'; }
 }
+
+// ===== 修复：computeCurrentOrderTotal 特码行不再重复计算生肖 =====
 function computeCurrentOrderTotal(){ 
   const pureLines = window._pureOrderLines || []; 
   let total=0; 
@@ -4979,8 +4981,9 @@ function computeCurrentOrderTotal(){
         total += parseInt(match[3]) || 0;
       }
     } else if(line.startsWith('特码:')){
-      const{numbers,zodiacs,amount}=countItemsInLine(line);
-      let cnt=numbers.length; zodiacs.forEach(z=>{cnt+=(ZODIAC_NUMS[z]||'').split(/[\s,，]+/).length;});
+      const{numbers,amount}=countItemsInLine(line);
+      // 修复：直接用 numbers.length
+      const cnt=numbers.length;
       if(cnt>0) total+=cnt*amount;
     } else {
       const match = line.match(/^(.+?):(.+?)\s+各\s*(\d+)$/);
@@ -5028,7 +5031,6 @@ async function copyReportCapText(){ const info=document.getElementById('reportCa
 async function screenshotTable(tid){ const tbl=document.getElementById(tid); if(!tbl){showToast('表格不存在');return;} try{ const canvas=await html2canvas(tbl,{backgroundColor:'#ffffff',scale:2,logging:false}); canvas.toBlob(async blob=>{ if(!blob){showToast('生成图片失败');return;} try{ const item=new ClipboardItem({'image/png':blob}); await navigator.clipboard.write([item]); showToast('截图已复制'); }catch(e){showToast('复制失败'); } },'image/png'); }catch(e){showToast('截图失败');} }
 function renderReportAmountTable(){ const tbl=document.getElementById('reportAmountTable'); if(!tbl)return; tbl.innerHTML=''; const cols=[...Array(5)].map((_,c)=>Array.from({length:c===4?9:10},(_,r)=>(c*10+r+1).toString().padStart(2,'0'))); let th='<thead><tr>'; for(let c=0;c<5;c++)th+='<th>号码</th><th>金额</th>'; th+='</tr></thead>'; let tb='<tbody>'; for(let r=0;r<10;r++){ tb+='<tr>'; for(let c=0;c<5;c++){ const n=cols[c][r]||''; if(n){ const a=reportAmountData[n]||0; const cls=redNumbers.includes(n)?'red-text':(blueNumbers.includes(n)?'blue-text':'green-text'); tb+=`<td class="${cls}">${n}</td><td class="black-text">${a||''}</td>`; }else{tb+='<td></td><td></td>';} } tb+='</tr>'; } tb+='</tbody>'; tbl.innerHTML=th+tb; updateReportAmountTotal(); }
 
-// ===== 修复：renderFrequencyCards 加上报列 =====
 function renderFrequencyCards(){ 
   const nt=document.getElementById('numberFreqTable'); if(!nt)return; nt.innerHTML=''; 
   const cols=[...Array(5)].map((_,c)=>Array.from({length:c===4?9:10},(_,r)=>(c*10+r+1).toString().padStart(2,'0'))); 
@@ -5048,7 +5050,6 @@ function renderFrequencyCards(){
   ztb+='</tbody>'; zt.innerHTML=zth+ztb; 
 }
 
-// ===== 修复：renderAmountFrequencyCards 加上报列 =====
 function renderAmountFrequencyCards(){ 
   const nt=document.getElementById('numberAmountFreqTable'); if(!nt)return; nt.innerHTML=''; 
   const cols=[...Array(5)].map((_,c)=>Array.from({length:c===4?9:10},(_,r)=>(c*10+r+1).toString().padStart(2,'0'))); 
