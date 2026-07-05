@@ -1839,6 +1839,53 @@ function parseTeMaSegment(content) {
       let subMatch;
       while ((subMatch = kwReLocal.exec(content)) !== null) {
         const subContent = content.substring(subLast, subMatch.index);
+        
+        // ===== 范围号码识别 =====
+        if (subContent.includes('到') || (subMatch[0] && subMatch[0].includes('到'))) {
+          const combined = subContent + (subMatch ? subMatch[0] : '');
+          const rangeMatch = combined.match(/(\d{1,2})\s*到\s*(\d{1,2})/);
+          if (rangeMatch) {
+            const start = parseInt(rangeMatch[1]);
+            const end = parseInt(rangeMatch[2]);
+            const amt = toNum(subMatch[2]);
+            const kw = subMatch[1];
+            
+            if (!kw) {
+              results.push({
+                cat: '__unrecognized__',
+                nums: [],
+                amt: 0, cnt: 0, total: 0, kw: '',
+                warnings: ['缺少金额关键字'],
+                rawLine: combined.trim()
+              });
+            } else if (start >= 1 && end <= 49 && start <= end) {
+              const nums = [];
+              for (let i = start; i <= end; i++) {
+                nums.push(String(i).padStart(2, '0'));
+              }
+              results.push({
+                cat: '特码',
+                nums: nums,
+                amt: amt,
+                cnt: nums.length,
+                total: amt * nums.length,
+                kw: kw,
+                warnings: []
+              });
+            } else {
+              results.push({
+                cat: '__unrecognized__',
+                nums: [],
+                amt: 0, cnt: 0, total: 0, kw: '',
+                warnings: ['号码范围无效，请检查'],
+                rawLine: combined.trim()
+              });
+            }
+            subLast = subMatch.index + subMatch[0].length;
+            continue;
+          }
+        }
+        
         const teXiaoResult = tryMatchTeXiao(subContent + subMatch[0]);
         if (teXiaoResult) {
           results.push(teXiaoResult);
@@ -1866,7 +1913,7 @@ function parseTeMaSegment(content) {
     while ((subMatch = kwReLocal.exec(content)) !== null) {
       const subContent = content.substring(subLast, subMatch.index);
       
-      // ===== 新增：范围号码识别（特码专用） =====
+      // ===== 范围号码识别 =====
       if (subContent.includes('到') || (subMatch[0] && subMatch[0].includes('到'))) {
         const combined = subContent + (subMatch ? subMatch[0] : '');
         const rangeMatch = combined.match(/(\d{1,2})\s*到\s*(\d{1,2})/);
@@ -1877,7 +1924,6 @@ function parseTeMaSegment(content) {
           const kw = subMatch[1];
           
           if (!kw) {
-            // 缺少金额关键字，报警
             results.push({
               cat: '__unrecognized__',
               nums: [],
@@ -1886,7 +1932,6 @@ function parseTeMaSegment(content) {
               rawLine: combined.trim()
             });
           } else if (start >= 1 && end <= 49 && start <= end) {
-            // 有效的范围，展开号码
             const nums = [];
             for (let i = start; i <= end; i++) {
               nums.push(String(i).padStart(2, '0'));
@@ -1901,7 +1946,6 @@ function parseTeMaSegment(content) {
               warnings: []
             });
           } else {
-            // 范围无效
             results.push({
               cat: '__unrecognized__',
               nums: [],
@@ -1938,8 +1982,6 @@ function parseTeMaSegment(content) {
         if (rangeMatch) {
           const start = parseInt(rangeMatch[1]);
           const end = parseInt(rangeMatch[2]);
-          
-          // 检查是否有金额关键字
           const amtMatch = remaining.match(/(各(?:数|号|组|码|注|下|买)?)\s*(\d+)/);
           if (amtMatch) {
             const amt = toNum(amtMatch[2]);
@@ -2279,7 +2321,7 @@ function formatNums(cat, numsArr) {
   return numsArr.map(g => `(` + g + `)`).join(' ');
 }
 
-// ===== countItemsInLine =====
+// ===== countItemsInLine（修复：生肖判断移到D[item]之前） =====
 function countItemsInLine(line) {
   const teXiaoMatch = line.match(/^特肖:(.+?)\s+各\s*(\d+)$/);
   if (teXiaoMatch) {
@@ -2329,23 +2371,27 @@ function countItemsInLine(line) {
         nums.push(item);
       } else if (/^\d$/.test(item) && parseInt(item) >= 1 && parseInt(item) <= 49) {
         nums.push(item.padStart(2, '0'));
+      } else if (/^[\u4e00-\u9fa5]$/.test(item) && ZODIAC_NUMS[item]) {
+        // 生肖判断移到D[item]之前
+        zods.push(item);
+        ZODIAC_NUMS[item].split(/[\s,，]+/).forEach(n => nums.push(n.padStart(2, '0')));
       } else if (D[item]) {
         const val = D[item];
         if (/[鼠牛虎兔龙蛇马羊猴鸡狗猪]/.test(val)) {
           if (/^[\u4e00-\u9fa5]$/.test(item) && ZODIAC_NUMS[item]) {
             zods.push(item);
-            ZODIAC_NUMS[item].split(/[\s,，]+/).forEach(n => nums.push(n));
+            ZODIAC_NUMS[item].split(/[\s,，]+/).forEach(n => nums.push(n.padStart(2, '0')));
           } else {
             for (const z of val) {
-              if (ZODIAC_NUMS[z]) ZODIAC_NUMS[z].split(/[\s,，]+/).forEach(n => nums.push(n));
+              if (ZODIAC_NUMS[z]) {
+                zods.push(z);
+                ZODIAC_NUMS[z].split(/[\s,，]+/).forEach(n => nums.push(n.padStart(2, '0')));
+              }
             }
           }
         } else {
           val.split(/[\s,，]+/).filter(n => n.trim()).forEach(n => nums.push(n.padStart(2, '0')));
         }
-      } else if (/^[\u4e00-\u9fa5]$/.test(item) && ZODIAC_NUMS[item]) {
-        zods.push(item);
-        ZODIAC_NUMS[item].split(/[\s,，]+/).forEach(n => nums.push(n));
       }
     });
     return { numbers: nums, zodiacs: [...new Set(zods)], amount: amt, playType };
@@ -2362,23 +2408,27 @@ function countItemsInLine(line) {
         nums.push(item);
       } else if (/^\d$/.test(item) && parseInt(item) >= 1 && parseInt(item) <= 49) {
         nums.push(item.padStart(2, '0'));
+      } else if (/^[\u4e00-\u9fa5]$/.test(item) && ZODIAC_NUMS[item]) {
+        // 生肖判断移到D[item]之前
+        zods.push(item);
+        ZODIAC_NUMS[item].split(/[\s,，]+/).forEach(n => nums.push(n.padStart(2, '0')));
       } else if (D[item]) {
         const val = D[item];
         if (/[鼠牛虎兔龙蛇马羊猴鸡狗猪]/.test(val)) {
           if (/^[\u4e00-\u9fa5]$/.test(item) && ZODIAC_NUMS[item]) {
             zods.push(item);
-            ZODIAC_NUMS[item].split(/[\s,，]+/).forEach(n => nums.push(n));
+            ZODIAC_NUMS[item].split(/[\s,，]+/).forEach(n => nums.push(n.padStart(2, '0')));
           } else {
             for (const z of val) {
-              if (ZODIAC_NUMS[z]) ZODIAC_NUMS[z].split(/[\s,，]+/).forEach(n => nums.push(n));
+              if (ZODIAC_NUMS[z]) {
+                zods.push(z);
+                ZODIAC_NUMS[z].split(/[\s,，]+/).forEach(n => nums.push(n.padStart(2, '0')));
+              }
             }
           }
         } else {
           val.split(/[\s,，]+/).filter(n => n.trim()).forEach(n => nums.push(n.padStart(2, '0')));
         }
-      } else if (/^[\u4e00-\u9fa5]$/.test(item) && ZODIAC_NUMS[item]) {
-        zods.push(item);
-        ZODIAC_NUMS[item].split(/[\s,，]+/).forEach(n => nums.push(n));
       }
     });
     return { numbers: nums, zodiacs: [...new Set(zods)], amount: amt };
