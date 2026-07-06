@@ -4348,12 +4348,9 @@ function semanticReplace() {
   const sel=ta.value.substring(s,e).trim(); 
   if(!sel){showToast('请先选择文本');return;}
 
-  // 辅助函数：展开属性词/生肖/数字连写+头尾为号码集合
   function expandToNums(text) {
     const resultNums = new Set();
     if (!text || !text.trim()) return resultNums;
-    
-    // 1. 处理数字连写+头（如 123头、1,2,3头、1 2 3头）
     const headRegex = /([\d\s,，.。、+\-*＊\/\\|]+)头/g;
     let headMatch;
     while ((headMatch = headRegex.exec(text)) !== null) {
@@ -4361,14 +4358,10 @@ function semanticReplace() {
       if (digits) {
         digits.forEach(d => {
           const key = d + '头';
-          if (D[key]) {
-            D[key].split(/[\s,，]+/).forEach(n => { if (n.trim()) resultNums.add(n.trim().padStart(2, '0')); });
-          }
+          if (D[key]) { D[key].split(/[\s,，]+/).forEach(n => { if (n.trim()) resultNums.add(n.trim().padStart(2, '0')); }); }
         });
       }
     }
-    
-    // 2. 处理数字连写+尾（如 4725尾、4,7,2,5尾、4 7 2 5尾）
     const tailRegex = /([\d\s,，.。、+\-*＊\/\\|]+)尾/g;
     let tailMatch;
     while ((tailMatch = tailRegex.exec(text)) !== null) {
@@ -4376,21 +4369,13 @@ function semanticReplace() {
       if (digits) {
         digits.forEach(d => {
           const key = d + '尾';
-          if (D[key]) {
-            D[key].split(/[\s,，]+/).forEach(n => { if (n.trim()) resultNums.add(n.trim().padStart(2, '0')); });
-          }
+          if (D[key]) { D[key].split(/[\s,，]+/).forEach(n => { if (n.trim()) resultNums.add(n.trim().padStart(2, '0')); }); }
         });
       }
     }
-    
-    // 3. 处理属性词（含生肖、家肖等）
     const cleanedText = text.replace(/([\d\s,，.。、+\-*＊\/\\|]+)头/g, '').replace(/([\d\s,，.。、+\-*＊\/\\|]+)尾/g, '');
-    
-    // 先按常见分隔符拆分成多个 token
     const tokens = cleanedText.split(/[\s,，.。、+\-*＊\/\\|]+/).filter(t => t.trim());
-    
     tokens.forEach(token => {
-      // 3a. 尝试匹配字典 D 中的长关键词
       let matched = false;
       const allDictKeys = Object.keys(D).filter(k => !/^\d+$/.test(k) && !/^\d{2}$/.test(k) && k.length > 1);
       allDictKeys.sort((a, b) => b.length - a.length);
@@ -4398,12 +4383,9 @@ function semanticReplace() {
         if (token.includes(key)) {
           const nums = keyToAllNums(key);
           nums.forEach(n => resultNums.add(n.padStart(2, '0')));
-          matched = true;
-          break;
+          matched = true; break;
         }
       }
-      
-      // 3b. 尝试逐字匹配生肖
       if (!matched) {
         for (const ch of token) {
           if (ZODIAC_NUMS[ch]) {
@@ -4413,20 +4395,16 @@ function semanticReplace() {
         }
       }
     });
-    
     return resultNums;
   }
 
-  // 辅助函数：提取排除号码
   function extractExcludeNums(text) {
     const nums = new Set();
     const digits = text.match(/\d{1,2}/g);
     if (digits) {
       digits.forEach(d => {
         const intVal = parseInt(d);
-        if (intVal >= 1 && intVal <= 49) {
-          nums.add(String(intVal).padStart(2, '0'));
-        }
+        if (intVal >= 1 && intVal <= 49) { nums.add(String(intVal).padStart(2, '0')); }
       });
     }
     return nums;
@@ -4434,92 +4412,43 @@ function semanticReplace() {
 
   let resultNums = new Set();
 
-  // 模式一：含 "不要" → 差集模式
   if (sel.includes('不要')) {
     const parts = sel.split('不要');
     const beforeText = parts[0] || '';
     const afterText = parts.slice(1).join('不要') || '';
-    
     const includeNums = expandToNums(beforeText);
     const excludeNums = extractExcludeNums(afterText);
-    
-    if (includeNums.size === 0) {
-      showToast('未识别到有效分类');
-      return;
-    }
-    
-    includeNums.forEach(n => {
-      if (!excludeNums.has(n)) {
-        resultNums.add(n);
-      }
-    });
-    
-    if (resultNums.size === 0) {
-      showToast('排除后无剩余号码');
-      return;
-    }
-  }
-  // 模式二：含 "的" → 交集模式
-  else if (sel.includes('的')) {
+    if (includeNums.size === 0) { showToast('未识别到有效分类'); return; }
+    includeNums.forEach(n => { if (!excludeNums.has(n)) resultNums.add(n); });
+    if (resultNums.size === 0) { showToast('排除后无剩余号码'); return; }
+  } else if (sel.includes('的')) {
     const parts = sel.split('的');
     const beforeText = parts[0] || '';
     const afterText = parts.slice(1).join('的') || '';
-    
     const beforeNums = expandToNums(beforeText);
     const afterNums = expandToNums(afterText);
-    
-    if (beforeNums.size === 0 || afterNums.size === 0) {
-      showToast('未识别到有效分类');
-      return;
-    }
-    
-    beforeNums.forEach(n => {
-      if (afterNums.has(n)) {
-        resultNums.add(n);
-      }
-    });
-    
-    if (resultNums.size === 0) {
-      showToast('无共同号码');
-      return;
-    }
-  }
-  // 模式三：原逻辑（多分类直接取交集）
-  else {
+    if (beforeNums.size === 0 || afterNums.size === 0) { showToast('未识别到有效分类'); return; }
+    beforeNums.forEach(n => { if (afterNums.has(n)) resultNums.add(n); });
+    if (resultNums.size === 0) { showToast('无共同号码'); return; }
+  } else {
     const tokens = sel.split(/[\s,，.。、+\-*＊\/\\|]+/).filter(t => t.trim());
     const matched = tokens.filter(t => D[t]);
-    if (!matched.length) {
-      showToast('未识别有效分类');
-      return;
-    }
-    
-    let sets = matched.map(cat => {
-      const nums = keyToAllNums(cat);
-      return new Set(nums);
-    });
-    
+    if (!matched.length) { showToast('未识别有效分类'); return; }
+    let sets = matched.map(cat => { const nums = keyToAllNums(cat); return new Set(nums); });
     let inter = sets[0];
-    for (let i = 1; i < sets.length; i++) {
-      inter = new Set([...inter].filter(x => sets[i].has(x)));
-    }
-    
+    for (let i = 1; i < sets.length; i++) { inter = new Set([...inter].filter(x => sets[i].has(x))); }
     resultNums = inter;
-    
-    if (resultNums.size === 0) {
-      showToast('无共同号码');
-      return;
-    }
+    if (resultNums.size === 0) { showToast('无共同号码'); return; }
   }
 
   const sortedNums = [...resultNums].sort((a, b) => parseInt(a) - parseInt(b));
   const str = sortedNums.join('-');
-  
   ta.value = ta.value.substring(0, s) + str + ta.value.substring(e);
   performRecognition(ta.value);
   showToast('语义转换完成：' + str);
 }
 
-// ===== 修复：saveOrder 按地区分组保存，取消时return =====
+// ===== 修复：saveOrder 按地区分组保存，clearStatsCache在updateTableFromRecords之前 =====
 async function saveOrder(){ 
   const user=document.getElementById('orderUserSelect')?.value; 
   if(!user){showToast('请选择用户');return;} 
@@ -4528,7 +4457,6 @@ async function saveOrder(){
   if(!pureLines || pureLines.length === 0){showToast('订单无效');return;} 
   const date=document.getElementById('filterDate')?.value||getTodayCST(); 
   
-  // 按地区分组
   const regionGroups = {};
   pureLines.forEach((line, i) => {
     const region = pureRegions[i] || currentRegion;
@@ -4538,7 +4466,6 @@ async function saveOrder(){
 
   const regionLabels = { 'macau': '澳门', 'hongkong': '香港', 'yuegang': '粤港' };
 
-  // 检查重复
   const existingOrders = (await getOrderRecords()).filter(r => r.date === date && r.user === user);
   let hasDuplicate = false;
   let duplicateRegions = [];
@@ -4556,121 +4483,17 @@ async function saveOrder(){
     if (!confirmed) { return; }
   }
 
-  // 按地区分别保存
   let savedCount = 0;
   for (const [region, lines] of Object.entries(regionGroups)) {
     const content = lines.join('\n');
-    
-    // 计算该地区订单的合计
     let totalAmount = 0;
     lines.forEach(line => {
       if(line.startsWith('特肖:')){
         const match = line.match(/^特肖:(.+?)\s+各\s*(\d+)$/);
-        if(match){
-          const zodiacs = match[1].split('-').map(z => z.trim()).filter(z => z);
-          const amtRaw = parseInt(match[2]) || 0;
-          totalAmount += zodiacs.length * amtRaw;
-        }
+        if(match){ totalAmount += match[1].split('-').filter(z => z.trim()).length * (parseInt(match[2]) || 0); }
       } else if(line.startsWith('包')){
         const match = line.match(/^包(.+?):(.+?)\s+各\s*(\d+)$/);
-        if(match){
-          totalAmount += parseInt(match[3]) || 0;
-        }
-      } else if(line.startsWith('特碰:')){
-        const match = line.match(/^特碰:(.+?)\s+各\s*(\d+)$/);
-        if(match){
-          const cleaned = match[1].replace(/[()]/g, '');
-          const groups = cleaned.split(/\s+/).filter(c => c.trim());
-          totalAmount += groups.length * (parseInt(match[2]) || 0);
-        }
-      } else if(line.startsWith('特码:')){
-        const{numbers,amount}=countItemsInLine(line);
-        if(numbers.length>0 && amount>0) totalAmount += numbers.length * amount;
-      } else {
-        const match = line.match(/^(.+?):(.+?)\s+各\s*(\d+)$/);
-        if(match){
-          const playType = match[1]; const content = match[2]; const amt = parseInt(match[3])||0;
-          const cleaned = content.replace(/[()]/g, '');
-          const groups = cleaned.split(/\s+/).filter(c=>c.trim());
-          totalAmount += groups.length * amt;
-        }
-      }
-    });
-
-    await saveOrderRecordToIDB(content, user, date, totalAmount, null, region);
-    addOperationLog('save_order', content, region, user, totalAmount);
-    savedCount++;
-  }
-  
-  const si=document.querySelector('.source-order-input'); if(si)si.value=''; 
-  const resultEl=document.getElementById('orderResult'); if(resultEl)resultEl.innerHTML=''; 
-  window._pureOrderLines = []; 
-  window._pureOrderRegions = [];
-  updateOrderTotalDisplay(); 
-  const md=document.getElementById('maxLossDisplay'); if(md){md.textContent='';md.style.display='none';} 
-  document.querySelectorAll('.category-btn').forEach(b=>b.classList.remove('active')); 
-  await updateTableFromRecords();
-  clearStatsCache();
-  calculateStorageUsage(); showStorageDrawerTemporary(5000); renderSmartDecision(); updateSingleBetDisplay(); 
-  updateOrderCountDisplay();
-  showToast('已保存下单（' + savedCount + '个地区）');
-}
-
-// ===== 修复：saveReportOrder 按地区分组保存，取消时return =====
-async function saveReportOrder(){ 
-  const user=document.getElementById('orderUserSelect')?.value; 
-  if(!user){showToast('请选择用户');return;} 
-  const pureLines = window._pureOrderLines; 
-  const pureRegions = window._pureOrderRegions || [];
-  if(!pureLines || pureLines.length === 0){showToast('订单无效');return;} 
-  const date=document.getElementById('filterDate')?.value||getTodayCST(); 
-  
-  // 按地区分组
-  const regionGroups = {};
-  pureLines.forEach((line, i) => {
-    const region = pureRegions[i] || currentRegion;
-    if (!regionGroups[region]) regionGroups[region] = [];
-    regionGroups[region].push(line);
-  });
-
-  const regionLabels = { 'macau': '澳门', 'hongkong': '香港', 'yuegang': '粤港' };
-
-  // 检查重复
-  const existingReports = (await getReportOrderRecords()).filter(r => r.date === date && r.user === user);
-  let hasDuplicate = false;
-  let duplicateRegions = [];
-  
-  for (const [region, lines] of Object.entries(regionGroups)) {
-    const content = lines.join('\n');
-    if (existingReports.some(o => o.content === content && o.region === region)) {
-      hasDuplicate = true;
-      duplicateRegions.push(regionLabels[region] || region);
-    }
-  }
-
-  if (hasDuplicate) {
-    const confirmed = await confirm(`该用户今天已在${duplicateRegions.join('、')}上报过相同的内容，确定再次上报吗？`);
-    if (!confirmed) { return; }
-  }
-
-  // 按地区分别保存
-  let savedCount = 0;
-  for (const [region, lines] of Object.entries(regionGroups)) {
-    const content = lines.join('\n');
-    
-    let totalAmount = 0;
-    lines.forEach(line => {
-      if(line.startsWith('特肖:')){
-        const match = line.match(/^特肖:(.+?)\s+各\s*(\d+)$/);
-        if(match){
-          const zodiacs = match[1].split('-').map(z => z.trim()).filter(z => z);
-          totalAmount += zodiacs.length * (parseInt(match[2]) || 0);
-        }
-      } else if(line.startsWith('包')){
-        const match = line.match(/^包(.+?):(.+?)\s+各\s*(\d+)$/);
-        if(match){
-          totalAmount += parseInt(match[3]) || 0;
-        }
+        if(match){ totalAmount += parseInt(match[3]) || 0; }
       } else if(line.startsWith('特碰:')){
         const match = line.match(/^特碰:(.+?)\s+各\s*(\d+)$/);
         if(match){
@@ -4690,7 +4513,90 @@ async function saveReportOrder(){
         }
       }
     });
+    await saveOrderRecordToIDB(content, user, date, totalAmount, null, region);
+    addOperationLog('save_order', content, region, user, totalAmount);
+    savedCount++;
+  }
+  
+  const si=document.querySelector('.source-order-input'); if(si)si.value=''; 
+  const resultEl=document.getElementById('orderResult'); if(resultEl)resultEl.innerHTML=''; 
+  window._pureOrderLines = []; 
+  window._pureOrderRegions = [];
+  updateOrderTotalDisplay(); 
+  const md=document.getElementById('maxLossDisplay'); if(md){md.textContent='';md.style.display='none';} 
+  document.querySelectorAll('.category-btn').forEach(b=>b.classList.remove('active')); 
+  clearStatsCache();
+  await updateTableFromRecords();
+  calculateStorageUsage(); showStorageDrawerTemporary(5000); renderSmartDecision(); updateSingleBetDisplay(); 
+  updateOrderCountDisplay();
+  showToast('已保存下单（' + savedCount + '个地区）');
+}
 
+// ===== 修复：saveReportOrder 按地区分组保存，clearStatsCache在updateTableFromRecords之前 =====
+async function saveReportOrder(){ 
+  const user=document.getElementById('orderUserSelect')?.value; 
+  if(!user){showToast('请选择用户');return;} 
+  const pureLines = window._pureOrderLines; 
+  const pureRegions = window._pureOrderRegions || [];
+  if(!pureLines || pureLines.length === 0){showToast('订单无效');return;} 
+  const date=document.getElementById('filterDate')?.value||getTodayCST(); 
+  
+  const regionGroups = {};
+  pureLines.forEach((line, i) => {
+    const region = pureRegions[i] || currentRegion;
+    if (!regionGroups[region]) regionGroups[region] = [];
+    regionGroups[region].push(line);
+  });
+
+  const regionLabels = { 'macau': '澳门', 'hongkong': '香港', 'yuegang': '粤港' };
+
+  const existingReports = (await getReportOrderRecords()).filter(r => r.date === date && r.user === user);
+  let hasDuplicate = false;
+  let duplicateRegions = [];
+  
+  for (const [region, lines] of Object.entries(regionGroups)) {
+    const content = lines.join('\n');
+    if (existingReports.some(o => o.content === content && o.region === region)) {
+      hasDuplicate = true;
+      duplicateRegions.push(regionLabels[region] || region);
+    }
+  }
+
+  if (hasDuplicate) {
+    const confirmed = await confirm(`该用户今天已在${duplicateRegions.join('、')}上报过相同的内容，确定再次上报吗？`);
+    if (!confirmed) { return; }
+  }
+
+  let savedCount = 0;
+  for (const [region, lines] of Object.entries(regionGroups)) {
+    const content = lines.join('\n');
+    let totalAmount = 0;
+    lines.forEach(line => {
+      if(line.startsWith('特肖:')){
+        const match = line.match(/^特肖:(.+?)\s+各\s*(\d+)$/);
+        if(match){ totalAmount += match[1].split('-').filter(z => z.trim()).length * (parseInt(match[2]) || 0); }
+      } else if(line.startsWith('包')){
+        const match = line.match(/^包(.+?):(.+?)\s+各\s*(\d+)$/);
+        if(match){ totalAmount += parseInt(match[3]) || 0; }
+      } else if(line.startsWith('特碰:')){
+        const match = line.match(/^特碰:(.+?)\s+各\s*(\d+)$/);
+        if(match){
+          const cleaned = match[1].replace(/[()]/g, '');
+          const groups = cleaned.split(/\s+/).filter(c => c.trim());
+          totalAmount += groups.length * (parseInt(match[2]) || 0);
+        }
+      } else if(line.startsWith('特码:')){
+        const{numbers,amount}=countItemsInLine(line);
+        if(numbers.length>0 && amount>0) totalAmount += numbers.length * amount;
+      } else {
+        const match = line.match(/^(.+?):(.+?)\s+各\s*(\d+)$/);
+        if(match){
+          const cleaned = match[2].replace(/[()]/g, '');
+          const groups = cleaned.split(/\s+/).filter(c=>c.trim());
+          totalAmount += groups.length * (parseInt(match[3]) || 0);
+        }
+      }
+    });
     await saveReportOrderRecordToIDB(content, user, date, totalAmount, null, region);
     addOperationLog('save_report', content, region, user, totalAmount);
     savedCount++;
@@ -4703,8 +4609,8 @@ async function saveReportOrder(){
   updateOrderTotalDisplay(); 
   const md=document.getElementById('maxLossDisplay'); if(md){md.textContent='';md.style.display='none';} 
   document.querySelectorAll('.category-btn').forEach(b=>b.classList.remove('active')); 
-  await updateTableFromRecords();
   clearStatsCache();
+  await updateTableFromRecords();
   calculateStorageUsage(); showStorageDrawerTemporary(5000); renderSmartDecision(); 
   showToast('已上报成功（' + savedCount + '个地区）'); 
   setTimeout(() => { const toast = document.querySelector('.toast-message.show'); if (toast) toast.style.color = '#ff0000'; }, 10); 
