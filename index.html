@@ -778,9 +778,59 @@ async function switchRegion(region) {
 
 function clearMemoryData() { tableBetData = {}; userBetData = {}; reportBetData = {}; reportAmountData = {}; reportRiskData = {}; numberCount = {}; zodiacCount = {}; numberAmountCount = {}; zodiacAmountCount = {}; zodiacDirectAmount = {}; zodiacFilteredAmount = {}; zodiacReportAmount = {}; zodiacFilteredReportAmount = {}; numberOrderTotal = 0; zodiacWeightedTotal = 0; originalOrderAmount = {}; directOrderAmount = {}; directReportAmount = {}; }
 
-// ===== 浮动窗口控制 =====
+// ===== 浮动窗口控制（修复：标题栏+底部状态栏可拖动，内容区不可拖动） =====
 let highestZ = 2000;
-function makeWindowDraggable(winId) { const win = document.getElementById(winId); if (!win) return; const header = win.querySelector('.modal-header') || win.querySelector('.database-modal-header'); if (!header) return; let isDragging = false, startX, startY, startLeft, startTop; header.addEventListener('mousedown', (e) => { if (e.target.closest('.window-controls')) return; isDragging = true; const rect = win.getBoundingClientRect(); startX = e.clientX; startY = e.clientY; startLeft = rect.left; startTop = rect.top; win.style.cursor = 'grabbing'; e.preventDefault(); }); document.addEventListener('mousemove', (e) => { if (!isDragging) return; const dx = e.clientX - startX; const dy = e.clientY - startY; win.style.left = (startLeft + dx) + 'px'; win.style.top = (startTop + dy) + 'px'; win.style.transform = 'none'; }); document.addEventListener('mouseup', () => { if (isDragging) { isDragging = false; win.style.cursor = ''; } }); win.addEventListener('mousedown', () => { highestZ += 1; win.style.zIndex = highestZ; }); }
+function makeWindowDraggable(winId) {
+  const win = document.getElementById(winId);
+  if (!win) return;
+  const header = win.querySelector('.modal-header') || win.querySelector('.database-modal-header');
+  const footer = win.querySelector('.modal-footer');
+  let isDragging = false, startX, startY, startLeft, startTop;
+  
+  function onMouseDown(e) {
+    if (e.target.closest('.window-controls')) return;
+    if (e.target.closest('input, textarea, button, select, [contenteditable="true"]')) return;
+    isDragging = true;
+    const rect = win.getBoundingClientRect();
+    startX = e.clientX;
+    startY = e.clientY;
+    startLeft = rect.left;
+    startTop = rect.top;
+    win.style.cursor = 'grabbing';
+    e.preventDefault();
+  }
+  
+  // 标题栏可拖动
+  if (header) {
+    header.addEventListener('mousedown', onMouseDown);
+  }
+  
+  // 底部状态栏可拖动
+  if (footer) {
+    footer.addEventListener('mousedown', onMouseDown);
+  }
+  
+  document.addEventListener('mousemove', (e) => {
+    if (!isDragging) return;
+    const dx = e.clientX - startX;
+    const dy = e.clientY - startY;
+    win.style.left = (startLeft + dx) + 'px';
+    win.style.top = (startTop + dy) + 'px';
+    win.style.transform = 'none';
+  });
+  
+  document.addEventListener('mouseup', () => {
+    if (isDragging) {
+      isDragging = false;
+      win.style.cursor = '';
+    }
+  });
+  
+  win.addEventListener('mousedown', () => {
+    highestZ += 1;
+    win.style.zIndex = highestZ;
+  });
+}
 
 // ===== 最大化窗口 =====
 function maximizeWindow(winId) { const win = document.getElementById(winId); if (!win) return; const isMaximized = win.getAttribute('data-maximized') === 'true'; if (isMaximized) { const origWidth = win.getAttribute('data-orig-width'); const origHeight = win.getAttribute('data-orig-height'); const origLeft = win.getAttribute('data-orig-left'); const origTop = win.getAttribute('data-orig-top'); const origTransform = win.getAttribute('data-orig-transform'); if (origWidth) win.style.width = origWidth; if (origHeight) win.style.height = origHeight; if (origLeft) win.style.left = origLeft; if (origTop) win.style.top = origTop; if (origTransform !== null) win.style.transform = origTransform; win.style.right = ''; win.style.bottom = ''; win.setAttribute('data-maximized', 'false'); win.style.resize = 'both'; win.style.overflow = 'auto'; } else { const rect = win.getBoundingClientRect(); win.setAttribute('data-orig-width', win.style.width || (rect.width + 'px')); win.setAttribute('data-orig-height', win.style.height || (rect.height + 'px')); win.setAttribute('data-orig-left', win.style.left || (rect.left + 'px')); win.setAttribute('data-orig-top', win.style.top || (rect.top + 'px')); win.setAttribute('data-orig-transform', win.style.transform || ''); win.style.left = '0'; win.style.top = '0'; win.style.right = '0'; win.style.bottom = '0'; win.style.width = 'auto'; win.style.height = 'auto'; win.style.transform = 'none'; win.setAttribute('data-maximized', 'true'); win.style.resize = 'none'; win.style.overflow = 'auto'; } }
@@ -880,6 +930,7 @@ function showRecognizeModal() {
   makeWindowDraggable('recognizeWin'); highestZ += 1; win.style.zIndex = highestZ;
   win.setAttribute('data-window-type', 'recognize');
 
+  // 桌面端默认展开快捷输入
   if (window.innerWidth > 768) {
     const container = document.getElementById('catShortcutsContainer');
     if (container) container.classList.add('show');
@@ -2219,11 +2270,47 @@ function applyInlineInheritance(lineResults) {
   return processed;
 }
 
+// ===== 地区关键字列表 =====
+const REGION_KEYWORDS = {
+  'macau': ['澳', '奥', '澳门', '奥门', '门', 'mc', 'MC', 'Mc'],
+  'hongkong': ['港', '香', '香港', 'hk', 'HK', 'Hk'],
+  'yuegang': ['粤', '粤港', 'yg', 'YG', 'Yg']
+};
+const REGION_LABELS = { 'macau': '澳门', 'hongkong': '香港', 'yuegang': '粤港' };
+
+// ===== 提取地区关键字 =====
+function extractRegion(line) {
+  const allKeywords = [];
+  for (const [region, keywords] of Object.entries(REGION_KEYWORDS)) {
+    for (const kw of keywords) {
+      allKeywords.push({ region, keyword: kw, len: kw.length });
+    }
+  }
+  allKeywords.sort((a, b) => b.len - a.len);
+
+  for (const { region, keyword } of allKeywords) {
+    const idx = line.indexOf(keyword);
+    if (idx !== -1) {
+      if (idx > 0 && /[\u4e00-\u9fa5]/.test(line.charAt(idx - 1))) {
+        continue;
+      }
+      const afterIdx = idx + keyword.length;
+      if (afterIdx < line.length && /[\u4e00-\u9fa5]/.test(line.charAt(afterIdx))) {
+        continue;
+      }
+      const remaining = (line.substring(0, idx) + line.substring(afterIdx)).trim();
+      return { region, remaining };
+    }
+  }
+  return null;
+}
+
 function performRecognition(text) {
   const resultDiv = document.getElementById('orderResult');
   if (!text || !text.trim()) {
     if (resultDiv) resultDiv.innerHTML = '';
     window._pureOrderLines = [];
+    window._pureOrderRegions = [];
     window._cachedMaxLossData = [];
     updateOrderTotalDisplay();
     updateMaxLossDisplay();
@@ -2232,18 +2319,33 @@ function performRecognition(text) {
   let processedText = preprocess(text);
   const lines = processedText.split('\n');
   const allResults = [];
+  const lineRegions = [];
+  let currentLineRegion = currentRegion;
+
   for (const line of lines) {
     if (!line.trim()) continue;
-    const parsed = processOneLine(line);
+
+    // ===== 提取地区 =====
+    const extracted = extractRegion(line);
+    let orderLine = line;
+    if (extracted) {
+      currentLineRegion = extracted.region;
+      orderLine = extracted.remaining;
+    }
+    lineRegions.push(currentLineRegion);
+
+    if (!orderLine.trim()) continue;
+
+    const parsed = processOneLine(orderLine);
     let lineResults = [];
     if (parsed.length === 0) {
-      if (containsDictElement(line)) {
+      if (containsDictElement(orderLine)) {
         lineResults.push({
           cat: '__unrecognized__',
           nums: [],
           amt: 0, cnt: 0, total: 0, kw: '',
           warnings: ['缺少金额关键字或有效玩法'],
-          rawLine: line.trim()
+          rawLine: orderLine.trim()
         });
       }
     } else {
@@ -2251,6 +2353,8 @@ function performRecognition(text) {
     }
     if (lineResults.length > 0) {
       lineResults = applyInlineInheritance(lineResults);
+      // 为每行结果添加地区标记
+      lineResults.forEach(r => { r.region = currentLineRegion; });
       allResults.push(...lineResults);
     }
   }
@@ -2258,13 +2362,15 @@ function performRecognition(text) {
   const mergedArray = allResults.map(r => ({
     category: r.cat, numbers: r.nums, unitAmount: r.amt,
     totalCount: r.cnt, totalAmount: r.total, kw: r.kw || '', warnings: r.warnings || [],
-    rawLine: r.rawLine || ''
+    rawLine: r.rawLine || '',
+    region: r.region || currentRegion
   }));
 
   if (resultDiv) {
     if (mergedArray.length === 0) {
       resultDiv.innerHTML = text ? `<div class="result-line">${text}</div>` : '';
       window._pureOrderLines = [];
+      window._pureOrderRegions = [];
       window._cachedMaxLossData = [];
     } else {
       displayResults(mergedArray, resultDiv);
@@ -2277,27 +2383,36 @@ function performRecognition(text) {
 function displayResults(rs, container) {
   if (!container) container = document.getElementById('orderResult');
   if (!container) return;
-  if (rs.length === 0) { container.innerHTML = ''; window._pureOrderLines = []; window._cachedMaxLossData = []; return; }
+  if (rs.length === 0) { container.innerHTML = ''; window._pureOrderLines = []; window._pureOrderRegions = []; window._cachedMaxLossData = []; return; }
   let total = 0; let html = '';
   const pureLines = [];
+  const pureRegions = [];
   const maxLossData = [];
 
   for (const r of rs) {
     if (r.category === '__unrecognized__') {
+      const regionLabel = REGION_LABELS[r.region] || '';
       const warnText = (r.warnings && r.warnings.length) ? r.warnings.join('；') : '缺少金额关键字或有效玩法';
-      html += `<div class="result-line">${r.rawLine} <span style="color:red;">[${warnText}]</span></div>`;
+      if (r.region && r.region !== currentRegion && !r.warnings.length) {
+        html += `<div class="result-line"><span style="color:red;">${regionLabel}·</span>${r.rawLine} <span style="color:red;">[已提取地区${regionLabel}，但内容无法识别]</span></div>`;
+      } else {
+        html += `<div class="result-line"><span style="color:${r.region !== currentRegion ? 'red' : 'inherit'};">${regionLabel}·</span>${r.rawLine} <span style="color:red;">[${warnText}]</span></div>`;
+      }
       continue;
     }
     total += r.totalAmount;
+    const regionLabel = REGION_LABELS[r.region] || '';
+    const regionColor = r.region !== currentRegion ? 'color:red;' : '';
     const kwDisplay = (r.category === '特码') ? '各数' : '各';
     const amountStr = `${kwDisplay}${Math.round(r.unitAmount)}`;
     const info = r.totalCount > 1 ? `(${r.totalCount}注, 共${Math.round(r.totalAmount)})` : `(共${Math.round(r.totalAmount)})`;
     const numStr = formatNums(r.category, r.numbers);
-    let line = `${r.category}:${numStr}${amountStr} ${info}`;
+    let line = `<span style="${regionColor}">${regionLabel}·</span>${r.category}:${numStr}${amountStr} ${info}`;
     if (r.warnings && r.warnings.length) { line += ` <span style="color:red;">[${r.warnings.join('；')}]</span>`; }
     html += `<div class="result-line">${line}</div>`;
     const pureNumStr = formatNums(r.category, r.numbers);
     pureLines.push(`${r.category}:${pureNumStr} ${kwDisplay} ${Math.round(r.unitAmount)}`);
+    pureRegions.push(r.region);
 
     if (r.category === '特码' || r.category === '特肖') {
       maxLossData.push({
@@ -2310,6 +2425,7 @@ function displayResults(rs, container) {
 
   container.innerHTML = html;
   window._pureOrderLines = pureLines;
+  window._pureOrderRegions = pureRegions;
   window._cachedMaxLossData = maxLossData;
 }
 
@@ -2321,7 +2437,7 @@ function formatNums(cat, numsArr) {
   return numsArr.map(g => `(` + g + `)`).join(' ');
 }
 
-// ===== countItemsInLine（修复：生肖判断移到D[item]之前） =====
+// ===== countItemsInLine（修复：生肖判断在D[item]之前） =====
 function countItemsInLine(line) {
   const teXiaoMatch = line.match(/^特肖:(.+?)\s+各\s*(\d+)$/);
   if (teXiaoMatch) {
@@ -2372,7 +2488,7 @@ function countItemsInLine(line) {
       } else if (/^\d$/.test(item) && parseInt(item) >= 1 && parseInt(item) <= 49) {
         nums.push(item.padStart(2, '0'));
       } else if (/^[\u4e00-\u9fa5]$/.test(item) && ZODIAC_NUMS[item]) {
-        // 生肖判断移到D[item]之前
+        // 生肖判断在D[item]之前
         zods.push(item);
         ZODIAC_NUMS[item].split(/[\s,，]+/).forEach(n => nums.push(n.padStart(2, '0')));
       } else if (D[item]) {
@@ -2409,7 +2525,7 @@ function countItemsInLine(line) {
       } else if (/^\d$/.test(item) && parseInt(item) >= 1 && parseInt(item) <= 49) {
         nums.push(item.padStart(2, '0'));
       } else if (/^[\u4e00-\u9fa5]$/.test(item) && ZODIAC_NUMS[item]) {
-        // 生肖判断移到D[item]之前
+        // 生肖判断在D[item]之前
         zods.push(item);
         ZODIAC_NUMS[item].split(/[\s,，]+/).forEach(n => nums.push(n.padStart(2, '0')));
       } else if (D[item]) {
@@ -3837,7 +3953,7 @@ async function clearAllComboOrders() {
   refreshLianxiaoStats();
   showToast('已清空全部其他订单');
 }
-   function initIndexedDB() { return new Promise((resolve) => { const request = indexedDB.open(DB_NAME, DB_VERSION); request.onerror = () => { dbAvailable = false; document.getElementById('dbWarning').style.display = 'block'; const dbStatusEl = document.getElementById('dbStatus'); if (dbStatusEl) { dbStatusEl.textContent = '异常'; dbStatusEl.style.color = '#e74c3c'; } resolve(false); }; request.onsuccess = (event) => { db = event.target.result; dbAvailable = true; document.getElementById('dbWarning').style.display = 'none'; const dbStatusEl = document.getElementById('dbStatus'); if (dbStatusEl) { dbStatusEl.textContent = '正常'; dbStatusEl.style.color = '#27ae60'; } resolve(true); }; request.onupgradeneeded = (event) => { db = event.target.result; if (!db.objectStoreNames.contains(STORE_NAME)) { db.createObjectStore(STORE_NAME, { keyPath: 'id' }); } if (!db.objectStoreNames.contains(REPORT_STORE_NAME)) { db.createObjectStore(REPORT_STORE_NAME, { keyPath: 'id' }); } if (!db.objectStoreNames.contains(RECYCLE_STORE_NAME)) { db.createObjectStore(RECYCLE_STORE_NAME, { keyPath: 'id' }); } if (!db.objectStoreNames.contains(LOG_STORE_NAME)) { db.createObjectStore(LOG_STORE_NAME, { keyPath: 'id' }); } if (!db.objectStoreNames.contains(COMBO_STORE_NAME)) { db.createObjectStore(COMBO_STORE_NAME, { keyPath: 'id' }); } const tx = event.target.transaction; const orderStore = tx.objectStore(STORE_NAME); const reportStore = tx.objectStore(REPORT_STORE_NAME); const addRegion = (store) => { const allReq = store.getAll(); allReq.onsuccess = () => { const records = allReq.result; records.forEach(r => { if (!r.region) { r.region = 'macau'; store.put(r); } }); }; }; addRegion(orderStore); addRegion(reportStore); }; }); }
+    function initIndexedDB() { return new Promise((resolve) => { const request = indexedDB.open(DB_NAME, DB_VERSION); request.onerror = () => { dbAvailable = false; document.getElementById('dbWarning').style.display = 'block'; const dbStatusEl = document.getElementById('dbStatus'); if (dbStatusEl) { dbStatusEl.textContent = '异常'; dbStatusEl.style.color = '#e74c3c'; } resolve(false); }; request.onsuccess = (event) => { db = event.target.result; dbAvailable = true; document.getElementById('dbWarning').style.display = 'none'; const dbStatusEl = document.getElementById('dbStatus'); if (dbStatusEl) { dbStatusEl.textContent = '正常'; dbStatusEl.style.color = '#27ae60'; } resolve(true); }; request.onupgradeneeded = (event) => { db = event.target.result; if (!db.objectStoreNames.contains(STORE_NAME)) { db.createObjectStore(STORE_NAME, { keyPath: 'id' }); } if (!db.objectStoreNames.contains(REPORT_STORE_NAME)) { db.createObjectStore(REPORT_STORE_NAME, { keyPath: 'id' }); } if (!db.objectStoreNames.contains(RECYCLE_STORE_NAME)) { db.createObjectStore(RECYCLE_STORE_NAME, { keyPath: 'id' }); } if (!db.objectStoreNames.contains(LOG_STORE_NAME)) { db.createObjectStore(LOG_STORE_NAME, { keyPath: 'id' }); } if (!db.objectStoreNames.contains(COMBO_STORE_NAME)) { db.createObjectStore(COMBO_STORE_NAME, { keyPath: 'id' }); } const tx = event.target.transaction; const orderStore = tx.objectStore(STORE_NAME); const reportStore = tx.objectStore(REPORT_STORE_NAME); const addRegion = (store) => { const allReq = store.getAll(); allReq.onsuccess = () => { const records = allReq.result; records.forEach(r => { if (!r.region) { r.region = 'macau'; store.put(r); } }); }; }; addRegion(orderStore); addRegion(reportStore); }; }); }
 async function getAllOrdersUnfiltered() { return new Promise((resolve) => { if (!db) resolve([]); const tx = db.transaction([STORE_NAME], 'readonly'); const store = tx.objectStore(STORE_NAME); const req = store.getAll(); req.onsuccess = (e) => resolve(e.target.result || []); }); }
 async function getAllReportsUnfiltered() { return new Promise((resolve) => { if (!db) resolve([]); const tx = db.transaction([REPORT_STORE_NAME], 'readonly'); const store = tx.objectStore(REPORT_STORE_NAME); const req = store.getAll(); req.onsuccess = (e) => resolve(e.target.result || []); }); }
 async function getOrderRecords() { const all = await getAllOrdersUnfiltered(); return all.filter(r => r.region === currentRegion); }
@@ -4225,7 +4341,6 @@ function semanticReplace() {
   }
 
   let resultNums = new Set();
-  let allNumsSet = null;
 
   // 模式一：含 "不要" → 差集模式
   if (sel.includes('不要')) {
@@ -4312,208 +4427,195 @@ function semanticReplace() {
   showToast('语义转换完成：' + str);
 }
 
-// ===== 修复：saveOrder 取消时 return =====
+// ===== 修复：saveOrder 按地区分组保存，取消时return =====
 async function saveOrder(){ 
   const user=document.getElementById('orderUserSelect')?.value; 
   if(!user){showToast('请选择用户');return;} 
   const pureLines = window._pureOrderLines; 
+  const pureRegions = window._pureOrderRegions || [];
   if(!pureLines || pureLines.length === 0){showToast('订单无效');return;} 
   const date=document.getElementById('filterDate')?.value||getTodayCST(); 
   
-  const allLines = pureLines;
-  let totalAmount = 0;
+  // 按地区分组
+  const regionGroups = {};
+  pureLines.forEach((line, i) => {
+    const region = pureRegions[i] || currentRegion;
+    if (!regionGroups[region]) regionGroups[region] = [];
+    regionGroups[region].push(line);
+  });
+
+  const regionLabels = { 'macau': '澳门', 'hongkong': '香港', 'yuegang': '粤港' };
+
+  // 检查重复
+  const existingOrders = (await getOrderRecords()).filter(r => r.date === date && r.user === user);
+  let hasDuplicate = false;
+  let duplicateRegions = [];
   
-  allLines.forEach(line => {
-    if(line.startsWith('特肖:')){
-      const match = line.match(/^特肖:(.+?)\s+各\s*(\d+)$/);
-      if(match){
-        const zodiacs = match[1].split('-').map(z => z.trim()).filter(z => z);
-        const amtRaw = parseInt(match[2]) || 0;
-        totalAmount += zodiacs.length * amtRaw;
-      }
-    } else if(line.startsWith('包')){
-      const match = line.match(/^包(.+?):(.+?)\s+各\s*(\d+)$/);
-      if(match){
-        const amtRaw = parseInt(match[3]) || 0;
-        totalAmount += amtRaw;
-      }
-    } else if(line.startsWith('特碰:')){
-      const match = line.match(/^特碰:(.+?)\s+各\s*(\d+)$/);
-      if(match){
-        const cleaned = match[1].replace(/[()]/g, '');
-        const groups = cleaned.split(/\s+/).filter(c => c.trim());
-        const amtRaw = parseInt(match[2]) || 0;
-        totalAmount += groups.length * amtRaw;
-      }
-    } else if(line.startsWith('特码:')){
-      const{numbers,zodiacs,amount}=countItemsInLine(line);
-      let cnt=numbers.length; zodiacs.forEach(z=>{cnt+=(ZODIAC_NUMS[z]||'').split(/[\s,，]+/).length;});
-      if(cnt>0 && amount>0) totalAmount+=cnt*amount;
-    } else {
-      const match = line.match(/^(.+?):(.+?)\s+各\s*(\d+)$/);
-      if(match){
-        const playType = match[1]; const content = match[2]; const amt = parseInt(match[3])||0;
-        if(playType==='平特肖'||playType==='平特尾'||playType==='平码'){
-          const items = content.split('-').filter(i=>i.trim());
-          totalAmount += items.length * amt;
-        } else {
+  for (const [region, lines] of Object.entries(regionGroups)) {
+    const content = lines.join('\n');
+    if (existingOrders.some(o => o.content === content && o.region === region)) {
+      hasDuplicate = true;
+      duplicateRegions.push(regionLabels[region] || region);
+    }
+  }
+
+  if (hasDuplicate) {
+    const confirmed = await confirm(`该用户今天已在${duplicateRegions.join('、')}保存过相同的订单，确定再次保存吗？`);
+    if (!confirmed) { return; }
+  }
+
+  // 按地区分别保存
+  let savedCount = 0;
+  for (const [region, lines] of Object.entries(regionGroups)) {
+    const content = lines.join('\n');
+    
+    // 计算该地区订单的合计
+    let totalAmount = 0;
+    lines.forEach(line => {
+      if(line.startsWith('特肖:')){
+        const match = line.match(/^特肖:(.+?)\s+各\s*(\d+)$/);
+        if(match){
+          const zodiacs = match[1].split('-').map(z => z.trim()).filter(z => z);
+          const amtRaw = parseInt(match[2]) || 0;
+          totalAmount += zodiacs.length * amtRaw;
+        }
+      } else if(line.startsWith('包')){
+        const match = line.match(/^包(.+?):(.+?)\s+各\s*(\d+)$/);
+        if(match){
+          totalAmount += parseInt(match[3]) || 0;
+        }
+      } else if(line.startsWith('特碰:')){
+        const match = line.match(/^特碰:(.+?)\s+各\s*(\d+)$/);
+        if(match){
+          const cleaned = match[1].replace(/[()]/g, '');
+          const groups = cleaned.split(/\s+/).filter(c => c.trim());
+          totalAmount += groups.length * (parseInt(match[2]) || 0);
+        }
+      } else if(line.startsWith('特码:')){
+        const{numbers,amount}=countItemsInLine(line);
+        if(numbers.length>0 && amount>0) totalAmount += numbers.length * amount;
+      } else {
+        const match = line.match(/^(.+?):(.+?)\s+各\s*(\d+)$/);
+        if(match){
+          const playType = match[1]; const content = match[2]; const amt = parseInt(match[3])||0;
           const cleaned = content.replace(/[()]/g, '');
           const groups = cleaned.split(/\s+/).filter(c=>c.trim());
           totalAmount += groups.length * amt;
         }
       }
-    }
-  });
-  
-  const pingtexiaoData = getPingtexiaoData();
-  let ptChanged = false;
-  allLines.forEach(line => {
-    const match = line.match(/^(.+?):(.+?)\s+各\s*(\d+)$/);
-    if (match) {
-      const playType = match[1];
-      const content = match[2];
-      const amt = parseInt(match[3]) || 0;
-      if (playType === '平特肖' || normalizePlayType(playType) === '平特肖') {
-        const items = content.split('-').filter(i => i.trim());
-        items.forEach(item => {
-          const cleanItem = item.trim();
-          if (/^[\u4e00-\u9fa5]$/.test(cleanItem) && ZODIAC_NUMS[cleanItem]) {
-            if (!pingtexiaoData[cleanItem]) pingtexiaoData[cleanItem] = { amount: '', report: '' };
-            pingtexiaoData[cleanItem].amount = (parseFloat(pingtexiaoData[cleanItem].amount) || 0 + amt).toString();
-            ptChanged = true;
-          }
-        });
-      }
-    }
-  });
-  if (ptChanged) { savePingtexiaoData(pingtexiaoData); renderPingtexiaoTable(); updatePingtexiaoTotal(); }
-  
-  const content = allLines.join('\n');
-  const existingOrders = (await getOrderRecords()).filter(r => r.date === date && r.user === user);
-  if (existingOrders.some(o => o.content === content)) {
-    const confirmed = await confirm('该用户今天已保存过相同的订单，确定再次保存吗？');
-    if (!confirmed) { return; }
-    await saveOrderRecordToIDB(content,user,date,totalAmount);
-    clearStatsCache();
-    addOperationLog('save_order', content, currentRegion, user, totalAmount);
-  } else {
-    await saveOrderRecordToIDB(content,user,date,totalAmount);
-    clearStatsCache();
-    addOperationLog('save_order', content, currentRegion, user, totalAmount);
+    });
+
+    await saveOrderRecordToIDB(content, user, date, totalAmount, null, region);
+    addOperationLog('save_order', content, region, user, totalAmount);
+    savedCount++;
   }
   
   const si=document.querySelector('.source-order-input'); if(si)si.value=''; 
   const resultEl=document.getElementById('orderResult'); if(resultEl)resultEl.innerHTML=''; 
   window._pureOrderLines = []; 
+  window._pureOrderRegions = [];
   updateOrderTotalDisplay(); 
   const md=document.getElementById('maxLossDisplay'); if(md){md.textContent='';md.style.display='none';} 
   document.querySelectorAll('.category-btn').forEach(b=>b.classList.remove('active')); 
   await updateTableFromRecords();
+  clearStatsCache();
   calculateStorageUsage(); showStorageDrawerTemporary(5000); renderSmartDecision(); updateSingleBetDisplay(); 
   updateOrderCountDisplay();
-  showToast('已保存下单');
+  showToast('已保存下单（' + savedCount + '个地区）');
 }
 
-// ===== 修复：saveReportOrder 取消时 return =====
+// ===== 修复：saveReportOrder 按地区分组保存，取消时return =====
 async function saveReportOrder(){ 
   const user=document.getElementById('orderUserSelect')?.value; 
   if(!user){showToast('请选择用户');return;} 
   const pureLines = window._pureOrderLines; 
+  const pureRegions = window._pureOrderRegions || [];
   if(!pureLines || pureLines.length === 0){showToast('订单无效');return;} 
   const date=document.getElementById('filterDate')?.value||getTodayCST(); 
   
-  const allLines = pureLines;
-  let totalAmount = 0;
+  // 按地区分组
+  const regionGroups = {};
+  pureLines.forEach((line, i) => {
+    const region = pureRegions[i] || currentRegion;
+    if (!regionGroups[region]) regionGroups[region] = [];
+    regionGroups[region].push(line);
+  });
+
+  const regionLabels = { 'macau': '澳门', 'hongkong': '香港', 'yuegang': '粤港' };
+
+  // 检查重复
+  const existingReports = (await getReportOrderRecords()).filter(r => r.date === date && r.user === user);
+  let hasDuplicate = false;
+  let duplicateRegions = [];
   
-  allLines.forEach(line => {
-    if(line.startsWith('特肖:')){
-      const match = line.match(/^特肖:(.+?)\s+各\s*(\d+)$/);
-      if(match){
-        const zodiacs = match[1].split('-').map(z => z.trim()).filter(z => z);
-        const amtRaw = parseInt(match[2]) || 0;
-        totalAmount += zodiacs.length * amtRaw;
-      }
-    } else if(line.startsWith('包')){
-      const match = line.match(/^包(.+?):(.+?)\s+各\s*(\d+)$/);
-      if(match){
-        const amtRaw = parseInt(match[3]) || 0;
-        totalAmount += amtRaw;
-      }
-    } else if(line.startsWith('特碰:')){
-      const match = line.match(/^特碰:(.+?)\s+各\s*(\d+)$/);
-      if(match){
-        const cleaned = match[1].replace(/[()]/g, '');
-        const groups = cleaned.split(/\s+/).filter(c => c.trim());
-        const amtRaw = parseInt(match[2]) || 0;
-        totalAmount += groups.length * amtRaw;
-      }
-    } else if(line.startsWith('特码:')){
-      const{numbers,zodiacs,amount}=countItemsInLine(line);
-      let cnt=numbers.length; zodiacs.forEach(z=>{cnt+=(ZODIAC_NUMS[z]||'').split(/[\s,，]+/).length;});
-      if(cnt>0 && amount>0) totalAmount+=cnt*amount;
-    } else {
-      const match = line.match(/^(.+?):(.+?)\s+各\s*(\d+)$/);
-      if(match){
-        const playType = match[1]; const content = match[2]; const amt = parseInt(match[3])||0;
-        if(playType==='平特肖'||playType==='平特尾'||playType==='平码'){
-          const items = content.split('-').filter(i=>i.trim());
-          totalAmount += items.length * amt;
-        } else {
-          const cleaned = content.replace(/[()]/g, '');
+  for (const [region, lines] of Object.entries(regionGroups)) {
+    const content = lines.join('\n');
+    if (existingReports.some(o => o.content === content && o.region === region)) {
+      hasDuplicate = true;
+      duplicateRegions.push(regionLabels[region] || region);
+    }
+  }
+
+  if (hasDuplicate) {
+    const confirmed = await confirm(`该用户今天已在${duplicateRegions.join('、')}上报过相同的内容，确定再次上报吗？`);
+    if (!confirmed) { return; }
+  }
+
+  // 按地区分别保存
+  let savedCount = 0;
+  for (const [region, lines] of Object.entries(regionGroups)) {
+    const content = lines.join('\n');
+    
+    let totalAmount = 0;
+    lines.forEach(line => {
+      if(line.startsWith('特肖:')){
+        const match = line.match(/^特肖:(.+?)\s+各\s*(\d+)$/);
+        if(match){
+          const zodiacs = match[1].split('-').map(z => z.trim()).filter(z => z);
+          totalAmount += zodiacs.length * (parseInt(match[2]) || 0);
+        }
+      } else if(line.startsWith('包')){
+        const match = line.match(/^包(.+?):(.+?)\s+各\s*(\d+)$/);
+        if(match){
+          totalAmount += parseInt(match[3]) || 0;
+        }
+      } else if(line.startsWith('特碰:')){
+        const match = line.match(/^特碰:(.+?)\s+各\s*(\d+)$/);
+        if(match){
+          const cleaned = match[1].replace(/[()]/g, '');
+          const groups = cleaned.split(/\s+/).filter(c => c.trim());
+          totalAmount += groups.length * (parseInt(match[2]) || 0);
+        }
+      } else if(line.startsWith('特码:')){
+        const{numbers,amount}=countItemsInLine(line);
+        if(numbers.length>0 && amount>0) totalAmount += numbers.length * amount;
+      } else {
+        const match = line.match(/^(.+?):(.+?)\s+各\s*(\d+)$/);
+        if(match){
+          const cleaned = match[2].replace(/[()]/g, '');
           const groups = cleaned.split(/\s+/).filter(c=>c.trim());
-          totalAmount += groups.length * amt;
+          totalAmount += groups.length * (parseInt(match[3]) || 0);
         }
       }
-    }
-  });
-  
-  const pingtexiaoData = getPingtexiaoData();
-  let ptChanged = false;
-  allLines.forEach(line => {
-    const match = line.match(/^(.+?):(.+?)\s+各\s*(\d+)$/);
-    if (match) {
-      const playType = match[1];
-      const content = match[2];
-      const amt = parseInt(match[3]) || 0;
-      if (playType === '平特肖' || normalizePlayType(playType) === '平特肖') {
-        const items = content.split('-').filter(i => i.trim());
-        items.forEach(item => {
-          const cleanItem = item.trim();
-          if (/^[\u4e00-\u9fa5]$/.test(cleanItem) && ZODIAC_NUMS[cleanItem]) {
-            if (!pingtexiaoData[cleanItem]) pingtexiaoData[cleanItem] = { amount: '', report: '' };
-            const oldReport = parseFloat(pingtexiaoData[cleanItem].report) || 0;
-            pingtexiaoData[cleanItem].report = (oldReport + amt).toString();
-            ptChanged = true;
-          }
-        });
-      }
-    }
-  });
-  if (ptChanged) { savePingtexiaoData(pingtexiaoData); renderPingtexiaoTable(); updatePingtexiaoTotal(); }
-  
-  const content = allLines.join('\n');
-  const existingReports = (await getReportOrderRecords()).filter(r => r.date === date && r.user === user);
-  if (existingReports.some(o => o.content === content)) {
-    const confirmed = await confirm('该用户今天已上报过相同的内容，确定再次上报吗？');
-    if (!confirmed) { return; }
-    await saveReportOrderRecordToIDB(content,user,date,totalAmount);
-    clearStatsCache();
-    addOperationLog('save_report', content, currentRegion, user, totalAmount);
-  } else {
-    await saveReportOrderRecordToIDB(content,user,date,totalAmount);
-    clearStatsCache();
-    addOperationLog('save_report', content, currentRegion, user, totalAmount);
+    });
+
+    await saveReportOrderRecordToIDB(content, user, date, totalAmount, null, region);
+    addOperationLog('save_report', content, region, user, totalAmount);
+    savedCount++;
   }
   
   const si=document.querySelector('.source-order-input'); if(si)si.value=''; 
   const resultEl=document.getElementById('orderResult'); if(resultEl)resultEl.innerHTML=''; 
   window._pureOrderLines = []; 
+  window._pureOrderRegions = [];
   updateOrderTotalDisplay(); 
   const md=document.getElementById('maxLossDisplay'); if(md){md.textContent='';md.style.display='none';} 
   document.querySelectorAll('.category-btn').forEach(b=>b.classList.remove('active')); 
   await updateTableFromRecords();
+  clearStatsCache();
   calculateStorageUsage(); showStorageDrawerTemporary(5000); renderSmartDecision(); 
-  showToast('已上报成功'); setTimeout(() => { const toast = document.querySelector('.toast-message.show'); if (toast) toast.style.color = '#ff0000'; }, 10); 
+  showToast('已上报成功（' + savedCount + '个地区）'); 
+  setTimeout(() => { const toast = document.querySelector('.toast-message.show'); if (toast) toast.style.color = '#ff0000'; }, 10); 
 }
     function updateOrderCountDisplay() {
   const fd = document.getElementById('filterDate')?.value || getTodayCST();
@@ -4902,7 +5004,7 @@ function updateDirectAmountTotals() {
 
 function renderOriginalAmountTable() { const tbl = document.getElementById('originalAmountTable'); if (!tbl) return; const cols = [...Array(5)].map((_,c)=>Array.from({length:c===4?9:10},(_,r)=>(c*10+r+1).toString().padStart(2,'0'))); let th = '<thead><tr>'; for (let c=0;c<5;c++) th += '<th>号码</th><th>次数</th><th>金额</th><th>上报</th>'; th += '</tr></thead>'; let tb = '<tbody>'; for (let r=0;r<10;r++) { tb += '<tr>'; for (let c=0;c<5;c++) { const n = cols[c][r] || ''; if (n) { const cnt = numberCount[n] || 0; const amt = directOrderAmount[n] || 0; const rpt = directReportAmount[n] || 0; const cls = redNumbers.includes(n) ? 'red-text' : (blueNumbers.includes(n) ? 'blue-text' : 'green-text'); tb += `<td class="${cls}">${n}</td>`; tb += `<td class="black-text">${cnt > 0 ? cnt : ''}</td>`; tb += `<td class="amount-red-text">${amt > 0 ? amt : ''}</td>`; tb += `<td class="report-red-text">${rpt > 0 ? rpt : ''}</td>`; } else { tb += '<td></td><td></td><td></td><td></td>'; } } tb += '</tr>'; } tb += '</tbody>'; tbl.innerHTML = th + tb; updateDirectAmountTotals(); }
 
-// ===== 修复：updateOrderTotalDisplay 特码行不再重复计算生肖 =====
+// ===== 修复：updateOrderTotalDisplay 特码行不重复计算生肖 =====
 function updateOrderTotalDisplay(){
   const re=document.getElementById('orderResult'); const box=document.getElementById('orderTotalAmountBox'); const span=document.getElementById('orderTotalAmount'); const lineCountSpan=document.getElementById('orderLineCount');
   if(!re||!box||!span)return;
@@ -4933,7 +5035,6 @@ function updateOrderTotalDisplay(){
       }
     } else if(line.startsWith('特码:')){
       const{numbers,amount}=countItemsInLine(line);
-      // 修复：直接用 numbers.length，不再叠加 zodiacs（numbers 已包含生肖展开的号码）
       const cnt=numbers.length;
       if(cnt>0 && amount>0) total+=cnt*amount;
     } else {
@@ -4956,7 +5057,7 @@ function updateOrderTotalDisplay(){
   else { box.style.display='none'; if(lineCountSpan) lineCountSpan.style.display='none'; }
 }
 
-// ===== 修复：computeCurrentOrderTotal 特码行不再重复计算生肖 =====
+// ===== 修复：computeCurrentOrderTotal 特码行不重复计算生肖 =====
 function computeCurrentOrderTotal(){ 
   const pureLines = window._pureOrderLines || []; 
   let total=0; 
@@ -4982,7 +5083,6 @@ function computeCurrentOrderTotal(){
       }
     } else if(line.startsWith('特码:')){
       const{numbers,amount}=countItemsInLine(line);
-      // 修复：直接用 numbers.length
       const cnt=numbers.length;
       if(cnt>0) total+=cnt*amount;
     } else {
@@ -5219,6 +5319,7 @@ function clearAllInput(){
   const si=document.querySelector('.source-order-input'); if(si)si.value=''; 
   const re=document.getElementById('orderResult'); if(re)re.innerHTML=''; 
   window._pureOrderLines = []; 
+  window._pureOrderRegions = [];
   updateOrderTotalDisplay(); 
   const md=document.getElementById('maxLossDisplay'); if(md){md.textContent='';md.style.display='none';}
   const box = document.getElementById('orderTotalAmountBox'); if(box) box.style.display='none';
