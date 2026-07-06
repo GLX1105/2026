@@ -895,13 +895,87 @@ function insertCategoryText(text) {
   performRecognition(ta.value);
 }
 
-// ===== 识别弹窗 =====
+// ===== 地区圆点切换函数 =====
+function setDotRegion(region) {
+  window._dotRegion = region;
+  const dotSmart = document.getElementById('dotSmart');
+  const dotMacau = document.getElementById('dotMacau');
+  const dotHongkong = document.getElementById('dotHongkong');
+  const dotYuegang = document.getElementById('dotYuegang');
+  
+  // 智能圆点样式
+  if (dotSmart) {
+    if (region === 'auto') {
+      dotSmart.style.background = '#8e44ad';
+      dotSmart.style.color = '#fff';
+      dotSmart.style.border = '1px solid #8e44ad';
+      dotSmart.querySelector('span').style.background = '#fff';
+    } else {
+      dotSmart.style.background = 'transparent';
+      dotSmart.style.color = '#8e44ad';
+      dotSmart.style.border = '1px solid #8e44ad';
+      dotSmart.querySelector('span').style.background = 'transparent';
+      dotSmart.querySelector('span').style.border = '1px solid #8e44ad';
+    }
+  }
+  
+  // 澳门圆点样式
+  if (dotMacau) {
+    if (region === 'macau') {
+      dotMacau.style.background = '#e74c3c';
+      dotMacau.style.color = '#fff';
+      dotMacau.style.border = '1px solid #e74c3c';
+      dotMacau.querySelector('span').style.background = '#fff';
+    } else {
+      dotMacau.style.background = 'transparent';
+      dotMacau.style.color = '#e74c3c';
+      dotMacau.style.border = '1px solid #e74c3c';
+      dotMacau.querySelector('span').style.background = 'transparent';
+      dotMacau.querySelector('span').style.border = '1px solid #e74c3c';
+    }
+  }
+  
+  // 香港圆点样式
+  if (dotHongkong) {
+    if (region === 'hongkong') {
+      dotHongkong.style.background = '#3498db';
+      dotHongkong.style.color = '#fff';
+      dotHongkong.style.border = '1px solid #3498db';
+      dotHongkong.querySelector('span').style.background = '#fff';
+    } else {
+      dotHongkong.style.background = 'transparent';
+      dotHongkong.style.color = '#3498db';
+      dotHongkong.style.border = '1px solid #3498db';
+      dotHongkong.querySelector('span').style.background = 'transparent';
+      dotHongkong.querySelector('span').style.border = '1px solid #3498db';
+    }
+  }
+  
+  // 粤港圆点样式
+  if (dotYuegang) {
+    if (region === 'yuegang') {
+      dotYuegang.style.background = '#27ae60';
+      dotYuegang.style.color = '#fff';
+      dotYuegang.style.border = '1px solid #27ae60';
+      dotYuegang.querySelector('span').style.background = '#fff';
+    } else {
+      dotYuegang.style.background = 'transparent';
+      dotYuegang.style.color = '#27ae60';
+      dotYuegang.style.border = '1px solid #27ae60';
+      dotYuegang.querySelector('span').style.background = 'transparent';
+      dotYuegang.querySelector('span').style.border = '1px solid #27ae60';
+    }
+  }
+}
+
+// ===== 识别弹窗（新增地区圆点） =====
 function showRecognizeModal() {
   if (document.getElementById('recognizeWin')) return;
   const regionLabel = currentRegion === 'macau' ? '澳门' : currentRegion === 'hongkong' ? '香港' : '粤港';
   const win = document.createElement('div'); win.className = 'floating-window'; win.id = 'recognizeWin';
   win.style.width = '850px'; win.style.height = '650px'; win.style.left = '50%'; win.style.top = '50%'; win.style.transform = 'translate(-50%, -50%)';
   win.setAttribute('data-orig-width', '850px'); win.setAttribute('data-orig-height', '650px');
+  window._dotRegion = window._dotRegion || 'auto';
   const catWords = '各 各号 单 双 大 小 鼠 牛 虎 兔 龙 蛇 马 羊 猴 鸡 狗 猪 金 木 水 火 土 红波 蓝波 绿波 红单 红双 蓝单 蓝双 绿单 绿双 单数 双数 家禽 野兽 二中二 三中三 平特肖 平特尾 二连肖 三连肖 四连肖 五连肖 二连尾 三连尾 四连尾 五连尾 五不中 六不中 七不中 八不中 九不中 十不中 十一不中 十二不中 二中特 三中二 特串 复试';
   const catSpans = catWords.split(' ').map(w => `<span class="cat-insert-text" onclick="insertCategoryText('${w}')">${w}</span>`).join(' ');
   win.innerHTML = `
@@ -912,7 +986,22 @@ function showRecognizeModal() {
           <select id="orderUserSelect" style="padding:4px 8px;border-radius:4px;border:1px solid #ccc;font-size:13px;"></select>
           <div class="amount-stat-box" id="orderTotalAmountBox" style="display:none;"><span>合计：</span><span id="orderTotalAmount">0</span><span id="orderLineCount" style="margin-left:10px;font-weight:normal;font-size:13px;display:none;"></span></div>
           <span id="maxLossDisplay"></span>
-          <button class="btn btn-prefix" onclick="showPrefixManager()" style="margin-left:auto;">前缀</button>
+          <!-- 新增：地区圆点 -->
+          <div style="display:flex; align-items:center; gap:6px; margin-left:auto; margin-right:4px;">
+            <span onclick="setDotRegion('auto')" id="dotSmart" style="display:flex;align-items:center;gap:3px;cursor:pointer;padding:2px 7px;border-radius:10px;font-size:11px;font-weight:bold;transition:all 0.2s;" title="智能识别">
+              <span style="width:7px;height:7px;border-radius:50%;background:#fff;"></span>智能
+            </span>
+            <span onclick="setDotRegion('macau')" id="dotMacau" style="display:flex;align-items:center;gap:3px;cursor:pointer;padding:2px 7px;border-radius:10px;font-size:11px;font-weight:bold;transition:all 0.2s;" title="澳门">
+              <span style="width:7px;height:7px;border-radius:50%;background:transparent;border:1px solid #e74c3c;"></span>澳
+            </span>
+            <span onclick="setDotRegion('hongkong')" id="dotHongkong" style="display:flex;align-items:center;gap:3px;cursor:pointer;padding:2px 7px;border-radius:10px;font-size:11px;font-weight:bold;transition:all 0.2s;" title="香港">
+              <span style="width:7px;height:7px;border-radius:50%;background:transparent;border:1px solid #3498db;"></span>港
+            </span>
+            <span onclick="setDotRegion('yuegang')" id="dotYuegang" style="display:flex;align-items:center;gap:3px;cursor:pointer;padding:2px 7px;border-radius:10px;font-size:11px;font-weight:bold;transition:all 0.2s;" title="粤港">
+              <span style="width:7px;height:7px;border-radius:50%;background:transparent;border:1px solid #27ae60;"></span>粤
+            </span>
+          </div>
+          <button class="btn btn-prefix" onclick="showPrefixManager()">前缀</button>
           <button class="btn btn-amount-prefix" onclick="showAmountPrefixManager()">金额前缀</button>
           <button class="btn btn-amount-prefix2" onclick="showAmountSuffixManager()">金额后缀</button>
         </div>
@@ -929,6 +1018,9 @@ function showRecognizeModal() {
   if (textarea) { const draftKey = `recognizeDraft_${currentRegion}`; const draft = localStorage.getItem(draftKey); if (draft) { textarea.value = draft; performRecognition(draft); } textarea.addEventListener('dragover', (e) => { e.preventDefault(); }); textarea.addEventListener('drop', (e) => { e.preventDefault(); const data = e.dataTransfer.getData('text/plain'); if (data) { textarea.value = data; performRecognition(data); showToast('已拖入文本'); } }); }
   makeWindowDraggable('recognizeWin'); highestZ += 1; win.style.zIndex = highestZ;
   win.setAttribute('data-window-type', 'recognize');
+  
+  // 初始化圆点状态
+  setTimeout(() => { setDotRegion(window._dotRegion || 'auto'); }, 50);
 
   // 桌面端默认展开快捷输入
   if (window.innerWidth > 768) {
@@ -940,6 +1032,7 @@ function showRecognizeModal() {
 function closeRecognizeModal() { const textarea = document.querySelector('.source-order-input'); if (textarea) { const draftKey = `recognizeDraft_${currentRegion}`; localStorage.setItem(draftKey, textarea.value); } const win = document.getElementById('recognizeWin'); if (win) win.remove(); }
 
 function markSelection() { const ta = document.querySelector('.source-order-input'); if (!ta) return; const start = ta.selectionStart, end = ta.selectionEnd; if (start === end) { showToast('请先选择文本'); return; } const selectedText = ta.value.substring(start, end); const tokens = selectedText.split(/[\s,，.。、+\-*＊\/\\|]+/).filter(t => t.trim()); if (tokens.length === 0) { showToast('所选内容无有效文字'); return; } const merged = tokens.join('-'); ta.value = ta.value.substring(0, start) + merged + ta.value.substring(end); performRecognition(ta.value); }
+    
     // ===== 订单变量与基础函数 =====
 let tableBetData = {}, userBetData = {}, reportBetData = {}, reportAmountData = {}, reportRiskData = {};
 let numberCount = {}, zodiacCount = {}, numberAmountCount = {}, zodiacAmountCount = {};
@@ -1823,7 +1916,7 @@ function parseTeMaSegment(content) {
   }
   return deduped;
 }
-    function processOneLine(line) {
+   function processOneLine(line) {
   if (!line.trim()) return [];
 
   // ===== 号码-金额对识别（优先处理） =====
@@ -2321,16 +2414,25 @@ function performRecognition(text) {
   const allResults = [];
   const lineRegions = [];
   let currentLineRegion = currentRegion;
+  
+  // 圆点强制地区模式
+  const dotRegion = window._dotRegion || 'auto';
 
   for (const line of lines) {
     if (!line.trim()) continue;
 
-    // ===== 提取地区 =====
-    const extracted = extractRegion(line);
     let orderLine = line;
-    if (extracted) {
-      currentLineRegion = extracted.region;
-      orderLine = extracted.remaining;
+    
+    if (dotRegion !== 'auto') {
+      // 强制用圆点地区，不看文本
+      currentLineRegion = dotRegion;
+    } else {
+      // 从文本中提取地区
+      const extracted = extractRegion(line);
+      if (extracted) {
+        currentLineRegion = extracted.region;
+        orderLine = extracted.remaining;
+      }
     }
     lineRegions.push(currentLineRegion);
 
@@ -2353,7 +2455,6 @@ function performRecognition(text) {
     }
     if (lineResults.length > 0) {
       lineResults = applyInlineInheritance(lineResults);
-      // 为每行结果添加地区标记
       lineResults.forEach(r => { r.region = currentLineRegion; });
       allResults.push(...lineResults);
     }
@@ -2389,20 +2490,24 @@ function displayResults(rs, container) {
   const pureRegions = [];
   const maxLossData = [];
 
+  // 地区颜色映射
+  const regionColorMap = { 'macau': '#e74c3c', 'hongkong': '#3498db', 'yuegang': '#27ae60' };
+
   for (const r of rs) {
     if (r.category === '__unrecognized__') {
       const regionLabel = REGION_LABELS[r.region] || '';
       const warnText = (r.warnings && r.warnings.length) ? r.warnings.join('；') : '缺少金额关键字或有效玩法';
       if (r.region && r.region !== currentRegion && !r.warnings.length) {
-        html += `<div class="result-line"><span style="color:red;">${regionLabel}·</span>${r.rawLine} <span style="color:red;">[已提取地区${regionLabel}，但内容无法识别]</span></div>`;
+        html += `<div class="result-line"><span style="color:${regionColorMap[r.region] || '#333'};">${regionLabel}·</span>${r.rawLine} <span style="color:red;">[已提取地区${regionLabel}，但内容无法识别]</span></div>`;
       } else {
-        html += `<div class="result-line"><span style="color:${r.region !== currentRegion ? 'red' : 'inherit'};">${regionLabel}·</span>${r.rawLine} <span style="color:red;">[${warnText}]</span></div>`;
+        html += `<div class="result-line"><span style="color:${r.region !== currentRegion ? (regionColorMap[r.region] || '#e74c3c') : '#000'};">${regionLabel}·</span>${r.rawLine} <span style="color:red;">[${warnText}]</span></div>`;
       }
       continue;
     }
     total += r.totalAmount;
     const regionLabel = REGION_LABELS[r.region] || '';
-    const regionColor = r.region !== currentRegion ? 'color:red;' : '';
+    const isCurrentRegion = r.region === currentRegion;
+    const regionColor = isCurrentRegion ? 'color:#000;' : `color:${regionColorMap[r.region] || '#333'};`;
     const kwDisplay = (r.category === '特码') ? '各数' : '各';
     const amountStr = `${kwDisplay}${Math.round(r.unitAmount)}`;
     const info = r.totalCount > 1 ? `(${r.totalCount}注, 共${Math.round(r.totalAmount)})` : `(共${Math.round(r.totalAmount)})`;
@@ -2488,7 +2593,6 @@ function countItemsInLine(line) {
       } else if (/^\d$/.test(item) && parseInt(item) >= 1 && parseInt(item) <= 49) {
         nums.push(item.padStart(2, '0'));
       } else if (/^[\u4e00-\u9fa5]$/.test(item) && ZODIAC_NUMS[item]) {
-        // 生肖判断在D[item]之前
         zods.push(item);
         ZODIAC_NUMS[item].split(/[\s,，]+/).forEach(n => nums.push(n.padStart(2, '0')));
       } else if (D[item]) {
@@ -2525,7 +2629,6 @@ function countItemsInLine(line) {
       } else if (/^\d$/.test(item) && parseInt(item) >= 1 && parseInt(item) <= 49) {
         nums.push(item.padStart(2, '0'));
       } else if (/^[\u4e00-\u9fa5]$/.test(item) && ZODIAC_NUMS[item]) {
-        // 生肖判断在D[item]之前
         zods.push(item);
         ZODIAC_NUMS[item].split(/[\s,，]+/).forEach(n => nums.push(n.padStart(2, '0')));
       } else if (D[item]) {
