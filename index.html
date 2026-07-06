@@ -4448,7 +4448,7 @@ function semanticReplace() {
   showToast('语义转换完成：' + str);
 }
 
-// ===== 修复：saveOrder 按地区分组保存，clearStatsCache在updateTableFromRecords之前 =====
+// ===== 修复：saveOrder 保存完成后加延迟再更新表格 =====
 async function saveOrder(){ 
   const user=document.getElementById('orderUserSelect')?.value; 
   if(!user){showToast('请选择用户');return;} 
@@ -4525,14 +4525,17 @@ async function saveOrder(){
   updateOrderTotalDisplay(); 
   const md=document.getElementById('maxLossDisplay'); if(md){md.textContent='';md.style.display='none';} 
   document.querySelectorAll('.category-btn').forEach(b=>b.classList.remove('active')); 
-  clearStatsCache();
+  
+  // 延迟确保 IndexedDB 事务完全提交后再刷新表格
+  await new Promise(r => setTimeout(r, 150));
   await updateTableFromRecords();
+  
   calculateStorageUsage(); showStorageDrawerTemporary(5000); renderSmartDecision(); updateSingleBetDisplay(); 
   updateOrderCountDisplay();
   showToast('已保存下单（' + savedCount + '个地区）');
 }
 
-// ===== 修复：saveReportOrder 按地区分组保存，clearStatsCache在updateTableFromRecords之前 =====
+// ===== 修复：saveReportOrder 保存完成后加延迟再更新表格 =====
 async function saveReportOrder(){ 
   const user=document.getElementById('orderUserSelect')?.value; 
   if(!user){showToast('请选择用户');return;} 
@@ -4609,8 +4612,11 @@ async function saveReportOrder(){
   updateOrderTotalDisplay(); 
   const md=document.getElementById('maxLossDisplay'); if(md){md.textContent='';md.style.display='none';} 
   document.querySelectorAll('.category-btn').forEach(b=>b.classList.remove('active')); 
-  clearStatsCache();
+  
+  // 延迟确保 IndexedDB 事务完全提交后再刷新表格
+  await new Promise(r => setTimeout(r, 150));
   await updateTableFromRecords();
+  
   calculateStorageUsage(); showStorageDrawerTemporary(5000); renderSmartDecision(); 
   showToast('已上报成功（' + savedCount + '个地区）'); 
   setTimeout(() => { const toast = document.querySelector('.toast-message.show'); if (toast) toast.style.color = '#ff0000'; }, 10); 
