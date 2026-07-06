@@ -4633,24 +4633,8 @@ async function updateTableFromRecords(){
     const viewUser = document.getElementById('viewUserSelect')?.value;
     let filterUser = null;
     if (riskSwitcher === 'user' && viewUser) { filterUser = viewUser; }
-    const cacheKey = getCacheKey(currentRegion, fd || 'all', filterUser || 'all');
-    const cached = statsCache.get(cacheKey);
-    if (cached) {
-      tableBetData = cached.tableBetData; userBetData = cached.userBetData; reportBetData = cached.reportBetData;
-      reportAmountData = cached.reportAmountData; reportRiskData = cached.reportRiskData;
-      numberCount = cached.numberCount; zodiacCount = cached.zodiacCount;
-      numberAmountCount = cached.numberAmountCount; zodiacAmountCount = cached.zodiacAmountCount;
-      zodiacDirectAmount = cached.zodiacDirectAmount; zodiacFilteredAmount = cached.zodiacFilteredAmount;
-      zodiacReportAmount = cached.zodiacReportAmount; zodiacFilteredReportAmount = cached.zodiacFilteredReportAmount;
-      numberOrderTotal = cached.numberOrderTotal; zodiacWeightedTotal = cached.zodiacWeightedTotal;
-      originalOrderAmount = cached.originalOrderAmount;
-      directOrderAmount = cached.directOrderAmount; directReportAmount = cached.directReportAmount;
-      orderCountAll = cached.orderCountAll || 0;
-      generateRiskTable(); generateReportTable(); renderFrequencyCards(); renderAmountFrequencyCards();
-      renderReportAmountTable(); renderOriginalAmountTable(); updateReportAmountTotal(); updateAmountDisplays();
-      calculateStorageUsage(); renderSmartDecision(); updateSingleBetDisplay(); updateOrderCountDisplay();
-      return;
-    }
+    
+    // ===== 去掉缓存，每次实时读取数据库 =====
     tableBetData={};userBetData={};reportBetData={};reportAmountData={};reportRiskData={};
     numberCount={};zodiacCount={};numberAmountCount={};zodiacAmountCount={};
     zodiacDirectAmount={};zodiacFilteredAmount={};
@@ -4901,7 +4885,6 @@ async function updateTableFromRecords(){
           return;
         }
 
-        // 特碰上报表处理
         const tepengMatch = line.match(/^特碰:(.+?)\s+各\s*(\d+)$/);
         if (tepengMatch) {
           const cleaned = tepengMatch[1].replace(/[()]/g, '');
@@ -4922,7 +4905,6 @@ async function updateTableFromRecords(){
           return;
         }
 
-        // 包玩法上报处理
         const baoMatch = line.match(/^包(.+?):(.+?)\s+各\s*(\d+)$/);
         if (baoMatch) {
           const attr = baoMatch[2].trim();
@@ -4983,7 +4965,7 @@ async function updateTableFromRecords(){
       });
     } catch(e) {} });
 
-    statsCache.set(cacheKey, { tableBetData: {...tableBetData}, userBetData: {...userBetData}, reportBetData: {...reportBetData}, reportAmountData: {...reportAmountData}, reportRiskData: {...reportRiskData}, numberCount: {...numberCount}, zodiacCount: {...zodiacCount}, numberAmountCount: {...numberAmountCount}, zodiacAmountCount: {...zodiacAmountCount}, zodiacDirectAmount: {...zodiacDirectAmount}, zodiacFilteredAmount: {...zodiacFilteredAmount}, zodiacReportAmount: {...zodiacReportAmount}, zodiacFilteredReportAmount: {...zodiacFilteredReportAmount}, numberOrderTotal, zodiacWeightedTotal, originalOrderAmount: {...originalOrderAmount}, directOrderAmount: {...directOrderAmount}, directReportAmount: {...directReportAmount}, orderCountAll });
+    // ===== 去掉缓存存储，直接渲染 =====
     generateRiskTable(); generateReportTable(); renderFrequencyCards(); renderAmountFrequencyCards();
     renderReportAmountTable(); renderOriginalAmountTable(); updateReportAmountTotal(); updateAmountDisplays();
     calculateStorageUsage(); renderSmartDecision(); updateSingleBetDisplay(); updateOrderCountDisplay();
@@ -5002,7 +4984,6 @@ function updateDirectAmountTotals() {
 
 function renderOriginalAmountTable() { const tbl = document.getElementById('originalAmountTable'); if (!tbl) return; const cols = [...Array(5)].map((_,c)=>Array.from({length:c===4?9:10},(_,r)=>(c*10+r+1).toString().padStart(2,'0'))); let th = '<thead><tr>'; for (let c=0;c<5;c++) th += '<th>号码</th><th>次数</th><th>金额</th><th>上报</th>'; th += '</tr></thead>'; let tb = '<tbody>'; for (let r=0;r<10;r++) { tb += '<tr>'; for (let c=0;c<5;c++) { const n = cols[c][r] || ''; if (n) { const cnt = numberCount[n] || 0; const amt = directOrderAmount[n] || 0; const rpt = directReportAmount[n] || 0; const cls = redNumbers.includes(n) ? 'red-text' : (blueNumbers.includes(n) ? 'blue-text' : 'green-text'); tb += `<td class="${cls}">${n}</td>`; tb += `<td class="black-text">${cnt > 0 ? cnt : ''}</td>`; tb += `<td class="amount-red-text">${amt > 0 ? amt : ''}</td>`; tb += `<td class="report-red-text">${rpt > 0 ? rpt : ''}</td>`; } else { tb += '<td></td><td></td><td></td><td></td>'; } } tb += '</tr>'; } tb += '</tbody>'; tbl.innerHTML = th + tb; updateDirectAmountTotals(); }
 
-// ===== 修复：updateOrderTotalDisplay 特码行不重复计算生肖 =====
 function updateOrderTotalDisplay(){
   const re=document.getElementById('orderResult'); const box=document.getElementById('orderTotalAmountBox'); const span=document.getElementById('orderTotalAmount'); const lineCountSpan=document.getElementById('orderLineCount');
   if(!re||!box||!span)return;
@@ -5055,7 +5036,6 @@ function updateOrderTotalDisplay(){
   else { box.style.display='none'; if(lineCountSpan) lineCountSpan.style.display='none'; }
 }
 
-// ===== 修复：computeCurrentOrderTotal 特码行不重复计算生肖 =====
 function computeCurrentOrderTotal(){ 
   const pureLines = window._pureOrderLines || []; 
   let total=0; 
@@ -5286,10 +5266,10 @@ async function deleteOrderRecord(id) {
         addOperationLog('delete_order', record.content, currentRegion, record.user, record.totalAmount || 0);
         deductPingtexiaoFromContent(record.content);
       }
-      clearStatsCache(); showToast('已移入回收站');
       await updateTableFromRecords(); calculateStorageUsage();
       showOrderRecord(); updateRecycleCount();
       if (document.getElementById('lianxiaoStatsWin')) { refreshLianxiaoStats(); }
+      showToast('已移入回收站');
     } else { showToast('删除失败，记录可能已不存在'); }
   } catch(e) { console.error('删除订单异常', e); showToast('删除异常'); }
 }
@@ -5306,10 +5286,10 @@ async function deleteChecked(){
       addOperationLog('delete_order', rec.content, currentRegion, rec.user, rec.totalAmount || 0);
       deductPingtexiaoFromContent(rec.content);
     });
-    clearStatsCache(); showToast(`已将 ${ids.length} 条移入回收站`);
     await updateTableFromRecords(); calculateStorageUsage();
     showOrderRecord(); updateRecycleCount();
     if (document.getElementById('lianxiaoStatsWin')) { refreshLianxiaoStats(); }
+    showToast(`已将 ${ids.length} 条移入回收站`);
   } catch(e) { console.error('批量删除异常', e); showToast('批量删除异常'); }
 }
 
@@ -5374,14 +5354,14 @@ function loadMoreReports() {
   }
 }
 
-async function deleteReportOrderRecord(id) { if (!(await confirm('确定删除？（可到回收站恢复）'))) return; try { const record = await new Promise((resolve) => { const tx = db.transaction([REPORT_STORE_NAME], 'readonly'); const store = tx.objectStore(REPORT_STORE_NAME); const req = store.get(id); req.onsuccess = () => resolve(req.result); req.onerror = () => resolve(null); }); const result = await deleteReportOrderRecordFromIDB(id); if (result) { if (record) addOperationLog('delete_report', record.content, currentRegion, record.user, record.totalAmount || 0); clearStatsCache(); showToast('已移入回收站'); await updateTableFromRecords(); calculateStorageUsage(); const userFilter = document.getElementById('reportRecordUserFilter')?.value || 'all'; await showReportOrderRecord(userFilter); updateRecycleCount(); } else { showToast('删除失败，记录可能已不存在'); } } catch(e) { console.error('删除上报异常', e); showToast('删除异常'); } }
+async function deleteReportOrderRecord(id) { if (!(await confirm('确定删除？（可到回收站恢复）'))) return; try { const record = await new Promise((resolve) => { const tx = db.transaction([REPORT_STORE_NAME], 'readonly'); const store = tx.objectStore(REPORT_STORE_NAME); const req = store.get(id); req.onsuccess = () => resolve(req.result); req.onerror = () => resolve(null); }); const result = await deleteReportOrderRecordFromIDB(id); if (result) { if (record) addOperationLog('delete_report', record.content, currentRegion, record.user, record.totalAmount || 0); await updateTableFromRecords(); calculateStorageUsage(); const userFilter = document.getElementById('reportRecordUserFilter')?.value || 'all'; await showReportOrderRecord(userFilter); updateRecycleCount(); showToast('已移入回收站'); } else { showToast('删除失败，记录可能已不存在'); } } catch(e) { console.error('删除上报异常', e); showToast('删除异常'); } }
 
 function checkAll(){ document.querySelectorAll('.order-check').forEach(cb=>cb.checked=true); }
 function uncheckAll(){ document.querySelectorAll('.order-check').forEach(cb=>cb.checked=false); }
 function checkAllReport(){ document.querySelectorAll('.report-order-check').forEach(cb=>cb.checked=true); }
 function uncheckAllReport(){ document.querySelectorAll('.report-order-check').forEach(cb=>cb.checked=false); }
 
-async function deleteCheckedReport(){ const ids=[]; document.querySelectorAll('.report-order-check:checked').forEach(cb=>ids.push(String(cb.dataset.id))); if(ids.length===0){showToast('请选择');return;} if(!(await confirm(`确定要删除选中的 ${ids.length} 条上报记录吗？（可到回收站恢复）`))) return; try { const details = []; for (const id of ids) { const record = await new Promise((resolve) => { const tx = db.transaction([REPORT_STORE_NAME], 'readonly'); const store = tx.objectStore(REPORT_STORE_NAME); const req = store.get(id); req.onsuccess = () => resolve(req.result); req.onerror = () => resolve(null); }); if (record) details.push(record); } await batchDeleteReportOrderRecordFromIDB(ids); details.forEach(rec => addOperationLog('delete_report', rec.content, currentRegion, rec.user, rec.totalAmount || 0)); clearStatsCache(); showToast(`已将 ${ids.length} 条移入回收站`); await updateTableFromRecords(); calculateStorageUsage(); const userFilter = document.getElementById('reportRecordUserFilter')?.value || 'all'; await showReportOrderRecord(userFilter); updateRecycleCount(); } catch(e) { console.error('批量删除异常', e); showToast('批量删除异常'); } }
+async function deleteCheckedReport(){ const ids=[]; document.querySelectorAll('.report-order-check:checked').forEach(cb=>ids.push(String(cb.dataset.id))); if(ids.length===0){showToast('请选择');return;} if(!(await confirm(`确定要删除选中的 ${ids.length} 条上报记录吗？（可到回收站恢复）`))) return; try { const details = []; for (const id of ids) { const record = await new Promise((resolve) => { const tx = db.transaction([REPORT_STORE_NAME], 'readonly'); const store = tx.objectStore(REPORT_STORE_NAME); const req = store.get(id); req.onsuccess = () => resolve(req.result); req.onerror = () => resolve(null); }); if (record) details.push(record); } await batchDeleteReportOrderRecordFromIDB(ids); details.forEach(rec => addOperationLog('delete_report', rec.content, currentRegion, rec.user, rec.totalAmount || 0)); await updateTableFromRecords(); calculateStorageUsage(); const userFilter = document.getElementById('reportRecordUserFilter')?.value || 'all'; await showReportOrderRecord(userFilter); updateRecycleCount(); showToast(`已将 ${ids.length} 条移入回收站`); } catch(e) { console.error('批量删除异常', e); showToast('批量删除异常'); } }
 
 let resetLock = false; let resetLongPressTimer = null;
 const resetBtn = document.getElementById('resetBtn');
