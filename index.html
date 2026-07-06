@@ -4634,7 +4634,6 @@ async function updateTableFromRecords(){
     let filterUser = null;
     if (riskSwitcher === 'user' && viewUser) { filterUser = viewUser; }
     
-    // ===== 去掉缓存，每次实时读取数据库 =====
     tableBetData={};userBetData={};reportBetData={};reportAmountData={};reportRiskData={};
     numberCount={};zodiacCount={};numberAmountCount={};zodiacAmountCount={};
     zodiacDirectAmount={};zodiacFilteredAmount={};
@@ -4667,7 +4666,6 @@ async function updateTableFromRecords(){
     fRecsFiltered.forEach(rec=>{ try{
       if(!userBetData[rec.user])userBetData[rec.user]={};
       rec.content.split('\n').filter(l=>l.trim()).forEach(line=>{
-        // 特肖行处理
         const teXiaoMatch = line.match(/^特肖:(.+?)\s+各\s*(\d+)$/);
         if (teXiaoMatch) {
           const zodiacsStr = teXiaoMatch[1];
@@ -4697,7 +4695,6 @@ async function updateTableFromRecords(){
           return;
         }
         
-        // 特碰行处理
         const tepengMatch = line.match(/^特碰:(.+?)\s+各\s*(\d+)$/);
         if (tepengMatch) {
           const cleaned = tepengMatch[1].replace(/[()]/g, '');
@@ -4725,7 +4722,6 @@ async function updateTableFromRecords(){
           return;
         }
         
-        // 包玩法行处理
         const baoMatch = line.match(/^包(.+?):(.+?)\s+各\s*(\d+)$/);
         if (baoMatch) {
           const attr = baoMatch[2].trim();
@@ -4768,7 +4764,6 @@ async function updateTableFromRecords(){
           return;
         }
         
-        // 特码行处理
         let content, amt;
         const teMaMatch = line.match(/^特码:(.+?)\s+各(?:数|)\s*(\d+)$/);
         if (teMaMatch) {
@@ -4965,9 +4960,9 @@ async function updateTableFromRecords(){
       });
     } catch(e) {} });
 
-    // ===== 去掉缓存存储，直接渲染 =====
     generateRiskTable(); generateReportTable(); renderFrequencyCards(); renderAmountFrequencyCards();
     renderReportAmountTable(); renderOriginalAmountTable(); updateReportAmountTotal(); updateAmountDisplays();
+    renderPingtexiaoTable(); updatePingtexiaoTotal();
     calculateStorageUsage(); renderSmartDecision(); updateSingleBetDisplay(); updateOrderCountDisplay();
   } catch(e) {}
 }
@@ -5035,7 +5030,6 @@ function updateOrderTotalDisplay(){
   if(total>0){ box.style.display='inline-flex'; if(lineCountSpan){ lineCountSpan.innerHTML = '<span style="color:#000;">' + validLineCount + '</span>行'; lineCountSpan.style.display = 'inline'; } }
   else { box.style.display='none'; if(lineCountSpan) lineCountSpan.style.display='none'; }
 }
-
 function computeCurrentOrderTotal(){ 
   const pureLines = window._pureOrderLines || []; 
   let total=0; 
