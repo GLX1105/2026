@@ -742,7 +742,7 @@ document.addEventListener('click', function(e) {
   }
 });
 
-// ===== 地区切换核心逻辑（含导航栏底部细线颜色切换） =====
+// ===== 地区切换核心逻辑 =====
 let currentRegion = localStorage.getItem('currentRegion') || 'macau';
 function getCurrentRegion() { return currentRegion; }
 function setCurrentRegion(region) {
@@ -778,7 +778,7 @@ async function switchRegion(region) {
 
 function clearMemoryData() { tableBetData = {}; userBetData = {}; reportBetData = {}; reportAmountData = {}; reportRiskData = {}; numberCount = {}; zodiacCount = {}; numberAmountCount = {}; zodiacAmountCount = {}; zodiacDirectAmount = {}; zodiacFilteredAmount = {}; zodiacReportAmount = {}; zodiacFilteredReportAmount = {}; numberOrderTotal = 0; zodiacWeightedTotal = 0; originalOrderAmount = {}; directOrderAmount = {}; directReportAmount = {}; }
 
-// ===== 浮动窗口控制（标题栏+底部状态栏可拖动，内容区不可拖动） =====
+// ===== 浮动窗口控制 =====
 let highestZ = 2000;
 function makeWindowDraggable(winId) {
   const win = document.getElementById(winId);
@@ -786,48 +786,33 @@ function makeWindowDraggable(winId) {
   const header = win.querySelector('.modal-header') || win.querySelector('.database-modal-header');
   const footer = win.querySelector('.modal-footer');
   let isDragging = false, startX, startY, startLeft, startTop;
-  
   function onMouseDown(e) {
     if (e.target.closest('.window-controls')) return;
     if (e.target.closest('input, textarea, button, select, [contenteditable="true"]')) return;
     isDragging = true;
     const rect = win.getBoundingClientRect();
-    startX = e.clientX;
-    startY = e.clientY;
-    startLeft = rect.left;
-    startTop = rect.top;
-    win.style.cursor = 'grabbing';
-    e.preventDefault();
+    startX = e.clientX; startY = e.clientY; startLeft = rect.left; startTop = rect.top;
+    win.style.cursor = 'grabbing'; e.preventDefault();
   }
-  
   if (header) { header.addEventListener('mousedown', onMouseDown); }
   if (footer) { footer.addEventListener('mousedown', onMouseDown); }
-  
   document.addEventListener('mousemove', (e) => {
     if (!isDragging) return;
-    const dx = e.clientX - startX;
-    const dy = e.clientY - startY;
-    win.style.left = (startLeft + dx) + 'px';
-    win.style.top = (startTop + dy) + 'px';
-    win.style.transform = 'none';
+    const dx = e.clientX - startX; const dy = e.clientY - startY;
+    win.style.left = (startLeft + dx) + 'px'; win.style.top = (startTop + dy) + 'px'; win.style.transform = 'none';
   });
-  
-  document.addEventListener('mouseup', () => {
-    if (isDragging) { isDragging = false; win.style.cursor = ''; }
-  });
-  
+  document.addEventListener('mouseup', () => { if (isDragging) { isDragging = false; win.style.cursor = ''; } });
   win.addEventListener('mousedown', () => { highestZ += 1; win.style.zIndex = highestZ; });
 }
 
 // ===== 最大化窗口 =====
 function maximizeWindow(winId) { const win = document.getElementById(winId); if (!win) return; const isMaximized = win.getAttribute('data-maximized') === 'true'; if (isMaximized) { const origWidth = win.getAttribute('data-orig-width'); const origHeight = win.getAttribute('data-orig-height'); const origLeft = win.getAttribute('data-orig-left'); const origTop = win.getAttribute('data-orig-top'); const origTransform = win.getAttribute('data-orig-transform'); if (origWidth) win.style.width = origWidth; if (origHeight) win.style.height = origHeight; if (origLeft) win.style.left = origLeft; if (origTop) win.style.top = origTop; if (origTransform !== null) win.style.transform = origTransform; win.style.right = ''; win.style.bottom = ''; win.setAttribute('data-maximized', 'false'); win.style.resize = 'both'; win.style.overflow = 'auto'; } else { const rect = win.getBoundingClientRect(); win.setAttribute('data-orig-width', win.style.width || (rect.width + 'px')); win.setAttribute('data-orig-height', win.style.height || (rect.height + 'px')); win.setAttribute('data-orig-left', win.style.left || (rect.left + 'px')); win.setAttribute('data-orig-top', win.style.top || (rect.top + 'px')); win.setAttribute('data-orig-transform', win.style.transform || ''); win.style.left = '0'; win.style.top = '0'; win.style.right = '0'; win.style.bottom = '0'; win.style.width = 'auto'; win.style.height = 'auto'; win.style.transform = 'none'; win.setAttribute('data-maximized', 'true'); win.style.resize = 'none'; win.style.overflow = 'auto'; } }
 
-// ===== 数据库弹窗显示/隐藏 =====
+// ===== 数据库弹窗 =====
 const PASSWORD_ENC = "ODkxMTA1"; const PASSWORD = decodePassword(PASSWORD_ENC);
 async function showDatabase() { const pwd = await prompt("请输入数据库密码：",""); if (pwd === PASSWORD) { const modal = document.getElementById('databaseModal'); if (!modal) return; modal.style.display = 'flex'; highestZ += 1; modal.style.zIndex = highestZ; renderDatabaseContent(); makeWindowDraggable('databaseModalBox'); } else { await alert("密码错误"); } }
 function hideDatabase() { const modal = document.getElementById('databaseModal'); if (modal) modal.style.display = 'none'; }
 
-// ===== 渲染新版D字典到数据库弹窗 =====
 function renderDatabaseContent() {
   const content = document.getElementById('databaseModalContent');
   if (!content) return;
@@ -870,7 +855,7 @@ function renderDatabaseContent() {
   content.innerHTML = html;
 }
 
-// ===== 在输入框光标位置插入分类文字 =====
+// ===== 插入分类文字 =====
 function insertCategoryText(text) {
   const ta = document.querySelector('.source-order-input');
   if (!ta) return;
@@ -892,71 +877,78 @@ function setDotRegion(region) {
   
   if (dotSmart) {
     if (region === 'auto') {
-      dotSmart.style.background = '#8e44ad';
-      dotSmart.style.color = '#fff';
-      dotSmart.style.border = '1px solid #8e44ad';
+      dotSmart.style.background = '#8e44ad'; dotSmart.style.color = '#fff'; dotSmart.style.border = '1px solid #8e44ad';
       if (dotSmart.querySelector('span')) dotSmart.querySelector('span').style.background = '#fff';
     } else {
-      dotSmart.style.background = 'transparent';
-      dotSmart.style.color = '#8e44ad';
-      dotSmart.style.border = '1px solid #8e44ad';
-      if (dotSmart.querySelector('span')) {
-        dotSmart.querySelector('span').style.background = 'transparent';
-        dotSmart.querySelector('span').style.border = '1px solid #8e44ad';
-      }
+      dotSmart.style.background = 'transparent'; dotSmart.style.color = '#8e44ad'; dotSmart.style.border = '1px solid #8e44ad';
+      if (dotSmart.querySelector('span')) { dotSmart.querySelector('span').style.background = 'transparent'; dotSmart.querySelector('span').style.border = '1px solid #8e44ad'; }
     }
   }
-  
   if (dotMacau) {
     if (region === 'macau') {
-      dotMacau.style.background = '#e74c3c';
-      dotMacau.style.color = '#fff';
-      dotMacau.style.border = '1px solid #e74c3c';
+      dotMacau.style.background = '#e74c3c'; dotMacau.style.color = '#fff'; dotMacau.style.border = '1px solid #e74c3c';
       if (dotMacau.querySelector('span')) dotMacau.querySelector('span').style.background = '#fff';
     } else {
-      dotMacau.style.background = 'transparent';
-      dotMacau.style.color = '#e74c3c';
-      dotMacau.style.border = '1px solid #e74c3c';
-      if (dotMacau.querySelector('span')) {
-        dotMacau.querySelector('span').style.background = 'transparent';
-        dotMacau.querySelector('span').style.border = '1px solid #e74c3c';
-      }
+      dotMacau.style.background = 'transparent'; dotMacau.style.color = '#e74c3c'; dotMacau.style.border = '1px solid #e74c3c';
+      if (dotMacau.querySelector('span')) { dotMacau.querySelector('span').style.background = 'transparent'; dotMacau.querySelector('span').style.border = '1px solid #e74c3c'; }
     }
   }
-  
   if (dotHongkong) {
     if (region === 'hongkong') {
-      dotHongkong.style.background = '#3498db';
-      dotHongkong.style.color = '#fff';
-      dotHongkong.style.border = '1px solid #3498db';
+      dotHongkong.style.background = '#3498db'; dotHongkong.style.color = '#fff'; dotHongkong.style.border = '1px solid #3498db';
       if (dotHongkong.querySelector('span')) dotHongkong.querySelector('span').style.background = '#fff';
     } else {
-      dotHongkong.style.background = 'transparent';
-      dotHongkong.style.color = '#3498db';
-      dotHongkong.style.border = '1px solid #3498db';
-      if (dotHongkong.querySelector('span')) {
-        dotHongkong.querySelector('span').style.background = 'transparent';
-        dotHongkong.querySelector('span').style.border = '1px solid #3498db';
-      }
+      dotHongkong.style.background = 'transparent'; dotHongkong.style.color = '#3498db'; dotHongkong.style.border = '1px solid #3498db';
+      if (dotHongkong.querySelector('span')) { dotHongkong.querySelector('span').style.background = 'transparent'; dotHongkong.querySelector('span').style.border = '1px solid #3498db'; }
     }
   }
-  
   if (dotYuegang) {
     if (region === 'yuegang') {
-      dotYuegang.style.background = '#27ae60';
-      dotYuegang.style.color = '#fff';
-      dotYuegang.style.border = '1px solid #27ae60';
+      dotYuegang.style.background = '#27ae60'; dotYuegang.style.color = '#fff'; dotYuegang.style.border = '1px solid #27ae60';
       if (dotYuegang.querySelector('span')) dotYuegang.querySelector('span').style.background = '#fff';
     } else {
-      dotYuegang.style.background = 'transparent';
-      dotYuegang.style.color = '#27ae60';
-      dotYuegang.style.border = '1px solid #27ae60';
-      if (dotYuegang.querySelector('span')) {
-        dotYuegang.querySelector('span').style.background = 'transparent';
-        dotYuegang.querySelector('span').style.border = '1px solid #27ae60';
-      }
+      dotYuegang.style.background = 'transparent'; dotYuegang.style.color = '#27ae60'; dotYuegang.style.border = '1px solid #27ae60';
+      if (dotYuegang.querySelector('span')) { dotYuegang.querySelector('span').style.background = 'transparent'; dotYuegang.querySelector('span').style.border = '1px solid #27ae60'; }
     }
   }
+}
+
+// ===== 标记地区函数 =====
+function markRegion(region) {
+  const ta = document.querySelector('.source-order-input');
+  if (!ta) return;
+  const start = ta.selectionStart, end = ta.selectionEnd;
+  if (start === end) { showToast('请先选择文本'); return; }
+  const selectedText = ta.value.substring(start, end);
+  if (!selectedText.trim()) { showToast('请先选择文本'); return; }
+  
+  const prefixMap = { 'macau': '澳', 'hongkong': '港', 'yuegang': '粤' };
+  const prefix = prefixMap[region] || '';
+  
+  const allPrefixes = ['澳', '奥', '澳门', '奥门', '门', '港', '香', '香港', '粤', '粤港'];
+  const allPrefixesSorted = [...allPrefixes].sort((a, b) => b.length - a.length);
+  
+  const lines = selectedText.split('\n');
+  const markedLines = lines.map(line => {
+    let trimmed = line.trim();
+    if (!trimmed) return line;
+    
+    for (const p of allPrefixesSorted) {
+      if (trimmed.startsWith(p)) {
+        trimmed = trimmed.substring(p.length).trim();
+        break;
+      }
+    }
+    
+    const leadingSpace = line.match(/^(\s*)/)[1];
+    return leadingSpace + prefix + trimmed;
+  });
+  
+  const markedText = markedLines.join('\n');
+  ta.value = ta.value.substring(0, start) + markedText + ta.value.substring(end);
+  performRecognition(ta.value);
+  const regionLabels = { 'macau': '澳门', 'hongkong': '香港', 'yuegang': '粤港' };
+  showToast('已标记为' + (regionLabels[region] || region));
 }
 
 // ===== 识别弹窗 =====
@@ -997,7 +989,17 @@ function showRecognizeModal() {
         </div>
         <div class="order-input-container" style="flex:1;"><div class="input-column"><div class="box-label">订单输入框</div><textarea class="source-order-input" oninput="performRecognition(this.value)"></textarea></div><div class="result-column"><div class="box-label">识别结果</div><div class="result-area-new"><div class="result-content" id="orderResult" contenteditable="false"></div></div></div></div>
         <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;">
-          <button class="btn btn-paste" onclick="pasteOrder()">粘贴订单</button><button class="btn btn-save-order" onclick="saveOrder()">保存下单</button><button class="btn btn-report" onclick="saveReportOrder()" style="background:#e74c3c;color:#fff;">上报</button><button class="btn btn-clear" onclick="clearAllInput()">清空</button><button class="btn btn-replace-sep" onclick="replaceSeparators()">换分隔</button><button class="btn btn-remove-sep" onclick="removeSeparators()">去分隔</button><button class="btn btn-mark" onclick="markSelection()">标记</button><button class="btn btn-cancel" onclick="semanticReplace()">语义转换</button>
+          <button class="btn btn-paste" onclick="pasteOrder()">粘贴订单</button>
+          <button class="btn btn-save-order" onclick="saveOrder()">保存下单</button>
+          <button class="btn btn-report" onclick="saveReportOrder()" style="background:#e74c3c;color:#fff;">上报</button>
+          <button class="btn btn-clear" onclick="clearAllInput()">清空</button>
+          <button class="btn btn-replace-sep" onclick="replaceSeparators()">换分隔</button>
+          <button class="btn btn-remove-sep" onclick="removeSeparators()">去分隔</button>
+          <button class="btn btn-mark" onclick="markSelection()">标记</button>
+          <button class="btn btn-cancel" onclick="semanticReplace()">语义转换</button>
+          <button class="btn" onclick="markRegion('macau')" style="background:#e74c3c;color:#fff;">标澳</button>
+          <button class="btn" onclick="markRegion('hongkong')" style="background:#3498db;color:#fff;">标香</button>
+          <button class="btn" onclick="markRegion('yuegang')" style="background:#27ae60;color:#fff;">标粤</button>
           <span id="invalidTokensDisplay" style="color:red; font-size:12px; display:none; white-space:pre-line; margin-left:auto;"></span>
         </div>
         <div class="cat-shortcuts-container" id="catShortcutsContainer" style="font-size:12px;line-height:1.6;margin-top:6px;">${catSpans}</div>
@@ -1009,10 +1011,8 @@ function showRecognizeModal() {
   makeWindowDraggable('recognizeWin'); highestZ += 1; win.style.zIndex = highestZ;
   win.setAttribute('data-window-type', 'recognize');
   
-  // 初始化圆点状态
   setTimeout(() => { if (typeof setDotRegion === 'function') setDotRegion(window._dotRegion || 'auto'); }, 100);
 
-  // 桌面端默认展开快捷输入
   if (window.innerWidth > 768) {
     const container = document.getElementById('catShortcutsContainer');
     if (container) container.classList.add('show');
