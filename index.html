@@ -4045,7 +4045,7 @@ async function clearAllComboOrders() {
   refreshLianxiaoStats();
   showToast('已清空全部其他订单');
 }
-   function initIndexedDB() { return new Promise((resolve) => { const request = indexedDB.open(DB_NAME, DB_VERSION); request.onerror = () => { dbAvailable = false; document.getElementById('dbWarning').style.display = 'block'; const dbStatusEl = document.getElementById('dbStatus'); if (dbStatusEl) { dbStatusEl.textContent = '异常'; dbStatusEl.style.color = '#e74c3c'; } resolve(false); }; request.onsuccess = (event) => { db = event.target.result; dbAvailable = true; document.getElementById('dbWarning').style.display = 'none'; const dbStatusEl = document.getElementById('dbStatus'); if (dbStatusEl) { dbStatusEl.textContent = '正常'; dbStatusEl.style.color = '#27ae60'; } resolve(true); }; request.onupgradeneeded = (event) => { db = event.target.result; if (!db.objectStoreNames.contains(STORE_NAME)) { db.createObjectStore(STORE_NAME, { keyPath: 'id' }); } if (!db.objectStoreNames.contains(REPORT_STORE_NAME)) { db.createObjectStore(REPORT_STORE_NAME, { keyPath: 'id' }); } if (!db.objectStoreNames.contains(RECYCLE_STORE_NAME)) { db.createObjectStore(RECYCLE_STORE_NAME, { keyPath: 'id' }); } if (!db.objectStoreNames.contains(LOG_STORE_NAME)) { db.createObjectStore(LOG_STORE_NAME, { keyPath: 'id' }); } if (!db.objectStoreNames.contains(COMBO_STORE_NAME)) { db.createObjectStore(COMBO_STORE_NAME, { keyPath: 'id' }); } const tx = event.target.transaction; const orderStore = tx.objectStore(STORE_NAME); const reportStore = tx.objectStore(REPORT_STORE_NAME); const addRegion = (store) => { const allReq = store.getAll(); allReq.onsuccess = () => { const records = allReq.result; records.forEach(r => { if (!r.region) { r.region = 'macau'; store.put(r); } }); }; }; addRegion(orderStore); addRegion(reportStore); }; }); }
+    function initIndexedDB() { return new Promise((resolve) => { const request = indexedDB.open(DB_NAME, DB_VERSION); request.onerror = () => { dbAvailable = false; document.getElementById('dbWarning').style.display = 'block'; const dbStatusEl = document.getElementById('dbStatus'); if (dbStatusEl) { dbStatusEl.textContent = '异常'; dbStatusEl.style.color = '#e74c3c'; } resolve(false); }; request.onsuccess = (event) => { db = event.target.result; dbAvailable = true; document.getElementById('dbWarning').style.display = 'none'; const dbStatusEl = document.getElementById('dbStatus'); if (dbStatusEl) { dbStatusEl.textContent = '正常'; dbStatusEl.style.color = '#27ae60'; } resolve(true); }; request.onupgradeneeded = (event) => { db = event.target.result; if (!db.objectStoreNames.contains(STORE_NAME)) { db.createObjectStore(STORE_NAME, { keyPath: 'id' }); } if (!db.objectStoreNames.contains(REPORT_STORE_NAME)) { db.createObjectStore(REPORT_STORE_NAME, { keyPath: 'id' }); } if (!db.objectStoreNames.contains(RECYCLE_STORE_NAME)) { db.createObjectStore(RECYCLE_STORE_NAME, { keyPath: 'id' }); } if (!db.objectStoreNames.contains(LOG_STORE_NAME)) { db.createObjectStore(LOG_STORE_NAME, { keyPath: 'id' }); } if (!db.objectStoreNames.contains(COMBO_STORE_NAME)) { db.createObjectStore(COMBO_STORE_NAME, { keyPath: 'id' }); } const tx = event.target.transaction; const orderStore = tx.objectStore(STORE_NAME); const reportStore = tx.objectStore(REPORT_STORE_NAME); const addRegion = (store) => { const allReq = store.getAll(); allReq.onsuccess = () => { const records = allReq.result; records.forEach(r => { if (!r.region) { r.region = 'macau'; store.put(r); } }); }; }; addRegion(orderStore); addRegion(reportStore); }; }); }
 async function getAllOrdersUnfiltered() { return new Promise((resolve) => { if (!db) resolve([]); const tx = db.transaction([STORE_NAME], 'readonly'); const store = tx.objectStore(STORE_NAME); const req = store.getAll(); req.onsuccess = (e) => resolve(e.target.result || []); }); }
 async function getAllReportsUnfiltered() { return new Promise((resolve) => { if (!db) resolve([]); const tx = db.transaction([REPORT_STORE_NAME], 'readonly'); const store = tx.objectStore(REPORT_STORE_NAME); const req = store.getAll(); req.onsuccess = (e) => resolve(e.target.result || []); }); }
 async function getOrderRecords() { const all = await getAllOrdersUnfiltered(); return all.filter(r => r.region === currentRegion); }
@@ -4055,53 +4055,26 @@ async function getComboOrders() { return new Promise((resolve) => { if (!db) res
 async function saveOrderRecordToIDB(content, user, date, totalAmount = 0, ts = null, regionOverride = null) {
   if (!db || !dbAvailable) { showToast('数据库不可用，操作无法保存'); return false; }
   const record = { id: Date.now() + '-' + Math.random().toString(36).substr(2, 9), content, user, date, totalAmount, region: regionOverride || currentRegion, timestamp: ts || new Date().toISOString() };
-  try {
-    await new Promise((resolve, reject) => {
-      const tx = db.transaction([STORE_NAME], 'readwrite');
-      const store = tx.objectStore(STORE_NAME);
-      store.add(record);
-      tx.oncomplete = () => resolve(true);
-      tx.onerror = () => reject(tx.error);
-    });
-    return true;
-  } catch (e) {
-    showToast('保存失败，请重试');
-    return false;
-  }
+  let success = false;
+  for (let attempt = 0; attempt < 3; attempt++) { try { await new Promise((resolve, reject) => { const tx = db.transaction([STORE_NAME], 'readwrite'); const store = tx.objectStore(STORE_NAME); const req = store.add(record); req.onsuccess = () => resolve(true); req.onerror = () => reject(req.error); tx.oncomplete = () => resolve(true); tx.onerror = () => reject(tx.error); }); success = true; break; } catch (e) { if (attempt < 2) await new Promise(r => setTimeout(r, 300)); } }
+  if (!success) { showToast('保存失败，请重试'); return false; }
+  return true;
 }
 async function saveReportOrderRecordToIDB(content, user, date, totalAmount = 0, ts = null, regionOverride = null) {
   if (!db || !dbAvailable) { showToast('数据库不可用，操作无法保存'); return false; }
   const record = { id: Date.now() + '-' + Math.random().toString(36).substr(2, 9), content, user, date, totalAmount, region: regionOverride || currentRegion, timestamp: ts || new Date().toISOString() };
-  try {
-    await new Promise((resolve, reject) => {
-      const tx = db.transaction([REPORT_STORE_NAME], 'readwrite');
-      const store = tx.objectStore(REPORT_STORE_NAME);
-      store.add(record);
-      tx.oncomplete = () => resolve(true);
-      tx.onerror = () => reject(tx.error);
-    });
-    return true;
-  } catch (e) {
-    showToast('保存失败，请重试');
-    return false;
-  }
+  let success = false;
+  for (let attempt = 0; attempt < 3; attempt++) { try { await new Promise((resolve, reject) => { const tx = db.transaction([REPORT_STORE_NAME], 'readwrite'); const store = tx.objectStore(REPORT_STORE_NAME); const req = store.add(record); req.onsuccess = () => resolve(true); req.onerror = () => reject(req.error); tx.oncomplete = () => resolve(true); tx.onerror = () => reject(tx.error); }); success = true; break; } catch (e) { if (attempt < 2) await new Promise(r => setTimeout(r, 300)); } }
+  if (!success) { showToast('保存失败，请重试'); return false; }
+  return true;
 }
 async function saveComboOrderRecordToIDB(content, user, date, totalAmount = 0, comboType = '', ts = null) {
   if (!db || !dbAvailable) { showToast('数据库不可用，操作无法保存'); return false; }
   const record = { id: Date.now() + '-' + Math.random().toString(36).substr(2, 9), content, user, date, totalAmount, comboType, region: currentRegion, timestamp: ts || new Date().toISOString() };
-  try {
-    await new Promise((resolve, reject) => {
-      const tx = db.transaction([COMBO_STORE_NAME], 'readwrite');
-      const store = tx.objectStore(COMBO_STORE_NAME);
-      store.add(record);
-      tx.oncomplete = () => resolve(true);
-      tx.onerror = () => reject(tx.error);
-    });
-    return true;
-  } catch (e) {
-    showToast('保存失败，请重试');
-    return false;
-  }
+  let success = false;
+  for (let attempt = 0; attempt < 3; attempt++) { try { await new Promise((resolve, reject) => { const tx = db.transaction([COMBO_STORE_NAME], 'readwrite'); const store = tx.objectStore(COMBO_STORE_NAME); const req = store.add(record); req.onsuccess = () => resolve(true); req.onerror = () => reject(req.error); tx.oncomplete = () => resolve(true); tx.onerror = () => reject(tx.error); }); success = true; break; } catch (e) { if (attempt < 2) await new Promise(r => setTimeout(r, 300)); } }
+  if (!success) { showToast('保存失败，请重试'); return false; }
+  return true;
 }
 
 // ===== 操作日志函数 =====
@@ -4475,7 +4448,7 @@ function semanticReplace() {
   showToast('语义转换完成：' + str);
 }
 
-// ===== saveOrder：保存完成后直接调用 updateTableFromRecords =====
+// ===== 修复：saveOrder 按地区分组保存，clearStatsCache在updateTableFromRecords之前 =====
 async function saveOrder(){ 
   const user=document.getElementById('orderUserSelect')?.value; 
   if(!user){showToast('请选择用户');return;} 
@@ -4552,13 +4525,14 @@ async function saveOrder(){
   updateOrderTotalDisplay(); 
   const md=document.getElementById('maxLossDisplay'); if(md){md.textContent='';md.style.display='none';} 
   document.querySelectorAll('.category-btn').forEach(b=>b.classList.remove('active')); 
+  clearStatsCache();
   await updateTableFromRecords();
   calculateStorageUsage(); showStorageDrawerTemporary(5000); renderSmartDecision(); updateSingleBetDisplay(); 
   updateOrderCountDisplay();
   showToast('已保存下单（' + savedCount + '个地区）');
 }
 
-// ===== saveReportOrder：保存完成后直接调用 updateTableFromRecords =====
+// ===== 修复：saveReportOrder 按地区分组保存，clearStatsCache在updateTableFromRecords之前 =====
 async function saveReportOrder(){ 
   const user=document.getElementById('orderUserSelect')?.value; 
   if(!user){showToast('请选择用户');return;} 
@@ -4635,6 +4609,7 @@ async function saveReportOrder(){
   updateOrderTotalDisplay(); 
   const md=document.getElementById('maxLossDisplay'); if(md){md.textContent='';md.style.display='none';} 
   document.querySelectorAll('.category-btn').forEach(b=>b.classList.remove('active')); 
+  clearStatsCache();
   await updateTableFromRecords();
   calculateStorageUsage(); showStorageDrawerTemporary(5000); renderSmartDecision(); 
   showToast('已上报成功（' + savedCount + '个地区）'); 
@@ -4659,7 +4634,7 @@ async function updateTableFromRecords(){
     let filterUser = null;
     if (riskSwitcher === 'user' && viewUser) { filterUser = viewUser; }
     
-    // ===== 每次实时从 IndexedDB 读取，不使用缓存 =====
+    // ===== 去掉缓存，每次实时读取数据库 =====
     tableBetData={};userBetData={};reportBetData={};reportAmountData={};reportRiskData={};
     numberCount={};zodiacCount={};numberAmountCount={};zodiacAmountCount={};
     zodiacDirectAmount={};zodiacFilteredAmount={};
@@ -4692,6 +4667,7 @@ async function updateTableFromRecords(){
     fRecsFiltered.forEach(rec=>{ try{
       if(!userBetData[rec.user])userBetData[rec.user]={};
       rec.content.split('\n').filter(l=>l.trim()).forEach(line=>{
+        // 特肖行处理
         const teXiaoMatch = line.match(/^特肖:(.+?)\s+各\s*(\d+)$/);
         if (teXiaoMatch) {
           const zodiacsStr = teXiaoMatch[1];
@@ -4721,6 +4697,7 @@ async function updateTableFromRecords(){
           return;
         }
         
+        // 特碰行处理
         const tepengMatch = line.match(/^特碰:(.+?)\s+各\s*(\d+)$/);
         if (tepengMatch) {
           const cleaned = tepengMatch[1].replace(/[()]/g, '');
@@ -4748,6 +4725,7 @@ async function updateTableFromRecords(){
           return;
         }
         
+        // 包玩法行处理
         const baoMatch = line.match(/^包(.+?):(.+?)\s+各\s*(\d+)$/);
         if (baoMatch) {
           const attr = baoMatch[2].trim();
@@ -4790,6 +4768,7 @@ async function updateTableFromRecords(){
           return;
         }
         
+        // 特码行处理
         let content, amt;
         const teMaMatch = line.match(/^特码:(.+?)\s+各(?:数|)\s*(\d+)$/);
         if (teMaMatch) {
@@ -4986,9 +4965,9 @@ async function updateTableFromRecords(){
       });
     } catch(e) {} });
 
+    // ===== 去掉缓存存储，直接渲染 =====
     generateRiskTable(); generateReportTable(); renderFrequencyCards(); renderAmountFrequencyCards();
     renderReportAmountTable(); renderOriginalAmountTable(); updateReportAmountTotal(); updateAmountDisplays();
-    renderPingtexiaoTable(); updatePingtexiaoTotal();
     calculateStorageUsage(); renderSmartDecision(); updateSingleBetDisplay(); updateOrderCountDisplay();
   } catch(e) {}
 }
@@ -5056,6 +5035,7 @@ function updateOrderTotalDisplay(){
   if(total>0){ box.style.display='inline-flex'; if(lineCountSpan){ lineCountSpan.innerHTML = '<span style="color:#000;">' + validLineCount + '</span>行'; lineCountSpan.style.display = 'inline'; } }
   else { box.style.display='none'; if(lineCountSpan) lineCountSpan.style.display='none'; }
 }
+
 function computeCurrentOrderTotal(){ 
   const pureLines = window._pureOrderLines || []; 
   let total=0; 
