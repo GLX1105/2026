@@ -4045,7 +4045,7 @@ async function clearAllComboOrders() {
   refreshLianxiaoStats();
   showToast('已清空全部其他订单');
 }
-    function initIndexedDB() { return new Promise((resolve) => { const request = indexedDB.open(DB_NAME, DB_VERSION); request.onerror = () => { dbAvailable = false; document.getElementById('dbWarning').style.display = 'block'; const dbStatusEl = document.getElementById('dbStatus'); if (dbStatusEl) { dbStatusEl.textContent = '异常'; dbStatusEl.style.color = '#e74c3c'; } resolve(false); }; request.onsuccess = (event) => { db = event.target.result; dbAvailable = true; document.getElementById('dbWarning').style.display = 'none'; const dbStatusEl = document.getElementById('dbStatus'); if (dbStatusEl) { dbStatusEl.textContent = '正常'; dbStatusEl.style.color = '#27ae60'; } resolve(true); }; request.onupgradeneeded = (event) => { db = event.target.result; if (!db.objectStoreNames.contains(STORE_NAME)) { db.createObjectStore(STORE_NAME, { keyPath: 'id' }); } if (!db.objectStoreNames.contains(REPORT_STORE_NAME)) { db.createObjectStore(REPORT_STORE_NAME, { keyPath: 'id' }); } if (!db.objectStoreNames.contains(RECYCLE_STORE_NAME)) { db.createObjectStore(RECYCLE_STORE_NAME, { keyPath: 'id' }); } if (!db.objectStoreNames.contains(LOG_STORE_NAME)) { db.createObjectStore(LOG_STORE_NAME, { keyPath: 'id' }); } if (!db.objectStoreNames.contains(COMBO_STORE_NAME)) { db.createObjectStore(COMBO_STORE_NAME, { keyPath: 'id' }); } const tx = event.target.transaction; const orderStore = tx.objectStore(STORE_NAME); const reportStore = tx.objectStore(REPORT_STORE_NAME); const addRegion = (store) => { const allReq = store.getAll(); allReq.onsuccess = () => { const records = allReq.result; records.forEach(r => { if (!r.region) { r.region = 'macau'; store.put(r); } }); }; }; addRegion(orderStore); addRegion(reportStore); }; }); }
+   function initIndexedDB() { return new Promise((resolve) => { const request = indexedDB.open(DB_NAME, DB_VERSION); request.onerror = () => { dbAvailable = false; document.getElementById('dbWarning').style.display = 'block'; const dbStatusEl = document.getElementById('dbStatus'); if (dbStatusEl) { dbStatusEl.textContent = '异常'; dbStatusEl.style.color = '#e74c3c'; } resolve(false); }; request.onsuccess = (event) => { db = event.target.result; dbAvailable = true; document.getElementById('dbWarning').style.display = 'none'; const dbStatusEl = document.getElementById('dbStatus'); if (dbStatusEl) { dbStatusEl.textContent = '正常'; dbStatusEl.style.color = '#27ae60'; } resolve(true); }; request.onupgradeneeded = (event) => { db = event.target.result; if (!db.objectStoreNames.contains(STORE_NAME)) { db.createObjectStore(STORE_NAME, { keyPath: 'id' }); } if (!db.objectStoreNames.contains(REPORT_STORE_NAME)) { db.createObjectStore(REPORT_STORE_NAME, { keyPath: 'id' }); } if (!db.objectStoreNames.contains(RECYCLE_STORE_NAME)) { db.createObjectStore(RECYCLE_STORE_NAME, { keyPath: 'id' }); } if (!db.objectStoreNames.contains(LOG_STORE_NAME)) { db.createObjectStore(LOG_STORE_NAME, { keyPath: 'id' }); } if (!db.objectStoreNames.contains(COMBO_STORE_NAME)) { db.createObjectStore(COMBO_STORE_NAME, { keyPath: 'id' }); } const tx = event.target.transaction; const orderStore = tx.objectStore(STORE_NAME); const reportStore = tx.objectStore(REPORT_STORE_NAME); const addRegion = (store) => { const allReq = store.getAll(); allReq.onsuccess = () => { const records = allReq.result; records.forEach(r => { if (!r.region) { r.region = 'macau'; store.put(r); } }); }; }; addRegion(orderStore); addRegion(reportStore); }; }); }
 async function getAllOrdersUnfiltered() { return new Promise((resolve) => { if (!db) resolve([]); const tx = db.transaction([STORE_NAME], 'readonly'); const store = tx.objectStore(STORE_NAME); const req = store.getAll(); req.onsuccess = (e) => resolve(e.target.result || []); }); }
 async function getAllReportsUnfiltered() { return new Promise((resolve) => { if (!db) resolve([]); const tx = db.transaction([REPORT_STORE_NAME], 'readonly'); const store = tx.objectStore(REPORT_STORE_NAME); const req = store.getAll(); req.onsuccess = (e) => resolve(e.target.result || []); }); }
 async function getOrderRecords() { const all = await getAllOrdersUnfiltered(); return all.filter(r => r.region === currentRegion); }
@@ -4055,26 +4055,53 @@ async function getComboOrders() { return new Promise((resolve) => { if (!db) res
 async function saveOrderRecordToIDB(content, user, date, totalAmount = 0, ts = null, regionOverride = null) {
   if (!db || !dbAvailable) { showToast('数据库不可用，操作无法保存'); return false; }
   const record = { id: Date.now() + '-' + Math.random().toString(36).substr(2, 9), content, user, date, totalAmount, region: regionOverride || currentRegion, timestamp: ts || new Date().toISOString() };
-  let success = false;
-  for (let attempt = 0; attempt < 3; attempt++) { try { await new Promise((resolve, reject) => { const tx = db.transaction([STORE_NAME], 'readwrite'); const store = tx.objectStore(STORE_NAME); const req = store.add(record); req.onsuccess = () => resolve(true); req.onerror = () => reject(req.error); tx.oncomplete = () => resolve(true); tx.onerror = () => reject(tx.error); }); success = true; break; } catch (e) { if (attempt < 2) await new Promise(r => setTimeout(r, 300)); } }
-  if (!success) { showToast('保存失败，请重试'); return false; }
-  return true;
+  try {
+    await new Promise((resolve, reject) => {
+      const tx = db.transaction([STORE_NAME], 'readwrite');
+      const store = tx.objectStore(STORE_NAME);
+      store.add(record);
+      tx.oncomplete = () => resolve(true);
+      tx.onerror = () => reject(tx.error);
+    });
+    return true;
+  } catch (e) {
+    showToast('保存失败，请重试');
+    return false;
+  }
 }
 async function saveReportOrderRecordToIDB(content, user, date, totalAmount = 0, ts = null, regionOverride = null) {
   if (!db || !dbAvailable) { showToast('数据库不可用，操作无法保存'); return false; }
   const record = { id: Date.now() + '-' + Math.random().toString(36).substr(2, 9), content, user, date, totalAmount, region: regionOverride || currentRegion, timestamp: ts || new Date().toISOString() };
-  let success = false;
-  for (let attempt = 0; attempt < 3; attempt++) { try { await new Promise((resolve, reject) => { const tx = db.transaction([REPORT_STORE_NAME], 'readwrite'); const store = tx.objectStore(REPORT_STORE_NAME); const req = store.add(record); req.onsuccess = () => resolve(true); req.onerror = () => reject(req.error); tx.oncomplete = () => resolve(true); tx.onerror = () => reject(tx.error); }); success = true; break; } catch (e) { if (attempt < 2) await new Promise(r => setTimeout(r, 300)); } }
-  if (!success) { showToast('保存失败，请重试'); return false; }
-  return true;
+  try {
+    await new Promise((resolve, reject) => {
+      const tx = db.transaction([REPORT_STORE_NAME], 'readwrite');
+      const store = tx.objectStore(REPORT_STORE_NAME);
+      store.add(record);
+      tx.oncomplete = () => resolve(true);
+      tx.onerror = () => reject(tx.error);
+    });
+    return true;
+  } catch (e) {
+    showToast('保存失败，请重试');
+    return false;
+  }
 }
 async function saveComboOrderRecordToIDB(content, user, date, totalAmount = 0, comboType = '', ts = null) {
   if (!db || !dbAvailable) { showToast('数据库不可用，操作无法保存'); return false; }
   const record = { id: Date.now() + '-' + Math.random().toString(36).substr(2, 9), content, user, date, totalAmount, comboType, region: currentRegion, timestamp: ts || new Date().toISOString() };
-  let success = false;
-  for (let attempt = 0; attempt < 3; attempt++) { try { await new Promise((resolve, reject) => { const tx = db.transaction([COMBO_STORE_NAME], 'readwrite'); const store = tx.objectStore(COMBO_STORE_NAME); const req = store.add(record); req.onsuccess = () => resolve(true); req.onerror = () => reject(req.error); tx.oncomplete = () => resolve(true); tx.onerror = () => reject(tx.error); }); success = true; break; } catch (e) { if (attempt < 2) await new Promise(r => setTimeout(r, 300)); } }
-  if (!success) { showToast('保存失败，请重试'); return false; }
-  return true;
+  try {
+    await new Promise((resolve, reject) => {
+      const tx = db.transaction([COMBO_STORE_NAME], 'readwrite');
+      const store = tx.objectStore(COMBO_STORE_NAME);
+      store.add(record);
+      tx.oncomplete = () => resolve(true);
+      tx.onerror = () => reject(tx.error);
+    });
+    return true;
+  } catch (e) {
+    showToast('保存失败，请重试');
+    return false;
+  }
 }
 
 // ===== 操作日志函数 =====
@@ -4448,7 +4475,7 @@ function semanticReplace() {
   showToast('语义转换完成：' + str);
 }
 
-// ===== 修复：saveOrder 保存完成后加延迟再更新表格 =====
+// ===== saveOrder：保存完成后直接调用 updateTableFromRecords =====
 async function saveOrder(){ 
   const user=document.getElementById('orderUserSelect')?.value; 
   if(!user){showToast('请选择用户');return;} 
@@ -4525,17 +4552,13 @@ async function saveOrder(){
   updateOrderTotalDisplay(); 
   const md=document.getElementById('maxLossDisplay'); if(md){md.textContent='';md.style.display='none';} 
   document.querySelectorAll('.category-btn').forEach(b=>b.classList.remove('active')); 
-  
-  // 延迟确保 IndexedDB 事务完全提交后再刷新表格
-  await new Promise(r => setTimeout(r, 150));
   await updateTableFromRecords();
-  
   calculateStorageUsage(); showStorageDrawerTemporary(5000); renderSmartDecision(); updateSingleBetDisplay(); 
   updateOrderCountDisplay();
   showToast('已保存下单（' + savedCount + '个地区）');
 }
 
-// ===== 修复：saveReportOrder 保存完成后加延迟再更新表格 =====
+// ===== saveReportOrder：保存完成后直接调用 updateTableFromRecords =====
 async function saveReportOrder(){ 
   const user=document.getElementById('orderUserSelect')?.value; 
   if(!user){showToast('请选择用户');return;} 
@@ -4612,11 +4635,7 @@ async function saveReportOrder(){
   updateOrderTotalDisplay(); 
   const md=document.getElementById('maxLossDisplay'); if(md){md.textContent='';md.style.display='none';} 
   document.querySelectorAll('.category-btn').forEach(b=>b.classList.remove('active')); 
-  
-  // 延迟确保 IndexedDB 事务完全提交后再刷新表格
-  await new Promise(r => setTimeout(r, 150));
   await updateTableFromRecords();
-  
   calculateStorageUsage(); showStorageDrawerTemporary(5000); renderSmartDecision(); 
   showToast('已上报成功（' + savedCount + '个地区）'); 
   setTimeout(() => { const toast = document.querySelector('.toast-message.show'); if (toast) toast.style.color = '#ff0000'; }, 10); 
@@ -4640,6 +4659,7 @@ async function updateTableFromRecords(){
     let filterUser = null;
     if (riskSwitcher === 'user' && viewUser) { filterUser = viewUser; }
     
+    // ===== 每次实时从 IndexedDB 读取，不使用缓存 =====
     tableBetData={};userBetData={};reportBetData={};reportAmountData={};reportRiskData={};
     numberCount={};zodiacCount={};numberAmountCount={};zodiacAmountCount={};
     zodiacDirectAmount={};zodiacFilteredAmount={};
