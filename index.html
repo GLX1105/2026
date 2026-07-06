@@ -4695,7 +4695,7 @@ async function saveReportOrder(){
   showToast('已上报成功（' + savedCount + '个地区）'); 
   setTimeout(() => { const toast = document.querySelector('.toast-message.show'); if (toast) toast.style.color = '#ff0000'; }, 10); 
 }
-    function updateOrderCountDisplay() {
+   function updateOrderCountDisplay() {
   const fd = document.getElementById('filterDate')?.value || getTodayCST();
   getOrderRecords().then(orders => {
     const todayOrders = orders.filter(r => r.date === fd);
@@ -5026,16 +5026,11 @@ async function updateTableFromRecords(){
           if (zodiacs.length === 0) directReportAmount[num] = (directReportAmount[num] || 0) + amount;
         });
 
+        // 修复：只统计生肖上报金额，不再重复累加号码的 reportBetData 和 reportAmountData
         zodiacs.forEach(z => {
           const zNumCount = (ZODIAC_NUMS[z] || '').split(/[\s,，]+/).length || 0;
           zodiacReportAmount[z] = (zodiacReportAmount[z] || 0) + amount * zNumCount;
           if (amount >= zMin && amount <= zMax) zodiacFilteredReportAmount[z] = (zodiacFilteredReportAmount[z] || 0) + amount * zNumCount;
-          (ZODIAC_NUMS[z] || '').split(/[\s,，]+/).forEach(n => {
-            const num = n.padStart(2, '0');
-            reportBetData[num] = (reportBetData[num] || 0) - amount;
-            reportAmountData[num] = (reportAmountData[num] || 0) + amount;
-            if (user && userBetData[user]) userBetData[user][num] = (userBetData[user][num] || 0) - amount;
-          });
         });
       });
     } catch(e) {} });
@@ -5750,3 +5745,4 @@ window.onload = async () => {
 </script>
 </body>
 </html>
+
