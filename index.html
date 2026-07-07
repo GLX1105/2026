@@ -1089,22 +1089,38 @@ function computeMaxLoss() {
     if (category === '特码') {
       const { odds } = getOddsForType('特码', oddsData);
       numbers.forEach(token => {
-        const expanded = keyToAllNums(token) || [token];
+        // 展开 token 为实际号码，并累加该 token 的投注金额
+        let expanded;
+        if (/^\d{1,2}$/.test(token) && parseInt(token) >= 1 && parseInt(token) <= 49) {
+          expanded = [String(parseInt(token)).padStart(2, '0')];
+        } else if (ZODIAC_NUMS[token]) {
+          expanded = (ZODIAC_NUMS[token] || '').split(/[\s,，]+/);
+        } else if (D[token]) {
+          expanded = keyToAllNums(token) || [token];
+        } else {
+          expanded = [token]; // 兜底
+        }
+        // 累加赔付
         expanded.forEach(num => {
           numPayout[num] = (numPayout[num] || 0) + unitAmount * odds;
         });
+        // 总投注金额 = 实际投注的号码总数 × 每号金额
+        totalOrderAmount += expanded.length * unitAmount;
       });
-      totalOrderAmount += numbers.length * unitAmount;
     }
     else if (category === '特肖') {
       numbers.forEach(zodiac => {
         const isBenming = zodiac === curYearZodiac;
         const type = isBenming ? '特肖本年肖' : '特肖';
         const { odds } = getOddsForType(type, oddsData);
-        (ZODIAC_NUMS[zodiac] || '').split(/[\s,，]+/).forEach(num => {
-          numPayout[num] = (numPayout[num] || 0) + unitAmount * odds;
+        const nums = (ZODIAC_NUMS[zodiac] || '').split(/[\s,，]+/);
+        // 整肖赔付按整肖金额计算，开该生肖下任意号码都赔付相同金额
+        const payout = unitAmount * odds;
+        nums.forEach(num => {
+          numPayout[num] = (numPayout[num] || 0) + payout;
         });
       });
+      // 总投注金额 = 每个生肖的金额累加
       totalOrderAmount += numbers.length * unitAmount;
     }
   });
