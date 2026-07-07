@@ -1910,7 +1910,7 @@ function parseTeMaSegment(content) {
   }
   return deduped;
 }
-    function processOneLine(line) {
+   function processOneLine(line) {
   if (!line.trim()) return [];
 
   // ===== 号码-金额对识别（优先处理） =====
@@ -2279,8 +2279,9 @@ function containsDictElement(str) {
   return false;
 }
 
-function applyInlineInheritance(lineResults) {
-  if (!lineResults || lineResults.length === 0) return lineResults;
+// ===== 增强版继承函数（支持无分隔符生肖串拆分 + 特肖覆盖 + 继承标记） =====
+function applyInlineInheritance(lineResults, lastInheritablePlay = null) {
+  if (!lineResults || lineResults.length === 0) return { results: lineResults, lastPlay: lastInheritablePlay };
 
   const inheritableCats = {
     '平特肖': { type: 'zodiac', count: 1 },
@@ -2291,70 +2292,193 @@ function applyInlineInheritance(lineResults) {
     inheritableCats[i + '连尾'] = { type: 'tail', count: i };
   }
 
-  let inheritedPlay = null;
+  // 1. 确定本行的继承源
+  let inheritedPlay = lastInheritablePlay;
   for (const r of lineResults) {
     if (r.cat !== '__unrecognized__' && inheritableCats[r.cat]) {
-      inheritedPlay = { cat: r.cat, ...inheritableCats[r.cat] };
+      inheritedPlay = { cat: r.cat, kw: r.kw || '', ...inheritableCats[r.cat] };
       break;
     }
   }
 
-  if (!inheritedPlay) return lineResults;
-
+  // 2. 遍历处理
   const processed = [];
   for (const r of lineResults) {
+    // ----- 特肖结果覆盖为连肖 -----
+    if (inheritedPlay && inheritedPlay.type === 'zodiac' && inheritedPlay.count >= 2 && r.cat === '特肖') {
+      const zodiacs = r.nums || [];
+      if (zodiacs.length === inheritedPlay.count && (r.kw || '') === (inheritedPlay.kw || '')) {
+        const comboStr = zodiacs.join('-');
+        processed.push({
+          cat: inheritedPlay.cat,
+          nums: [comboStr],
+          amt: r.amt,
+          cnt: 1,
+          total: r.amt,
+          kw: inheritedPlay.kw || '各组',
+          warnings: [],
+          rawLine: r.rawLine || '',
+          _inherited: true
+        });
+        continue;
+      }
+    }
+
     if (r.cat !== '__unrecognized__') {
       processed.push(r);
       continue;
     }
 
-    const amtMatch = r.rawLine.match(new RegExp(`(.+?)\\s*(${AMT_RE_STR})\\s*$`));
+    if (!inheritedPlay) {
+      processed.push(r);
+      continue;
+    }
+
+    // 提取内容和金额
+    const raw = (r.rawLine || '').trim();
+    if (!raw) {
+      processed.push(r);
+      continue;
+    }
+
+    // 提取金额数字（最后一个数字）
+    const amtMatch = raw.match(/(\d+)\s*$/);
     if (!amtMatch) {
       processed.push(r);
       continue;
     }
-
-    const content = amtMatch[1].trim();
-    const amt = toNum(amtMatch[2]);
-    if (!amt || amt <= 0) {
+    const amt = parseInt(amtMatch[1]) || 0;
+    if (amt <= 0) {
       processed.push(r);
       continue;
     }
 
+    // 提取内容（去掉金额部分）
+    let content = raw.substring(0, amtMatch.index).trim();
+    if (!content) {
+      processed.push(r);
+      continue;
+    }
+
+    // 提取内容中的关键字
+    let contentKw = '';
+    for (const kw of KW_LIST) {
+      if (content.includes(kw)) {
+        contentKw = kw;
+        break;
+      }
+    }
+
+    // 关键字一致性检查
+    const inheritedKw = inheritedPlay.kw || '';
+    if (contentKw !== inheritedKw) {
+      r.warnings = [`关键字不一致（需要"${inheritedKw || '无关键字'}"，实际"${contentKw || '无关键字'}"）`];
+      processed.push(r);
+      continue;
+    }
+
+    // 清理内容中的关键字
+    let cleanContent = content;
+    if (contentKw) {
+      cleanContent = content.replace(new RegExp(contentKw), '').trim();
+    }
+    // 清理分隔符
+    cleanContent = cleanContent.replace(/[\s,，.。、+\-*＊\/\\|]+/g, '-');
+
+    // 格式匹配检查
     let matched = false;
     if (inheritedPlay.type === 'zodiac') {
-      const zs = content.replace(/[^鼠牛虎兔龙蛇马羊猴鸡狗猪]/g, '');
-      if (zs.length === inheritedPlay.count) {
-        const combos = zCombosKeepOrder(zs, inheritedPlay.count);
-        processed.push({
-          category: inheritedPlay.cat, numbers: combos, unitAmount: amt,
-          totalCount: combos.length, totalAmount: amt * combos.length, kw: '各', warnings: [],
-          _inherited: true
-        });
-        matched = true;
+      // 先尝试按分隔符拆分
+      let items = cleanContent.split('-').filter(i => i.trim());
+      
+      // 如果拆分后数量不匹配，尝试把整串当纯生肖逐字符拆分
+      if (items.length !== inheritedPlay.count) {
+        const pureZodiacStr = cleanContent.replace(/[^鼠牛虎兔龙蛇马羊猴鸡狗猪]/g, '');
+        if (pureZodiacStr.length === inheritedPlay.count) {
+          // 拆成单个生肖数组
+          items = pureZodiacStr.split('');
+        }
+      }
+
+      if (inheritedPlay.count === 1) {
+        // 平特肖：单个生肖
+        if (items.length === 1 && /^[鼠牛虎兔龙蛇马羊猴鸡狗猪]$/.test(items[0].trim())) {
+          processed.push({
+            cat: inheritedPlay.cat, nums: [items[0].trim()], amt: amt,
+            cnt: 1, total: amt, kw: inheritedPlay.kw || '各', warnings: [],
+            rawLine: raw,
+            _inherited: true
+          });
+          matched = true;
+        }
+      } else {
+        // 连肖：N个生肖
+        if (items.length === inheritedPlay.count && items.every(i => /^[鼠牛虎兔龙蛇马羊猴鸡狗猪]$/.test(i.trim()))) {
+          const comboStr = items.map(i => i.trim()).join('-');
+          processed.push({
+            cat: inheritedPlay.cat, nums: [comboStr], amt: amt,
+            cnt: 1, total: amt, kw: inheritedPlay.kw || '各组', warnings: [],
+            rawLine: raw,
+            _inherited: true
+          });
+          matched = true;
+        }
       }
     } else if (inheritedPlay.type === 'tail') {
-      const tails = (content.match(/\d+尾/g) || []).map(t => t.trim());
-      const digits = tails.map(t => t.replace('尾', ''));
-      if (digits.length === inheritedPlay.count) {
-        const combos = tailCKeepOrder(digits.join(','), inheritedPlay.count);
-        processed.push({
-          category: inheritedPlay.cat, numbers: combos, unitAmount: amt,
-          totalCount: combos.length, totalAmount: amt * combos.length, kw: '各', warnings: [],
-          _inherited: true
-        });
-        matched = true;
+      // 先尝试按分隔符拆分
+      let items = cleanContent.split('-').filter(i => /\d+尾/.test(i.trim()));
+      
+      // 如果拆分后数量不匹配，尝试把整串当纯数字尾数逐字符拆分
+      if (items.length !== inheritedPlay.count) {
+        const pureDigits = cleanContent.replace(/[^0-9]/g, '');
+        if (pureDigits.length === inheritedPlay.count) {
+          items = pureDigits.split('').map(d => d + '尾');
+        }
+      }
+
+      if (inheritedPlay.count === 1) {
+        // 平特尾：单个尾数
+        if (items.length === 1 && /\d+尾$/.test(items[0].trim())) {
+          processed.push({
+            cat: inheritedPlay.cat, nums: [items[0].trim()], amt: amt,
+            cnt: 1, total: amt, kw: inheritedPlay.kw || '各', warnings: [],
+            rawLine: raw,
+            _inherited: true
+          });
+          matched = true;
+        }
+      } else {
+        // 连尾：N个尾数
+        if (items.length === inheritedPlay.count && items.every(i => /\d+尾$/.test(i.trim()))) {
+          const comboStr = items.map(i => i.trim()).join('-');
+          processed.push({
+            cat: inheritedPlay.cat, nums: [comboStr], amt: amt,
+            cnt: 1, total: amt, kw: inheritedPlay.kw || '各组', warnings: [],
+            rawLine: raw,
+            _inherited: true
+          });
+          matched = true;
+        }
       }
     }
 
     if (!matched) {
-      const expectedDesc = inheritedPlay.type === 'zodiac' ? `${inheritedPlay.count}个生肖` : `${inheritedPlay.count}个尾数`;
-      r.warnings = [`格式不匹配，无法继承：需要${expectedDesc}`];
+      r.warnings = [`格式不匹配（需要${inheritedPlay.count}个${inheritedPlay.type === 'zodiac' ? '生肖' : '尾数'}）`];
       processed.push(r);
     }
   }
 
-  return processed;
+  // 3. 确定传递给下一行的继承源
+  let outgoingPlay = lastInheritablePlay;
+  for (let i = lineResults.length - 1; i >= 0; i--) {
+    const r = lineResults[i];
+    if (r.cat !== '__unrecognized__' && inheritableCats[r.cat]) {
+      outgoingPlay = { cat: r.cat, kw: r.kw || '', ...inheritableCats[r.cat] };
+      break;
+    }
+  }
+
+  return { results: processed, lastPlay: outgoingPlay };
 }
 
 // ===== 地区关键字列表 =====
@@ -2412,16 +2536,19 @@ function performRecognition(text) {
   // 圆点强制地区模式
   const dotRegion = window._dotRegion || 'auto';
 
+  // 跨行继承上下文
+  let lastInheritablePlay = null;
+
   for (const line of lines) {
-    if (!line.trim()) continue;
+    if (!line.trim()) {
+      continue;
+    }
 
     let orderLine = line;
     
     if (dotRegion !== 'auto') {
-      // 强制用圆点地区，不看文本
       currentLineRegion = dotRegion;
     } else {
-      // 从文本中提取地区
       const extracted = extractRegion(line);
       if (extracted) {
         currentLineRegion = extracted.region;
@@ -2448,7 +2575,9 @@ function performRecognition(text) {
       lineResults.push(...parsed);
     }
     if (lineResults.length > 0) {
-      lineResults = applyInlineInheritance(lineResults);
+      const inheritResult = applyInlineInheritance(lineResults, lastInheritablePlay);
+      lineResults = inheritResult.results;
+      lastInheritablePlay = inheritResult.lastPlay;
       lineResults.forEach(r => { r.region = currentLineRegion; });
       allResults.push(...lineResults);
     }
@@ -2458,7 +2587,8 @@ function performRecognition(text) {
     category: r.cat, numbers: r.nums, unitAmount: r.amt,
     totalCount: r.cnt, totalAmount: r.total, kw: r.kw || '', warnings: r.warnings || [],
     rawLine: r.rawLine || '',
-    region: r.region || currentRegion
+    region: r.region || currentRegion,
+    _inherited: r._inherited || false
   }));
 
   if (resultDiv) {
@@ -2507,6 +2637,9 @@ function displayResults(rs, container) {
     const info = r.totalCount > 1 ? `(${r.totalCount}注, 共${Math.round(r.totalAmount)})` : `(共${Math.round(r.totalAmount)})`;
     const numStr = formatNums(r.category, r.numbers);
     let line = `<span style="${regionColor}">${regionLabel}·</span>${r.category}:${numStr}${amountStr} ${info}`;
+    if (r._inherited) {
+      line += ` <span style="color:#27ae60;">[继承]</span>`;
+    }
     if (r.warnings && r.warnings.length) { line += ` <span style="color:red;">[${r.warnings.join('；')}]</span>`; }
     html += `<div class="result-line">${line}</div>`;
     const pureNumStr = formatNums(r.category, r.numbers);
@@ -2532,7 +2665,10 @@ function formatNums(cat, numsArr) {
   const simpleCats = ['特码', '特肖', '平特肖', '平码', '平特尾'];
   if (simpleCats.includes(cat)) return numsArr.join('-');
   if (cat.startsWith('包')) return numsArr.join('-');
-  if (cat.includes('连肖')) return numsArr.map(g => '(' + g.split('').join('-') + ')').join(' ');
+  if (cat.includes('连肖')) return numsArr.map(g => {
+    if (g.includes('-')) return '(' + g + ')';
+    return '(' + g.split('').join('-') + ')';
+  }).join(' ');
   return numsArr.map(g => `(` + g + `)`).join(' ');
 }
 
@@ -4701,7 +4837,7 @@ async function saveReportOrder(){
   showToast('已上报成功（' + savedCount + '个地区）'); 
   setTimeout(() => { const toast = document.querySelector('.toast-message.show'); if (toast) toast.style.color = '#ff0000'; }, 10); 
 }
-    function updateOrderCountDisplay() {
+   function updateOrderCountDisplay() {
   const fd = document.getElementById('filterDate')?.value || getTodayCST();
   getOrderRecords().then(orders => {
     const todayOrders = orders.filter(r => r.date === fd);
@@ -4960,7 +5096,6 @@ async function updateTableFromRecords(){
               reportAmountData[numPadded] = (reportAmountData[numPadded] || 0) + perNumAmt;
               if (user && userBetData[user]) userBetData[user][numPadded] = (userBetData[user][numPadded] || 0) - perNumAmt;
             });
-            // 修复：上报生肖金额直接累加amtRaw，不用perNumAmt*nums.length避免翻倍
             zodiacReportAmount[z] = (zodiacReportAmount[z] || 0) + amtRaw;
             if (perNumAmt >= zMin && perNumAmt <= zMax) zodiacFilteredReportAmount[z] = (zodiacFilteredReportAmount[z] || 0) + amtRaw;
           });
@@ -5022,10 +5157,12 @@ async function updateTableFromRecords(){
           return;
         }
 
+        // 修改点：处理普通特码/生肖上报，避免重复累加号码金额
         const { numbers, zodiacs, amount, playType } = countItemsInLine(line);
         if (!amount || amount <= 0) return;
         if (playType && playType !== '特码') return;
 
+        // 号码金额只在这里累加一次
         numbers.forEach(num => {
           reportBetData[num] = (reportBetData[num] || 0) - amount;
           reportAmountData[num] = (reportAmountData[num] || 0) + amount;
@@ -5033,16 +5170,12 @@ async function updateTableFromRecords(){
           if (zodiacs.length === 0) directReportAmount[num] = (directReportAmount[num] || 0) + amount;
         });
 
+        // 生肖层面统计，不再重复累加号码金额
         zodiacs.forEach(z => {
           const zNumCount = (ZODIAC_NUMS[z] || '').split(/[\s,，]+/).length || 0;
           zodiacReportAmount[z] = (zodiacReportAmount[z] || 0) + amount * zNumCount;
           if (amount >= zMin && amount <= zMax) zodiacFilteredReportAmount[z] = (zodiacFilteredReportAmount[z] || 0) + amount * zNumCount;
-          (ZODIAC_NUMS[z] || '').split(/[\s,，]+/).forEach(n => {
-            const num = n.padStart(2, '0');
-            reportBetData[num] = (reportBetData[num] || 0) - amount;
-            reportAmountData[num] = (reportAmountData[num] || 0) + amount;
-            if (user && userBetData[user]) userBetData[user][num] = (userBetData[user][num] || 0) - amount;
-          });
+          // 删除了原本在生肖内部对 reportBetData 和 reportAmountData 的重复累加
         });
       });
     } catch(e) {} });
