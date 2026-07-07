@@ -983,9 +983,9 @@ function showRecognizeModal() {
               <span style="width:7px;height:7px;border-radius:50%;"></span>粤
             </span>
           </div>
-          <button class="btn btn-prefix" onclick="showPrefixManager()">前缀</button>
-          <button class="btn btn-amount-prefix" onclick="showAmountPrefixManager()">金额前缀</button>
-          <button class="btn btn-amount-prefix2" onclick="showAmountSuffixManager()">金额后缀</button>
+          <button class="btn btn-prefix" onclick="showPrefixManager()" style="font-size:10px;padding:4px 6px;min-height:24px;">前缀</button>
+          <button class="btn btn-amount-prefix" onclick="showAmountPrefixManager()" style="font-size:10px;padding:4px 6px;min-height:24px;">金额前缀</button>
+          <button class="btn btn-amount-prefix2" onclick="showAmountSuffixManager()" style="font-size:10px;padding:4px 6px;min-height:24px;">金额后缀</button>
         </div>
         <div class="order-input-container" style="flex:1;"><div class="input-column"><div class="box-label">订单输入框</div><textarea class="source-order-input" oninput="performRecognition(this.value)"></textarea></div><div class="result-column"><div class="box-label">识别结果</div><div class="result-area-new"><div class="result-content" id="orderResult" contenteditable="false"></div></div></div></div>
         <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;">
@@ -997,9 +997,9 @@ function showRecognizeModal() {
           <button class="btn btn-remove-sep" onclick="removeSeparators()">去分隔</button>
           <button class="btn btn-mark" onclick="markSelection()">标记</button>
           <button class="btn btn-cancel" onclick="semanticReplace()">语义转换</button>
-          <button class="btn" onclick="markRegion('macau')" style="background:#e74c3c;color:#fff;">标澳</button>
-          <button class="btn" onclick="markRegion('hongkong')" style="background:#3498db;color:#fff;">标香</button>
-          <button class="btn" onclick="markRegion('yuegang')" style="background:#27ae60;color:#fff;">标粤</button>
+          <button class="btn" onclick="markRegion('macau')" style="background:#e74c3c;color:#fff;font-size:10px;padding:4px 6px;min-height:24px;">标澳</button>
+          <button class="btn" onclick="markRegion('hongkong')" style="background:#3498db;color:#fff;font-size:10px;padding:4px 6px;min-height:24px;">标港</button>
+          <button class="btn" onclick="markRegion('yuegang')" style="background:#27ae60;color:#fff;font-size:10px;padding:4px 6px;min-height:24px;">标粤</button>
           <span id="invalidTokensDisplay" style="color:red; font-size:12px; display:none; white-space:pre-line; margin-left:auto;"></span>
         </div>
         <div class="cat-shortcuts-container" id="catShortcutsContainer" style="font-size:12px;line-height:1.6;margin-top:6px;">${catSpans}</div>
