@@ -2502,14 +2502,12 @@ function extractRegion(line) {
   for (const { region, keyword } of allKeywords) {
     const idx = line.indexOf(keyword);
     if (idx !== -1) {
+      // 只检查前面是否紧挨汉字（防止匹配到非独立的关键字，如“澳”匹配到“澳门”中间的“澳”）
       if (idx > 0 && /[\u4e00-\u9fa5]/.test(line.charAt(idx - 1))) {
         continue;
       }
-      const afterIdx = idx + keyword.length;
-      if (afterIdx < line.length && /[\u4e00-\u9fa5]/.test(line.charAt(afterIdx))) {
-        continue;
-      }
-      const remaining = (line.substring(0, idx) + line.substring(afterIdx)).trim();
+      // 不再检查后面是否紧挨汉字，只要包含关键字就提取
+      const remaining = (line.substring(0, idx) + line.substring(idx + keyword.length)).trim();
       return { region, remaining };
     }
   }
