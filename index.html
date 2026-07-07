@@ -578,7 +578,7 @@ tr.selected-row{background-color:#dceeff!important;font-weight:bold;box-shadow:i
         </div>
       </div>
     </div>
-<!-- 右侧风险报告区域 -->
+    <!-- 右侧风险报告区域 -->
     <div class="risk-report-area">
         <div class="card" id="riskReportCard">
           <div class="card-title">
@@ -1022,7 +1022,7 @@ function showRecognizeModal() {
 function closeRecognizeModal() { const textarea = document.querySelector('.source-order-input'); if (textarea) { const draftKey = `recognizeDraft_${currentRegion}`; localStorage.setItem(draftKey, textarea.value); } const win = document.getElementById('recognizeWin'); if (win) win.remove(); }
 
 function markSelection() { const ta = document.querySelector('.source-order-input'); if (!ta) return; const start = ta.selectionStart, end = ta.selectionEnd; if (start === end) { showToast('请先选择文本'); return; } const selectedText = ta.value.substring(start, end); const tokens = selectedText.split(/[\s,，.。、+\-*＊\/\\|]+/).filter(t => t.trim()); if (tokens.length === 0) { showToast('所选内容无有效文字'); return; } const merged = tokens.join('-'); ta.value = ta.value.substring(0, start) + merged + ta.value.substring(end); performRecognition(ta.value); }
-// ===== 订单变量与基础函数 =====
+    // ===== 订单变量与基础函数 =====
 let tableBetData = {}, userBetData = {}, reportBetData = {}, reportAmountData = {}, reportRiskData = {};
 let numberCount = {}, zodiacCount = {}, numberAmountCount = {}, zodiacAmountCount = {};
 let zodiacDirectAmount = {}, zodiacFilteredAmount = {};
@@ -1235,7 +1235,7 @@ function saveOddsData() {
   document.querySelectorAll('.odds-input').forEach(inp => { inp.disabled = true; inp.style.border = 'none'; inp.style.background = 'transparent'; });
   showToast('赔率已保存'); if (document.getElementById('lianxiaoStatsWin')) refreshLianxiaoStats();
 }
-// ===== 新版字典与识别核心 =====
+    // ===== 新版字典与识别核心 =====
 const ZODIAC = '鼠牛虎兔龙蛇马羊猴鸡狗猪';
 const ZODIAC_NUMS = { '鼠': '07 19 31 43', '牛': '06 18 30 42', '虎': '05 17 29 41', '兔': '04 16 28 40', '龙': '03 15 27 39', '蛇': '02 14 26 38', '马': '01 13 25 37 49', '羊': '12 24 36 48', '猴': '11 23 35 47', '鸡': '10 22 34 46', '狗': '09 21 33 45', '猪': '08 20 32 44' };
 const NUM_TO_ZODIAC = {};
@@ -1325,7 +1325,7 @@ function zodiacToNums(zStr) { const ns = []; for (const z of zStr) { if (D[z]) D
 function extractNums(txt) { return (txt.match(/\d+/g) || []).map(n => parseInt(n)).filter(n => n >= 1 && n <= 49).map(n => String(n).padStart(2, '0')); }
 function extractZodiacs(txt) { return (txt.match(new RegExp(`[${ZODIAC}]`, 'g')) || []); }
 function findInvalidNums(txt) { if (!txt) return []; const allNums = (txt.match(/\d+/g) || []).map(n => parseInt(n)); return allNums.filter(n => n > 49); }
-function preprocess(txt) {
+    function preprocess(txt) {
   let c = txt;
   c = c.replace(/[\uFF01-\uFF5E]/g, ch => String.fromCharCode(ch.charCodeAt(0) - 0xFEE0));
   c = c.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
@@ -1460,7 +1460,7 @@ function parseTeMaSegment(content) {
   const warnings = invalidNums.length ? ['无效号码: ' + invalidNums.join(', ')] : [];
   return { displayItems, totalCount: cnt, warnings, allNumsArr: allNumsArr };
 }
-function collectSpecialMatches(text) {
+    function collectSpecialMatches(text) {
   const Z = ZODIAC;
   const allMatches = [];
 
@@ -1910,7 +1910,7 @@ function collectSpecialMatches(text) {
   }
   return deduped;
 }
-function processOneLine(line) {
+    function processOneLine(line) {
   if (!line.trim()) return [];
 
   // ===== 号码-金额对识别（优先处理） =====
@@ -2663,7 +2663,7 @@ function processCurrentOrder(input, user, isNormal, date = null) {
   });
   updateTableFromRecords();
 }
-// ===== 连肖统计弹窗 =====
+    // ===== 连肖统计弹窗 =====
 function showLianxiaoStatsWin() {
   if (document.getElementById('lianxiaoStatsWin')) return;
   const win = document.createElement('div'); win.className = 'floating-window'; win.id = 'lianxiaoStatsWin';
@@ -2887,7 +2887,7 @@ function normalizePlayType(playType) {
   };
   return map[playType] || playType;
 }
-// ===== 兑奖统计核心函数 =====
+    // ===== 兑奖统计核心函数 =====
 function refreshDuiJiangStats() {
   const orderBody = document.getElementById('duiJiangOrderBody');
   const reportBody = document.getElementById('duiJiangReportBody');
@@ -3047,7 +3047,7 @@ function buildHitDetail(hitByType) {
   }
   return parts.length > 0 ? parts.join('，') : '';
 }
-// ===== 特肖兑奖处理函数（下单） =====
+    // ===== 特肖兑奖处理函数（下单） =====
 function processTexiaoLineDuijiang(stats, content, amt, drawTeMaZodiac, drawTeMa, hasValidDraw) {
   const zodiacs = content.split('-').map(z => z.trim()).filter(z => z);
   if (zodiacs.length === 0) return;
@@ -3292,7 +3292,7 @@ function processComboLineDuijiangNew(stats, playType, content, amt, drawZodiacsS
     }
   });
 }
-// ===== 上报兑奖处理函数 =====
+    // ===== 上报兑奖处理函数 =====
 function processComboLineDuijiangNewReport(stats, playType, content, amt, drawZodiacsSet, drawNumbersSet, drawNumbersZhengma, hasValidDraw) {
   playType = normalizePlayType(playType);
   const cleaned = content.replace(/[()]/g, '');
@@ -3603,7 +3603,7 @@ function getOddsForType(type, oddsData) {
     rebate: parseFloat(saved.rebate) || defaults[type]?.rebate || 4
   };
 }
-// ===== 连肖识别输入处理（旧版保持不变） =====
+    // ===== 连肖识别输入处理（旧版保持不变） =====
 function comboRemoveSeparators() { const ta = document.getElementById('comboInput'); if (!ta) return; const s = ta.selectionStart, e = ta.selectionEnd; if (s === e) { showToast('请先选择文本'); return; } const sel = ta.value.substring(s, e); const cleaned = sel.replace(/[\s,，.。、+\-*＊\/\\|]+/g, ''); ta.value = ta.value.substring(0, s) + cleaned + ta.value.substring(e); }
 async function pasteComboOrder() { try { const text = await navigator.clipboard.readText(); if (text) { const ta = document.getElementById('comboInput'); if (ta) { ta.value = text; } } } catch(err) { showToast('无法访问剪贴板'); } }
 
@@ -4701,7 +4701,7 @@ async function saveReportOrder(){
   showToast('已上报成功（' + savedCount + '个地区）'); 
   setTimeout(() => { const toast = document.querySelector('.toast-message.show'); if (toast) toast.style.color = '#ff0000'; }, 10); 
 }
-function updateOrderCountDisplay() {
+    function updateOrderCountDisplay() {
   const fd = document.getElementById('filterDate')?.value || getTodayCST();
   getOrderRecords().then(orders => {
     const todayOrders = orders.filter(r => r.date === fd);
@@ -5227,7 +5227,7 @@ function renderAmountFrequencyCards(){
   } 
   ztb+='</tbody>'; zt.innerHTML=zth+ztb; 
 }
-function isTokenMatching(token,targetNum){ const t=targetNum.padStart(2,'0'); if(/^\d{1,2}$/.test(token))return token.padStart(2,'0')===t; if(D[token]){const nums=keyToAllNums(token);return nums.includes(t);} return false; }
+    function isTokenMatching(token,targetNum){ const t=targetNum.padStart(2,'0'); if(/^\d{1,2}$/.test(token))return token.padStart(2,'0')===t; if(D[token]){const nums=keyToAllNums(token);return nums.includes(t);} return false; }
 function highlightContent(content,targetNum){ if(!targetNum)return content; const t=targetNum.padStart(2,'0'); const parts=[];let tmp=''; for(const ch of content){if(ch==='-'||ch===' '){if(tmp)parts.push(tmp);parts.push(ch);tmp='';}else{tmp+=ch;}} if(tmp)parts.push(tmp); return parts.map(p=>{if(p==='-'||p===' ')return p;if(isTokenMatching(p,targetNum))return`<span class="highlight-number">${p}</span>`;return p;}).join(''); }
 function orderContainsTarget(content,targetNum){ if(!targetNum)return true; const t=targetNum.padStart(2,'0'); const lines=content.split('\n'); for(const line of lines){ if(!line.startsWith('特码:')) continue; const m=line.match(/^特码:(.+?)\s+各(?:数|)\s*(\d+)$/); if(!m)continue; const cont=m[1]; const parts=[];let tmp=''; for(const ch of cont){if(ch==='-'||ch===' '){if(tmp)parts.push(tmp);tmp='';}else{tmp+=ch;}} if(tmp)parts.push(tmp); for(const p of parts){if(p!=='-'&&p!==' '&&isTokenMatching(p,targetNum))return true;} } return false; }
 function getSpecialAmountFromOrder(content, prizeNum) { if (!prizeNum) return 0; const targetNum = prizeNum.padStart(2, '0'); const lines = content.split('\n'); let total = 0; for (const line of lines) { const match = line.match(/^(.+?):(.+?)\s+各(?:数|)\s*(\d+)$/); if (!match) continue; const tokensPart = match[2]; const amount = parseInt(match[3]) || 0; const tokens = tokensPart.split('-').map(t => t.trim()).filter(t => t); for (const token of tokens) { if (isTokenMatching(token, targetNum)) { total += amount; } } } return total; }
@@ -5411,6 +5411,34 @@ function deductPingtexiaoFromContent(content) {
   if (changed) { savePingtexiaoData(pingtexiaoData); renderPingtexiaoTable(); updatePingtexiaoTotal(); }
 }
 
+// ===== 新增：删除上报时同步扣除平特肖上报金额 =====
+function deductPingtexiaoFromReportContent(content) {
+  const pingtexiaoData = getPingtexiaoData();
+  let changed = false;
+  const lines = content.split('\n');
+  lines.forEach(line => {
+    const match = line.match(/^(.+?):(.+?)\s+各\s*(\d+)$/);
+    if (!match) return;
+    const playType = normalizePlayType(match[1]);
+    if (playType !== '平特肖') return;
+    const combosStr = match[2];
+    const amt = parseInt(match[3]) || 0;
+    const cleaned = combosStr.replace(/[()]/g, '');
+    const items = cleaned.split('-').filter(i => i.trim());
+    items.forEach(item => {
+      if (/^[\u4e00-\u9fa5]$/.test(item) && ZODIAC_NUMS[item]) {
+        if (pingtexiaoData[item]) {
+          const oldReport = parseFloat(pingtexiaoData[item].report) || 0;
+          const newReport = Math.max(0, oldReport - amt);
+          pingtexiaoData[item].report = newReport.toString();
+          changed = true;
+        }
+      }
+    });
+  });
+  if (changed) { savePingtexiaoData(pingtexiaoData); renderPingtexiaoTable(); updatePingtexiaoTotal(); }
+}
+
 async function showReportOrderRecord(filter='all'){ try{ const recs=await getReportOrderRecords(),users=getUsers(); if(document.getElementById('reportWin'))document.getElementById('reportWin').remove(); const fd=document.getElementById('filterDate')?.value; const df=fd?recs.filter(r=>r.date===fd):recs; const fin=(filter==='all')?df:df.filter(r=>r.user===filter); window._reportListAllData = fin; window._reportListPage = 0; const w=document.createElement('div'); w.className='floating-window'; w.id='reportWin'; w.style.width='700px'; w.style.height='500px'; w.style.left='50%'; w.style.top='50%'; w.style.transform='translate(-50%,-50%)'; let html=`<div class="modal-header"><h3>上报数据 <span style="font-size:12px;font-weight:normal;">(共${fin.length}单)</span></h3><div class="window-controls"><button onclick="maximizeWindow('reportWin')">🗖</button><button onclick="document.getElementById('reportWin').remove()">×</button></div></div><div class="modal-body" style="display:flex; flex-direction:column; height: calc(100% - 120px);">`; html+=`<div style="margin-bottom:10px;display:flex;gap:12px;flex-wrap:wrap;align-items:center;position:sticky;top:0;background:rgba(255,255,255,0.9);z-index:2;padding:5px 0;"><select id="reportRecordUserFilter" onchange="showReportOrderRecord(this.value)" style="padding:4px 8px;border-radius:4px;border:1px solid #ccc;"><option value="all" ${filter==='all'?'selected':''}>全部用户</option>`; users.forEach(u=>html+=`<option value="${u}" ${u===filter?'selected':''}>${u}</option>`); html+=`</select><button onclick="checkAllReport()" style="padding:6px 12px;background:#007bff;color:#fff;border:none;border-radius:4px;">全选</button><button onclick="uncheckAllReport()" style="padding:6px 12px;background:#6c757d;color:#fff;border:none;border-radius:4px;">取消全选</button><button onclick="deleteCheckedReport()" style="padding:6px 12px;background:#e74c3c;color:#fff;border:none;border-radius:4px;">批量删除</button></div>`; html+=`<div id="reportOrderListContainer" style="flex:1; overflow-y:auto;">`; if(fin.length===0)html+=`<div style="padding:20px;text-align:center;color:#666;">暂无上报记录</div>`; else{ const pageSize = window._orderListPageSize || 50; const pageData = fin.slice(0, pageSize); pageData.forEach(it=>{ const ts=formatTimestampToCST(it.timestamp),ud=it.user||'未知',ta=it.totalAmount||0; html+=`<div class="order-item"><input type="checkbox" class="report-order-check" data-id="${it.id}"><div class="order-content" data-id="${it.id}">${it.content.replace(/\n/g,'<br>')}</div><div class="order-info"><span class="order-total" style="color:#000;">合计：${ta}</span><span class="order-meta"><span style="color:red;">用户：${ud}</span> &nbsp; ${ts}</span></div><button class="order-copy" onclick="copySingleOrderById('${it.id}')" style="background:#8e44ad;color:#fff;border:none;border-radius:3px;cursor:pointer;font-size:11px;padding:4px 10px;white-space:nowrap;margin-right:4px;">复制</button><button class="order-del" onclick="deleteReportOrderRecord('${it.id}')">删除</button></div>`; }); if (fin.length > pageSize) { html += `<div style="text-align:center;padding:10px;" id="loadMoreReportsBtn"><button onclick="loadMoreReports()" style="padding:6px 20px;background:#007bff;color:#fff;border:none;border-radius:4px;cursor:pointer;">加载更多（${pageSize}/${fin.length}）</button></div>`; } } html+=`</div></div><div class="modal-footer"><button onclick="batchCopyOrders('.report-order-check')" style="padding:8px 16px;background:#8e44ad;color:#fff;border:none;border-radius:4px;">批量复制</button><button onclick="document.getElementById('reportWin').remove()" style="padding:8px 16px;background:#6c757d;color:#fff;border:none;border-radius:4px;">关闭</button></div>`; w.innerHTML=html; document.body.appendChild(w); makeWindowDraggable('reportWin'); highestZ+=1; w.style.zIndex=highestZ; }catch(e){showToast('加载失败');} }
 
 function loadMoreReports() {
@@ -5434,14 +5462,70 @@ function loadMoreReports() {
   }
 }
 
-async function deleteReportOrderRecord(id) { if (!(await confirm('确定删除？（可到回收站恢复）'))) return; try { const record = await new Promise((resolve) => { const tx = db.transaction([REPORT_STORE_NAME], 'readonly'); const store = tx.objectStore(REPORT_STORE_NAME); const req = store.get(id); req.onsuccess = () => resolve(req.result); req.onerror = () => resolve(null); }); const result = await deleteReportOrderRecordFromIDB(id); if (result) { if (record) addOperationLog('delete_report', record.content, currentRegion, record.user, record.totalAmount || 0); await updateTableFromRecords(); calculateStorageUsage(); const userFilter = document.getElementById('reportRecordUserFilter')?.value || 'all'; await showReportOrderRecord(userFilter); updateRecycleCount(); showToast('已移入回收站'); } else { showToast('删除失败，记录可能已不存在'); } } catch(e) { console.error('删除上报异常', e); showToast('删除异常'); } }
+async function deleteReportOrderRecord(id) {
+  if (!(await confirm('确定删除？（可到回收站恢复）'))) return;
+  try {
+    const record = await new Promise((resolve) => {
+      const tx = db.transaction([REPORT_STORE_NAME], 'readonly');
+      const store = tx.objectStore(REPORT_STORE_NAME);
+      const req = store.get(id);
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => resolve(null);
+    });
+    const result = await deleteReportOrderRecordFromIDB(id);
+    if (result) {
+      if (record) {
+        addOperationLog('delete_report', record.content, currentRegion, record.user, record.totalAmount || 0);
+        deductPingtexiaoFromReportContent(record.content); // 新增
+      }
+      await updateTableFromRecords(); calculateStorageUsage();
+      const userFilter = document.getElementById('reportRecordUserFilter')?.value || 'all';
+      await showReportOrderRecord(userFilter);
+      updateRecycleCount();
+      showToast('已移入回收站');
+    } else {
+      showToast('删除失败，记录可能已不存在');
+    }
+  } catch(e) {
+    console.error('删除上报异常', e);
+    showToast('删除异常');
+  }
+}
+
+async function deleteCheckedReport(){
+  const ids=[]; document.querySelectorAll('.report-order-check:checked').forEach(cb=>ids.push(String(cb.dataset.id)));
+  if(ids.length===0){showToast('请选择');return;}
+  if(!(await confirm(`确定要删除选中的 ${ids.length} 条上报记录吗？（可到回收站恢复）`))) return;
+  try {
+    const details = [];
+    for (const id of ids) {
+      const record = await new Promise((resolve) => {
+        const tx = db.transaction([REPORT_STORE_NAME], 'readonly');
+        const store = tx.objectStore(REPORT_STORE_NAME);
+        const req = store.get(id);
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = () => resolve(null);
+      });
+      if (record) details.push(record);
+    }
+    await batchDeleteReportOrderRecordFromIDB(ids);
+    details.forEach(rec => {
+      addOperationLog('delete_report', rec.content, currentRegion, rec.user, rec.totalAmount || 0);
+      deductPingtexiaoFromReportContent(rec.content); // 新增
+    });
+    await updateTableFromRecords();
+    calculateStorageUsage();
+    const userFilter = document.getElementById('reportRecordUserFilter')?.value || 'all';
+    await showReportOrderRecord(userFilter);
+    updateRecycleCount();
+    showToast(`已将 ${ids.length} 条移入回收站`);
+  } catch(e) { console.error('批量删除异常', e); showToast('批量删除异常'); }
+}
 
 function checkAll(){ document.querySelectorAll('.order-check').forEach(cb=>cb.checked=true); }
 function uncheckAll(){ document.querySelectorAll('.order-check').forEach(cb=>cb.checked=false); }
 function checkAllReport(){ document.querySelectorAll('.report-order-check').forEach(cb=>cb.checked=true); }
 function uncheckAllReport(){ document.querySelectorAll('.report-order-check').forEach(cb=>cb.checked=false); }
-
-async function deleteCheckedReport(){ const ids=[]; document.querySelectorAll('.report-order-check:checked').forEach(cb=>ids.push(String(cb.dataset.id))); if(ids.length===0){showToast('请选择');return;} if(!(await confirm(`确定要删除选中的 ${ids.length} 条上报记录吗？（可到回收站恢复）`))) return; try { const details = []; for (const id of ids) { const record = await new Promise((resolve) => { const tx = db.transaction([REPORT_STORE_NAME], 'readonly'); const store = tx.objectStore(REPORT_STORE_NAME); const req = store.get(id); req.onsuccess = () => resolve(req.result); req.onerror = () => resolve(null); }); if (record) details.push(record); } await batchDeleteReportOrderRecordFromIDB(ids); details.forEach(rec => addOperationLog('delete_report', rec.content, currentRegion, rec.user, rec.totalAmount || 0)); await updateTableFromRecords(); calculateStorageUsage(); const userFilter = document.getElementById('reportRecordUserFilter')?.value || 'all'; await showReportOrderRecord(userFilter); updateRecycleCount(); showToast(`已将 ${ids.length} 条移入回收站`); } catch(e) { console.error('批量删除异常', e); showToast('批量删除异常'); } }
 
 let resetLock = false; let resetLongPressTimer = null;
 const resetBtn = document.getElementById('resetBtn');
