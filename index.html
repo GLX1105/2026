@@ -470,7 +470,7 @@ tr.selected-row{background-color:#dceeff!important;font-weight:bold;box-shadow:i
     <button class="btn btn-clear" onclick="logout()">退出</button>
   </div>
 </div>
-    <div class="container" id="mainContent">
+<div class="container" id="mainContent">
   <div class="recognize-wrap">
       <!-- 下注统计大卡片：号码次数 + 生肖次数 + 上报号码金额 -->
       <div class="card" style="margin-top:0;">
@@ -579,7 +579,7 @@ tr.selected-row{background-color:#dceeff!important;font-weight:bold;box-shadow:i
         </div>
       </div>
     </div>
-        <!-- 右侧风险报告区域 -->
+<!-- 右侧风险报告区域 -->
     <div class="risk-report-area">
         <div class="card" id="riskReportCard">
           <div class="card-title">
@@ -657,7 +657,7 @@ tr.selected-row{background-color:#dceeff!important;font-weight:bold;box-shadow:i
     </div>
   </div>
 </div>
-    <script>
+<script>
 // ===== 密码解码函数 =====
 function decodePassword(encoded) { return atob(encoded); }
 
@@ -779,30 +779,123 @@ async function switchRegion(region) {
 
 function clearMemoryData() { tableBetData = {}; userBetData = {}; reportBetData = {}; reportAmountData = {}; reportRiskData = {}; numberCount = {}; zodiacCount = {}; numberAmountCount = {}; zodiacAmountCount = {}; zodiacDirectAmount = {}; zodiacFilteredAmount = {}; zodiacReportAmount = {}; zodiacFilteredReportAmount = {}; numberOrderTotal = 0; zodiacWeightedTotal = 0; originalOrderAmount = {}; directOrderAmount = {}; directReportAmount = {}; }
 
-// ===== 浮动窗口控制 =====
+// ===== 浮动窗口控制（增强版） =====
 let highestZ = 2000;
 function makeWindowDraggable(winId) {
   const win = document.getElementById(winId);
   if (!win) return;
   const header = win.querySelector('.modal-header') || win.querySelector('.database-modal-header');
-  const footer = win.querySelector('.modal-footer');
   let isDragging = false, startX, startY, startLeft, startTop;
+
   function onMouseDown(e) {
     if (e.target.closest('.window-controls')) return;
     if (e.target.closest('input, textarea, button, select, [contenteditable="true"]')) return;
+    if (e.offsetX > e.target.clientWidth || e.offsetY > e.target.clientHeight) return;
     isDragging = true;
     const rect = win.getBoundingClientRect();
-    startX = e.clientX; startY = e.clientY; startLeft = rect.left; startTop = rect.top;
-    win.style.cursor = 'grabbing'; e.preventDefault();
+    startX = e.clientX;
+    startY = e.clientY;
+    startLeft = rect.left;
+    startTop = rect.top;
+
+    // 如果窗口已经越界（标题栏被拖出屏幕），先将其拉回安全位置再开始拖拽
+    const minVisible = 50;
+    if (startTop < 0) {
+      win.style.top = '0px';
+      win.style.transform = 'none';
+      startTop = 0;
+    }
+    if (startLeft < -win.offsetWidth + minVisible) {
+      win.style.left = (-win.offsetWidth + minVisible) + 'px';
+      win.style.transform = 'none';
+      startLeft = -win.offsetWidth + minVisible;
+    }
+    if (startLeft > window.innerWidth - minVisible) {
+      win.style.left = (window.innerWidth - minVisible) + 'px';
+      win.style.transform = 'none';
+      startLeft = window.innerWidth - minVisible;
+    }
+
+    win.style.cursor = 'grabbing';
+    e.preventDefault();
   }
-  if (header) { header.addEventListener('mousedown', onMouseDown); }
-  if (footer) { footer.addEventListener('mousedown', onMouseDown); }
+
+  win.addEventListener('mousedown', onMouseDown);
+
+  if (header) {
+    header.addEventListener('dblclick', function(e) {
+      if (e.target.closest('.window-controls')) return;
+      if (e.target.closest('input, textarea, button, select')) return;
+      win.style.left = '50%';
+      win.style.top = '50%';
+      win.style.transform = 'translate(-50%, -50%)';
+      win.style.right = '';
+      win.style.bottom = '';
+      showToast('窗口已重置到中央');
+    });
+  }
+
   document.addEventListener('mousemove', (e) => {
     if (!isDragging) return;
-    const dx = e.clientX - startX; const dy = e.clientY - startY;
-    win.style.left = (startLeft + dx) + 'px'; win.style.top = (startTop + dy) + 'px'; win.style.transform = 'none';
+    const dx = e.clientX - startX;
+    const dy = e.clientY - startY;
+    let newLeft = startLeft + dx;
+    let newTop = startTop + dy;
+
+    const winWidth = win.offsetWidth;
+    const winHeight = win.offsetHeight;
+    const screenWidth = window.innerWidth;
+    const screenHeight = window.innerHeight;
+    const minVisible = 50;
+
+    // 左右边界限制：至少保留 minVisible 在屏幕内
+    if (newLeft < -winWidth + minVisible) newLeft = -winWidth + minVisible;
+    if (newLeft > screenWidth - minVisible) newLeft = screenWidth - minVisible;
+
+    // 上下边界限制：上方不允许标题栏超出屏幕顶部，下方至少保留 minVisible
+    if (newTop < 0) newTop = 0;
+    if (newTop > screenHeight - minVisible) newTop = screenHeight - minVisible;
+
+    win.style.left = newLeft + 'px';
+    win.style.top = newTop + 'px';
+    win.style.transform = 'none';
   });
-  document.addEventListener('mouseup', () => { if (isDragging) { isDragging = false; win.style.cursor = ''; } });
+
+  document.addEventListener('mouseup', () => {
+    if (!isDragging) return;
+    isDragging = false;
+    win.style.cursor = '';
+
+    // 松开鼠标后再次确保窗口在安全区域内（兜底修正）
+    const rect = win.getBoundingClientRect();
+    const winWidth = win.offsetWidth;
+    const screenWidth = window.innerWidth;
+    const screenHeight = window.innerHeight;
+    const minVisible = 50;
+    let needsFix = false;
+
+    if (rect.top < 0) {
+      win.style.top = '0px';
+      win.style.transform = 'none';
+      needsFix = true;
+    }
+    if (rect.left < -winWidth + minVisible) {
+      win.style.left = (-winWidth + minVisible) + 'px';
+      win.style.transform = 'none';
+      needsFix = true;
+    }
+    if (rect.left > screenWidth - minVisible) {
+      win.style.left = (screenWidth - minVisible) + 'px';
+      win.style.transform = 'none';
+      needsFix = true;
+    }
+    if (rect.top > screenHeight - minVisible) {
+      win.style.top = (screenHeight - minVisible) + 'px';
+      win.style.transform = 'none';
+      needsFix = true;
+    }
+  });
+
   win.addEventListener('mousedown', () => { highestZ += 1; win.style.zIndex = highestZ; });
 }
 
@@ -1089,7 +1182,6 @@ function computeMaxLoss() {
     if (category === '特码') {
       const { odds } = getOddsForType('特码', oddsData);
       numbers.forEach(token => {
-        // 展开 token 为实际号码，并累加该 token 的投注金额
         let expanded;
         if (/^\d{1,2}$/.test(token) && parseInt(token) >= 1 && parseInt(token) <= 49) {
           expanded = [String(parseInt(token)).padStart(2, '0')];
@@ -1098,13 +1190,11 @@ function computeMaxLoss() {
         } else if (D[token]) {
           expanded = keyToAllNums(token) || [token];
         } else {
-          expanded = [token]; // 兜底
+          expanded = [token];
         }
-        // 累加赔付
         expanded.forEach(num => {
           numPayout[num] = (numPayout[num] || 0) + unitAmount * odds;
         });
-        // 总投注金额 = 实际投注的号码总数 × 每号金额
         totalOrderAmount += expanded.length * unitAmount;
       });
     }
@@ -1114,13 +1204,11 @@ function computeMaxLoss() {
         const type = isBenming ? '特肖本年肖' : '特肖';
         const { odds } = getOddsForType(type, oddsData);
         const nums = (ZODIAC_NUMS[zodiac] || '').split(/[\s,，]+/);
-        // 整肖赔付按整肖金额计算，开该生肖下任意号码都赔付相同金额
         const payout = unitAmount * odds;
         nums.forEach(num => {
           numPayout[num] = (numPayout[num] || 0) + payout;
         });
       });
-      // 总投注金额 = 每个生肖的金额累加
       totalOrderAmount += numbers.length * unitAmount;
     }
   });
@@ -1252,7 +1340,7 @@ function saveOddsData() {
   document.querySelectorAll('.odds-input').forEach(inp => { inp.disabled = true; inp.style.border = 'none'; inp.style.background = 'transparent'; });
   showToast('赔率已保存'); if (document.getElementById('lianxiaoStatsWin')) refreshLianxiaoStats();
 }
-    // ===== 新版字典与识别核心 =====
+// ===== 新版字典与识别核心 =====
 const ZODIAC = '鼠牛虎兔龙蛇马羊猴鸡狗猪';
 const ZODIAC_NUMS = { '鼠': '07 19 31 43', '牛': '06 18 30 42', '虎': '05 17 29 41', '兔': '04 16 28 40', '龙': '03 15 27 39', '蛇': '02 14 26 38', '马': '01 13 25 37 49', '羊': '12 24 36 48', '猴': '11 23 35 47', '鸡': '10 22 34 46', '狗': '09 21 33 45', '猪': '08 20 32 44' };
 const NUM_TO_ZODIAC = {};
@@ -1292,18 +1380,9 @@ function buildDict() {
   const cnT = ['零', '一', '二', '三', '四', '五', '六', '七', '八', '九']; for (let i = 0; i <= 9; i++) d[cnT[i] + '尾'] = tails[i];
   d['小尾'] = '10 20 30 40 01 11 21 31 41 02 12 22 32 42 03 13 23 33 43 04 14 24 34 44';
   d['大尾'] = '05 15 25 35 45 06 16 26 36 46 07 17 27 37 47 08 18 28 38 48 09 19 29 39 49';
-  const arr0 = [];
-  for (let i = 1; i <= 9; i++) arr0.push(String(i).padStart(2, '0'));
-  d['0头'] = arr0.join(' ');
-  d['0头单'] = arr0.filter(n => parseInt(n) % 2 === 1).join(' ');
-  d['0头双'] = arr0.filter(n => parseInt(n) % 2 === 0).join(' ');
-  for (let h = 1; h <= 4; h++) {
-    const arr = [];
-    for (let i = 0; i < 10; i++) { const n = h * 10 + i; if (n <= 49) arr.push(String(n).padStart(2, '0')); }
-    d[h + '头'] = arr.join(' ');
-    d[h + '头单'] = arr.filter(n => parseInt(n) % 2 === 1).join(' ');
-    d[h + '头双'] = arr.filter(n => parseInt(n) % 2 === 0).join(' ');
-  }
+  const arr0 = []; for (let i = 1; i <= 9; i++) arr0.push(String(i).padStart(2, '0'));
+  d['0头'] = arr0.join(' '); d['0头单'] = arr0.filter(n => parseInt(n) % 2 === 1).join(' '); d['0头双'] = arr0.filter(n => parseInt(n) % 2 === 0).join(' ');
+  for (let h = 1; h <= 4; h++) { const arr = []; for (let i = 0; i < 10; i++) { const n = h * 10 + i; if (n <= 49) arr.push(String(n).padStart(2, '0')); } d[h + '头'] = arr.join(' '); d[h + '头单'] = arr.filter(n => parseInt(n) % 2 === 1).join(' '); d[h + '头双'] = arr.filter(n => parseInt(n) % 2 === 0).join(' '); }
   for (let [k, v] of Object.entries(AGE_TO_NUMS)) { d[k] = v; }
   const hes = { '1合': '01 10', '2合': '02 11 20', '3合': '03 12 21 30', '4合': '04 13 22 31 40', '5合': '05 14 23 32 41', '6合': '06 15 24 33 42', '7合': '07 16 25 34 43', '8合': '08 17 26 35 44', '9合': '09 18 27 36 45', '10合': '19 28 37 46', '11合': '29 38 47', '12合': '39 48', '13合': '49' };
   for (let [k, v] of Object.entries(hes)) d[k] = v;
@@ -1342,13 +1421,55 @@ function zodiacToNums(zStr) { const ns = []; for (const z of zStr) { if (D[z]) D
 function extractNums(txt) { return (txt.match(/\d+/g) || []).map(n => parseInt(n)).filter(n => n >= 1 && n <= 49).map(n => String(n).padStart(2, '0')); }
 function extractZodiacs(txt) { return (txt.match(new RegExp(`[${ZODIAC}]`, 'g')) || []); }
 function findInvalidNums(txt) { if (!txt) return []; const allNums = (txt.match(/\d+/g) || []).map(n => parseInt(n)); return allNums.filter(n => n > 49); }
-    function preprocess(txt) {
+// ===== 预构建玩法名正则（模块顶层只执行一次） =====
+const PLAY_NAMES_LIST = [
+    '连肖', '连尾', '二中二', '三中三', '特碰', '不中',
+    '平特肖', '平特尾', '特肖', '特码', '平码'
+];
+
+function buildPlayPatterns() {
+    const patterns = [];
+    for (const name of PLAY_NAMES_LIST) {
+        patterns.push(name);
+        for (let i = 2; i <= 5; i++) {
+            patterns.push(i + name);
+        }
+    }
+    patterns.sort((a, b) => b.length - a.length);
+    return patterns;
+}
+
+const _playPunctPatterns = buildPlayPatterns();
+const _playPunctRegex = new RegExp(
+    `(${_playPunctPatterns.join('|')})[，。！？；：、,\\.\\!\\?;:]`,
+    'g'
+);
+
+function step_removePlayPunctuation(txt) {
+    return txt.replace(_playPunctRegex, '$1');
+}
+
+function preprocess(txt) {
   let c = txt;
   c = c.replace(/[\uFF01-\uFF5E]/g, ch => String.fromCharCode(ch.charCodeAt(0) - 0xFEE0));
   c = c.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
   // ===== 字符容错：o/O -> 0，l/i/I/！/! -> 1 =====
   c = c.replace(/[oO]/g, '0');
   c = c.replace(/[liI！!]/g, '1');
+
+  // ===== 修复5：中文标点处理 =====
+  const moneyKwPart = `(?:${KW_LIST.join('|')})`;
+  const moneySuffixPart = '(?:米|元|块|角|分|厘|眯|咪|井|#|快|斤)';
+  c = c.replace(/(\d) ([。！？；，])/g, '$1$2');
+  const reMoneyKw = new RegExp(`(${moneyKwPart}\\s*\\d+(?:\\.\\d+)?)\\s*([。！？；，])`, 'g');
+  c = c.replace(reMoneyKw, '$1\n');
+  const reMoneySuffix = new RegExp(`(\\d+(?:\\.\\d+)?\\s*${moneySuffixPart})\\s*([。！？；，])`, 'g');
+  c = c.replace(reMoneySuffix, '$1\n');
+  c = c.replace(/[。！？；，]/g, ' ');
+
+  // ===== 新增：删除玩法名后面紧跟的标点符号 =====
+  c = step_removePlayPunctuation(c);
+
   const reps = {
     夏式: '复式', 復式: '复式', 复制: '复式', 復制: '复式', 复习: '复式', 复试: '复式', 复示: '复式', 覆式: '复式', 複试: '复式',
     友: '有', 尤: '龙', 虑: '虎', 坡: '波', 午: '牛', 綠: '绿', 孑: '子', 监: '蓝', 俏: '肖', 串肖: '连肖', '连/肖': '连肖',
@@ -1359,25 +1480,17 @@ function findInvalidNums(txt) { if (!txt) return []; const allNums = (txt.match(
     三全中: '三中三', 復制: '复式', 鳮: '鸡', 単: '单', 組: '组', 平待: '平特', 泼: '波', 肖连: '连肖', 消: '肖', '〇': '0',
     l: '1', I: '1', 壹: '一', 贰: '二', 叁: '三', 肆: '四', 陆: '六', 柒: '七', 捌: '八', 玖: '九', 伍: '五', 免: '兔', 拘: '狗',
     馬: '马', 龍: '龙', 雞: '鸡', 豬: '猪', 候: '猴', 侯: '猴', 兔子: '兔', 猴子: '猴', 子: '鼠', 老蛇: '蛇',
-    // ===== 新增生僻字 / 异体字容错 =====
     '𤠣': '猴', '竜': '龙', '鷄': '鸡', '猎': '猪',
-    // 波色大小（PREPROCESS_REPLACE）
+    '二中二复': '复式二中二', '二中二复式': '复式二中二',
     '红波小': '红小', '红波大': '红大', '绿波小': '绿小', '绿波大': '绿大',
     '蓝波小': '蓝小', '兰小': '蓝小', '兰波小': '蓝小',
     '蓝波大': '蓝大', '兰大': '蓝大', '兰波大': '蓝大',
-    // 尾数
     '尾数小': '小尾', '尾数大': '大尾',
-    // 平特
     '平特一肖': '平特肖', '平特二肖': '平特肖', '平特三肖': '平特肖',
-    // 复式连肖
     '复试三肖': '复式三连肖', '三肖复式': '三连肖复式',
-    // 复式连尾
     '复试三尾': '复式三连尾', '三尾复式': '三连尾复式', '复3尾': '复三尾', '复三尾': '复式三连尾',
-    // 二中二
     '复试二中二': '复式二中二', '二中二复试': '复式二中二', '2中2复试': '复式二中二', '复试2中2': '复式二中二',
-    // 三中三
     '复试三中三': '复式三中三', '三中三复试': '复式三中三', '3中3复试': '复式三中三', '复试3中3': '复式三中三',
-    // 其他
     '三三二二串': '复三复二', '三三二二': '复三复二', '家属': '家肖',
     '复3': '复三', '复三': '复式三', '复3尾': '复三尾'
   };
@@ -1386,18 +1499,15 @@ function findInvalidNums(txt) { if (!txt) return []; const allNums = (txt.match(
   c = c.replace(/澳门\d+期/g, '');
   c = c.replace(/[。！？；]/g, ' ');
   c = c.replace(/[^\dA-Za-z\u4e00-\u9fa5\s,\-，\=＝\.]/g, ' ');
-  // 修复：保护换行符不被空白压缩合并
   c = c.replace(/\n/g, '[[[NL]]]');
   c = c.replace(/[\s]{2,}/g, ' ');
   c = c.replace(/\[\[\[NL\]\]\]/g, '\n');
   
-  // 头数连写：支持数字间有分隔符（空格、标点等）
   c = c.replace(/((?:\d[\s,，.。、+\-*＊\/\\|]*)+)头/g, (match, digits) => {
     const nums = (digits.match(/\d/g) || []);
     if (nums.length >= 2) return nums.map(n => n + '头').join('-');
     return match;
   });
-  // 尾数连写：同上
   c = c.replace(/((?:\d[\s,，.。、+\-*＊\/\\|]*)+)尾/g, (match, digits) => {
     const nums = (digits.match(/\d/g) || []);
     if (nums.length >= 2) return nums.map(n => n + '尾').join('-');
@@ -1477,7 +1587,7 @@ function parseTeMaSegment(content) {
   const warnings = invalidNums.length ? ['无效号码: ' + invalidNums.join(', ')] : [];
   return { displayItems, totalCount: cnt, warnings, allNumsArr: allNumsArr };
 }
-    function collectSpecialMatches(text) {
+function collectSpecialMatches(text) {
   const Z = ZODIAC;
   const allMatches = [];
 
@@ -1523,6 +1633,65 @@ function parseTeMaSegment(content) {
 
   const multiMatches = [];
   const lockedIntervals = [];
+
+  // ===== 修复6：连肖无关键字整行及带关键字版本 (优先级最高) =====
+  const reLianXiaoNoKw = new RegExp(
+      `^[\\s]*((?:[${Z}]+))[\\s]*([二三四五2345两])` +
+      `(?:连肖|连[肖]?|肖连|肖全中|连?肖|肖中|连)` +
+      `[\\s]*(?:(${KW_GROUP})\\s*)?(${AMT_GROUP})\\s*$`,
+      'gm'
+  );
+  let mLX;
+  while ((mLX = reLianXiaoNoKw.exec(text)) !== null) {
+      const full = mLX[0].trim();
+      const zPart = mLX[1];
+      const k = toNum(mLX[2].replace(/[^0-9二三四五两]/g, ''));
+      if (!k || k < 2 || k > 5) continue;
+      const kw = mLX[4] || '';
+      const amt = toNum(mLX[5] || mLX[6]);
+      if (!amt || amt <= 0) continue;
+      const zChars = (zPart.match(new RegExp(`[${Z}]`, 'g')) || []).join('');
+      if (zChars.length !== k) {
+          const warnings = [`${zChars}：连肖数(${k})与生肖数(${zChars.length})不匹配`];
+          multiMatches.push({ start: mLX.index, end: mLX.index + mLX[0].length, result: { cat: k + '连肖', nums: [], amt, cnt: 0, total: 0, kw, warnings } });
+          lockedIntervals.push({ start: mLX.index, end: mLX.index + mLX[0].length });
+          continue;
+      }
+      const comb = zCombosKeepOrder(zChars, k);
+      const warnings = [];
+      if (!kw && comb.length > 1) warnings.push('缺少金额关键字');
+      multiMatches.push({ start: mLX.index, end: mLX.index + mLX[0].length, result: { cat: k + '连肖', nums: comb, amt, cnt: comb.length, total: amt * comb.length, kw: kw || '各组', warnings } });
+      lockedIntervals.push({ start: mLX.index, end: mLX.index + mLX[0].length });
+  }
+
+  // ===== 修复6补：玩法在前，生肖在后的无关键字连肖 =====
+  const reLianXiaoNoKw2 = new RegExp(
+      `^[\\s]*([二三四五2345两])` +
+      `(?:连肖|连[肖]?|肖连|肖全中|连?肖|肖中|连)` +
+      `[\\s，,]*((?:[${Z}]+))\\s*(${AMT_GROUP})\\s*$`,
+      'gm'
+  );
+  let mLX2;
+  while ((mLX2 = reLianXiaoNoKw2.exec(text)) !== null) {
+      if (isOverlap(mLX2.index, mLX2.index + mLX2[0].length, lockedIntervals)) continue;
+      const k = toNum(mLX2[1].replace(/[^0-9二三四五两]/g, ''));
+      if (!k || k < 2 || k > 5) continue;
+      const zPart = mLX2[2];
+      const amt = toNum(mLX2[3] || mLX2[4]);
+      if (!amt || amt <= 0) continue;
+      const zChars = (zPart.match(new RegExp(`[${Z}]`, 'g')) || []).join('');
+      if (zChars.length !== k) {
+          const warnings = [`${zChars}：连肖数(${k})与生肖数(${zChars.length})不匹配`];
+          multiMatches.push({ start: mLX2.index, end: mLX2.index + mLX2[0].length, result: { cat: k + '连肖', nums: [], amt, cnt: 0, total: 0, kw: '', warnings } });
+          lockedIntervals.push({ start: mLX2.index, end: mLX2.index + mLX2[0].length });
+          continue;
+      }
+      const comb = zCombosKeepOrder(zChars, k);
+      const warnings = [];
+      if (comb.length > 1) warnings.push('缺少金额关键字');
+      multiMatches.push({ start: mLX2.index, end: mLX2.index + mLX2[0].length, result: { cat: k + '连肖', nums: comb, amt, cnt: comb.length, total: amt * comb.length, kw: '各组', warnings } });
+      lockedIntervals.push({ start: mLX2.index, end: mLX2.index + mLX2[0].length });
+  }
 
   const reMultiLX = new RegExp(`([二三四五2345两])(?:连肖|连[肖]?|肖连|肖全中|连?肖|肖中|连)${SEP}((?:[${Z}]+${SEP_CHARS}+)+[${Z}]+)[\\s]*(?=${KW_GROUP})${KW_GROUP}${SEP}${AMT_GROUP}`, 'g');
   let m;
@@ -1613,7 +1782,7 @@ function parseTeMaSegment(content) {
     return { cat: '包' + attr, nums: [attr], amt, cnt: 1, total: amt, kw: '各' };
   });
 
-  // ===== 特碰：碰法（和二中二拖法逻辑一样） =====
+  // ===== 特碰：碰法 =====
   addMatch(new RegExp(`特碰${SEP}((?:[${Z}]+|\\d+尾|\\d{1,2})(?:${SEP_CHARS}+(?:[${Z}]+|\\d+尾|\\d{1,2}))*)${SEP_CHARS}*(?:碰)${SEP_CHARS}*((?:[${Z}]+|\\d+尾|\\d{1,2})(?:${SEP_CHARS}+(?:[${Z}]+|\\d+尾|\\d{1,2}))*?)[\\s]*${END_AMT_RE}`, 'g'), m => {
     const full = m[0]; const { amt, kw } = extractAmtAndKw(full); if (!amt || amt <= 0) return null;
     const leftPart = m[1], rightPart = m[2];
@@ -1661,7 +1830,7 @@ function parseTeMaSegment(content) {
     return { cat: '二中二', nums: pairs, amt, cnt: pairs.length, total: amt * pairs.length, kw, warnings };
   });
 
-  // ===== 特碰：复式（和二中二一样） =====
+  // ===== 特碰：复式 =====
   addMatch(new RegExp(`复[式试]?特碰${SEP}((?:\\d+${SEP_CHARS}+)+\\d+)(?!${SEP_CHARS}*[拖托碰])[\\s]*${END_AMT_RE}`, 'g'), m => {
     const full = m[0]; const { amt, kw } = extractAmtAndKw(full); if (!amt || amt <= 0) return null;
     const nums = extractNums(m[1]); const invalidNums = findInvalidNums(m[1]);
@@ -1671,7 +1840,7 @@ function parseTeMaSegment(content) {
     return { cat: '特碰', nums: pairs, amt, cnt: pairs.length, total: amt * pairs.length, kw, warnings };
   });
 
-  // ===== 特碰：数字直接配对（和二中二一样） =====
+  // ===== 特碰：数字直接配对 =====
   addMatch(new RegExp(`特碰${SEP}((?:\\d{1,2}${SEP_CHARS}+\\d{1,2}${SEP_CHARS}*)+)(?!${SEP_CHARS}*[拖托碰])[\\s]*${END_AMT_RE}`, 'g'), m => {
     const full = m[0]; const { amt, kw } = extractAmtAndKw(full); if (!amt || amt <= 0) return null;
     const numPart = m[1]; const invalidNums = findInvalidNums(numPart);
@@ -1840,7 +2009,6 @@ function parseTeMaSegment(content) {
     const zPart = m[2]; const warnings = [];
     const afterEnd = text.substring(m.index + m[0].length);
     if (!kw && /^\s*[鼠牛虎兔龙蛇马羊猴鸡狗猪]/.test(afterEnd)) return null;
-
     const groups = zPart.split(new RegExp(SEP_CHARS + '+')).filter(g => g.trim().length > 0);
     const validCombos = [];
     const invalidGroups = [];
@@ -1853,9 +2021,7 @@ function parseTeMaSegment(content) {
       }
     }
     if (invalidGroups.length > 0) {
-      invalidGroups.forEach(zs => {
-        warnings.push(`${zs}：连肖数(${k})与生肖数(${zs.length})不匹配`);
-      });
+      invalidGroups.forEach(zs => { warnings.push(`${zs}：连肖数(${k})与生肖数(${zs.length})不匹配`); });
     }
     if (validCombos.length > 0) {
       const cnt = validCombos.length;
@@ -1888,9 +2054,7 @@ function parseTeMaSegment(content) {
     const full = m[0]; const { amt, kw } = extractAmtAndKw(full); if (!amt || amt <= 0) return null;
     const zs = extractZodiacs(m[1]);
     const warnings = [];
-    if (zs.length >= 2 && !kw) {
-      warnings.push('缺少金额关键字');
-    }
+    if (zs.length >= 2 && !kw) { warnings.push('缺少金额关键字'); }
     return { cat: '平特肖', nums: zs, amt, cnt: zs.length, total: amt * zs.length, kw, warnings };
   });
 
@@ -1899,9 +2063,7 @@ function parseTeMaSegment(content) {
     const full = m[0]; const { amt, kw } = extractAmtAndKw(full); if (!amt || amt <= 0) return null;
     const tails = (m[1].match(/\d/g) || []).map(d => d + '尾');
     const warnings = [];
-    if (tails.length >= 2 && !kw) {
-      warnings.push('缺少金额关键字');
-    }
+    if (tails.length >= 2 && !kw) { warnings.push('缺少金额关键字'); }
     return { cat: '平特尾', nums: tails, amt, cnt: tails.length, total: amt * tails.length, kw, warnings };
   });
 
@@ -1912,6 +2074,75 @@ function parseTeMaSegment(content) {
     const warnings = invalidNums.length ? ['无效号码: ' + invalidNums.join(', ')] : [];
     if (nums.length > 1 && !kw) warnings.push('缺少金额关键字');
     return { cat: '平码', nums, amt, cnt: nums.length, total: amt * nums.length, kw, warnings };
+  });
+
+  // ===== 新增：号码对 + 玩法名在后（如 "08-12 二中二 各组100"） =====
+  addMatch(new RegExp(
+      `((?:\\d{1,2}${SEP_CHARS}+\\d{1,2}${SEP_CHARS}*)+)` +
+      `[\\s]*([二2]中[二2]|[三3]中[三3]|特碰)` +
+      `[\\s]*(${KW_GROUP})${SEP}${AMT_GROUP}`, 'g'
+  ), m => {
+      const full = m[0];
+      const { amt, kw } = extractAmtAndKw(full);
+      if (!amt || amt <= 0) return null;
+      const numPart = m[1];
+      const playName = m[2].trim();
+      const invalidNums = findInvalidNums(numPart);
+      const warnings = invalidNums.length ? ['无效号码: ' + invalidNums.join(', ')] : [];
+      const pairs = [];
+      const pr = new RegExp(`(\\d{1,2})${SEP_CHARS}+(\\d{1,2})`, 'g');
+      let pm;
+      while ((pm = pr.exec(numPart)) !== null) {
+          pairs.push(pm[1] + '-' + pm[2]);
+      }
+      if (pairs.length === 0) {
+          const nums = extractNums(numPart);
+          if (nums.length < 2) {
+              warnings.push(`号码数不足`);
+              return { cat: playName, nums: [], amt, cnt: 0, total: 0, kw, warnings };
+          }
+          if (playName === '二中二' || playName === '特碰') {
+              combosNoSort(nums, 2).forEach(c => pairs.push(c.join('-')));
+          } else if (playName === '三中三') {
+              if (nums.length < 3) {
+                  warnings.push(`号码数不足`);
+                  return { cat: playName, nums: [], amt, cnt: 0, total: 0, kw, warnings };
+              }
+              combosNoSort(nums, 3).forEach(c => pairs.push(c.join('-')));
+          }
+      }
+      if (pairs.length === 0) return null;
+      if (pairs.length > 1 && !kw) warnings.push('缺少金额关键字');
+      return { cat: playName, nums: pairs, amt, cnt: pairs.length,
+               total: amt * pairs.length, kw, warnings };
+  });
+
+  // ===== 新增：号码串 + 复式玩法在后（如 "08-12-15 复式二中二 各组100"） =====
+  addMatch(new RegExp(
+      `((?:\\d+${SEP_CHARS}+)+\\d+)` +
+      `[\\s]*(复[式试]?(?:[二2]中[二2]|[三3]中[三3]|特碰))` +
+      `[\\s]*(${KW_GROUP})${SEP}${AMT_GROUP}`, 'g'
+  ), m => {
+      const full = m[0];
+      const { amt, kw } = extractAmtAndKw(full);
+      if (!amt || amt <= 0) return null;
+      const nums = extractNums(m[1]);
+      const playPart = m[2].trim();
+      const invalidNums = findInvalidNums(m[1]);
+      const warnings = invalidNums.length ? ['无效号码: ' + invalidNums.join(', ')] : [];
+      let cat = '';
+      let k = 0;
+      if (/[二2]中[二2]/.test(playPart)) { cat = '二中二'; k = 2; }
+      else if (/[三3]中[三3]/.test(playPart)) { cat = '三中三'; k = 3; }
+      else if (/特碰/.test(playPart)) { cat = '特碰'; k = 2; }
+      if (!cat || nums.length < k) {
+          warnings.push(`号码数不足`);
+          return { cat: cat || playPart, nums: [], amt, cnt: 0, total: 0, kw, warnings };
+      }
+      const pairs = combosNoSort(nums, k).map(c => c.join('-'));
+      if (pairs.length > 1 && !kw) warnings.push('缺少金额关键字');
+      return { cat, nums: pairs, amt, cnt: pairs.length,
+               total: amt * pairs.length, kw, warnings };
   });
 
   allMatches.push(...multiMatches);
@@ -1927,7 +2158,7 @@ function parseTeMaSegment(content) {
   }
   return deduped;
 }
-    function processOneLine(line) {
+function processOneLine(line) {
   if (!line.trim()) return [];
 
   // ===== 号码-金额对识别（优先处理） =====
@@ -1961,22 +2192,21 @@ function parseTeMaSegment(content) {
   function tryMatchTeXiao(content) {
     if (!content || !content.trim()) return null;
     if (/特码/.test(content)) return null;
+    // ===== 新增：直接跳过含"号各"的内容 =====
+    if (/号各|号\s*各/.test(content)) return null;
+    
     const trimmed = content.trim();
     const shxMatch = trimmed.match(new RegExp(`(.+?)(各肖|各(?!数|号|组|码|注|下|买))\\s*(\\d+)`));
     if (!shxMatch) return null;
-    const rawContent = shxMatch[1];
-    const amtRaw = parseInt(shxMatch[3]) || 0;
-    const kw = shxMatch[2] || '';
+    const rawContent = shxMatch[1]; const amtRaw = parseInt(shxMatch[3]) || 0; const kw = shxMatch[2] || '';
     if (amtRaw <= 0) return null;
-    const zodiacChars = [];
-    for (const ch of rawContent) {
-      if (ZODIAC_SET.has(ch)) zodiacChars.push(ch);
-    }
+    // ===== 新增：关键字含"号"就退出 =====
+    if (kw && kw.includes('号')) return null;
+    
+    const zodiacChars = []; for (const ch of rawContent) { if (ZODIAC_SET.has(ch)) zodiacChars.push(ch); }
     if (zodiacChars.length > 0) {
-      const cnt = zodiacChars.length;
-      const total = amtRaw * cnt;
-      const warnings = [];
-      if (cnt > 1 && !kw) warnings.push('缺少金额关键字');
+      const cnt = zodiacChars.length; const total = amtRaw * cnt;
+      const warnings = []; if (cnt > 1 && !kw) warnings.push('缺少金额关键字');
       return { cat: '特肖', nums: zodiacChars, amt: amtRaw, cnt: cnt, total: total, kw: kw || '各', warnings };
     }
     return null;
@@ -2814,7 +3044,7 @@ function processCurrentOrder(input, user, isNormal, date = null) {
   });
   updateTableFromRecords();
 }
-    // ===== 连肖统计弹窗 =====
+// ===== 连肖统计弹窗 =====
 function showLianxiaoStatsWin() {
   if (document.getElementById('lianxiaoStatsWin')) return;
   const win = document.createElement('div'); win.className = 'floating-window'; win.id = 'lianxiaoStatsWin';
@@ -3038,7 +3268,7 @@ function normalizePlayType(playType) {
   };
   return map[playType] || playType;
 }
-   // ===== 兑奖统计核心函数 =====
+// ===== 兑奖统计核心函数 =====
 function refreshDuiJiangStats() {
   const orderBody = document.getElementById('duiJiangOrderBody');
   const reportBody = document.getElementById('duiJiangReportBody');
@@ -3198,7 +3428,7 @@ function buildHitDetail(hitByType) {
   }
   return parts.length > 0 ? parts.join('，') : '';
 }
-    // ===== 特肖兑奖处理函数（下单） =====
+// ===== 特肖兑奖处理函数（下单） =====
 function processTexiaoLineDuijiang(stats, content, amt, drawTeMaZodiac, drawTeMa, hasValidDraw) {
   const zodiacs = content.split('-').map(z => z.trim()).filter(z => z);
   if (zodiacs.length === 0) return;
@@ -3418,9 +3648,9 @@ function processComboLineDuijiangNew(stats, playType, content, amt, drawZodiacsS
     stats.orderRebate += effectiveCount * amt * (rebate / 100);
     if (hasValidDraw) {
       let hit = false;
-      if (comboType === '平特肖' || comboType === '平特肖带主肖') { hit = drawZodiacsSet.has(tokens[0]); }
-      else if (comboType === '平特尾' || comboType === '平特尾零尾') { const d = tokens[0].replace('尾',''); const tailNums = []; for (let i=0;i<=4;i++) { const n=(i*10+parseInt(d)).toString().padStart(2,'0'); if(parseInt(n)>=1&&parseInt(n)<=49) tailNums.push(n); } hit = tailNums.some(n => drawNumbersSet.has(n)); }
-      else if (comboType === '平码') { hit = drawNumbersZhengma.includes(tokens[0].padStart(2,'0')); }
+      if (comboType === '平特肖' || comboType === '平特肖带主肖') { hit = tokens.some(t => drawZodiacsSet.has(t)); }
+      else if (comboType === '平特尾' || comboType === '平特尾零尾') { hit = tokens.some(t => { const d = t.replace('尾',''); const tailNums = []; for (let i=0;i<=4;i++) { const n=(i*10+parseInt(d)).toString().padStart(2,'0'); if(parseInt(n)>=1&&parseInt(n)<=49) tailNums.push(n); } return tailNums.some(n => drawNumbersSet.has(n)); }); }
+      else if (comboType === '平码') { hit = tokens.some(t => drawNumbersZhengma.includes(t.padStart(2,'0'))); }
       else if (['二连肖','二连肖带主肖','三连肖','三连肖带主肖','四连肖','四连肖带主肖','五连肖','五连肖带主肖'].includes(comboType)) { hit = tokens.every(t => drawZodiacsSet.has(t)); }
       else if (['二连尾','二连尾零尾','三连尾','三连尾零尾','四连尾','四连尾零尾','五连尾','五连尾零尾'].includes(comboType)) { hit = tokens.every(t => { const d=t.replace('尾',''); for(let i=0;i<=4;i++){ const n=(i*10+parseInt(d)).toString().padStart(2,'0'); if(drawNumbersSet.has(n)) return true; } return false; }); }
       else if (['五不中','六不中','七不中','八不中','九不中','十不中','十一不中','十二不中'].includes(comboType)) { hit = !tokens.some(t => drawNumbersSet.has(t.padStart(2,'0'))); }
@@ -3443,7 +3673,7 @@ function processComboLineDuijiangNew(stats, playType, content, amt, drawZodiacsS
     }
   });
 }
-    // ===== 上报兑奖处理函数 =====
+// ===== 上报兑奖处理函数 =====
 function processComboLineDuijiangNewReport(stats, playType, content, amt, drawZodiacsSet, drawNumbersSet, drawNumbersZhengma, hasValidDraw) {
   playType = normalizePlayType(playType);
   const cleaned = content.replace(/[()]/g, '');
@@ -3478,9 +3708,9 @@ function processComboLineDuijiangNewReport(stats, playType, content, amt, drawZo
     stats.reportRebate += effectiveCount * amt * (rebate / 100);
     if (hasValidDraw) {
       let hit = false;
-      if (comboType === '平特肖' || comboType === '平特肖带主肖') { hit = drawZodiacsSet.has(tokens[0]); }
-      else if (comboType === '平特尾' || comboType === '平特尾零尾') { const d = tokens[0].replace('尾',''); const tailNums = []; for (let i=0;i<=4;i++) { const n=(i*10+parseInt(d)).toString().padStart(2,'0'); if(parseInt(n)>=1&&parseInt(n)<=49) tailNums.push(n); } hit = tailNums.some(n => drawNumbersSet.has(n)); }
-      else if (comboType === '平码') { hit = drawNumbersZhengma.includes(tokens[0].padStart(2,'0')); }
+      if (comboType === '平特肖' || comboType === '平特肖带主肖') { hit = tokens.some(t => drawZodiacsSet.has(t)); }
+      else if (comboType === '平特尾' || comboType === '平特尾零尾') { hit = tokens.some(t => { const d = t.replace('尾',''); const tailNums = []; for (let i=0;i<=4;i++) { const n=(i*10+parseInt(d)).toString().padStart(2,'0'); if(parseInt(n)>=1&&parseInt(n)<=49) tailNums.push(n); } return tailNums.some(n => drawNumbersSet.has(n)); }); }
+      else if (comboType === '平码') { hit = tokens.some(t => drawNumbersZhengma.includes(t.padStart(2,'0'))); }
       else if (['二连肖','二连肖带主肖','三连肖','三连肖带主肖','四连肖','四连肖带主肖','五连肖','五连肖带主肖'].includes(comboType)) { hit = tokens.every(t => drawZodiacsSet.has(t)); }
       else if (['二连尾','二连尾零尾','三连尾','三连尾零尾','四连尾','四连尾零尾','五连尾','五连尾零尾'].includes(comboType)) { hit = tokens.every(t => { const d=t.replace('尾',''); for(let i=0;i<=4;i++){ const n=(i*10+parseInt(d)).toString().padStart(2,'0'); if(drawNumbersSet.has(n)) return true; } return false; }); }
       else if (['五不中','六不中','七不中','八不中','九不中','十不中','十一不中','十二不中'].includes(comboType)) { hit = !tokens.some(t => drawNumbersSet.has(t.padStart(2,'0'))); }
@@ -3603,9 +3833,9 @@ function processComboLineDuijiangOld(stats, match, drawZodiacsSet, drawNumbersSe
     stats.orderRebate += effectiveCount * amt * (rebate / 100);
     if (hasValidDraw) {
       let hit = false;
-      if (comboType === '平特肖' || comboType === '平特肖带主肖') { hit = drawZodiacsSet.has(tokens[0]); }
-      else if (comboType === '平特尾' || comboType === '平特尾零尾') { const d = tokens[0].replace('尾',''); const tailNums = []; for (let i=0;i<=4;i++) { const n=(i*10+parseInt(d)).toString().padStart(2,'0'); if(parseInt(n)>=1&&parseInt(n)<=49) tailNums.push(n); } hit = tailNums.some(n => drawNumbersSet.has(n)); }
-      else if (comboType === '平码') { hit = drawNumbersZhengma.includes(tokens[0].padStart(2,'0')); }
+      if (comboType === '平特肖' || comboType === '平特肖带主肖') { hit = tokens.some(t => drawZodiacsSet.has(t)); }
+      else if (comboType === '平特尾' || comboType === '平特尾零尾') { hit = tokens.some(t => { const d = t.replace('尾',''); const tailNums = []; for (let i=0;i<=4;i++) { const n=(i*10+parseInt(d)).toString().padStart(2,'0'); if(parseInt(n)>=1&&parseInt(n)<=49) tailNums.push(n); } return tailNums.some(n => drawNumbersSet.has(n)); }); }
+      else if (comboType === '平码') { hit = tokens.some(t => drawNumbersZhengma.includes(t.padStart(2,'0'))); }
       else if (['二连肖','二连肖带主肖','三连肖','三连肖带主肖','四连肖','四连肖带主肖','五连肖','五连肖带主肖'].includes(comboType)) { hit = tokens.every(t => drawZodiacsSet.has(t)); }
       else if (['二连尾','二连尾零尾','三连尾','三连尾零尾','四连尾','四连尾零尾','五连尾','五连尾零尾'].includes(comboType)) { hit = tokens.every(t => { const d=t.replace('尾',''); for(let i=0;i<=4;i++){ const n=(i*10+parseInt(d)).toString().padStart(2,'0'); if(drawNumbersSet.has(n)) return true; } return false; }); }
       else if (['五不中','六不中','七不中','八不中','九不中','十不中','十一不中','十二不中'].includes(comboType)) { hit = !tokens.some(t => drawNumbersSet.has(t.padStart(2,'0'))); }
@@ -3673,9 +3903,9 @@ function processComboLineDuijiangOldReport(stats, match, drawZodiacsSet, drawNum
     stats.reportRebate += effectiveCount * amt * (rebate / 100);
     if (hasValidDraw) {
       let hit = false;
-      if (comboType === '平特肖' || comboType === '平特肖带主肖') { hit = drawZodiacsSet.has(tokens[0]); }
-      else if (comboType === '平特尾' || comboType === '平特尾零尾') { const d = tokens[0].replace('尾',''); const tailNums = []; for (let i=0;i<=4;i++) { const n=(i*10+parseInt(d)).toString().padStart(2,'0'); if(parseInt(n)>=1&&parseInt(n)<=49) tailNums.push(n); } hit = tailNums.some(n => drawNumbersSet.has(n)); }
-      else if (comboType === '平码') { hit = drawNumbersZhengma.includes(tokens[0].padStart(2,'0')); }
+      if (comboType === '平特肖' || comboType === '平特肖带主肖') { hit = tokens.some(t => drawZodiacsSet.has(t)); }
+      else if (comboType === '平特尾' || comboType === '平特尾零尾') { hit = tokens.some(t => { const d = t.replace('尾',''); const tailNums = []; for (let i=0;i<=4;i++) { const n=(i*10+parseInt(d)).toString().padStart(2,'0'); if(parseInt(n)>=1&&parseInt(n)<=49) tailNums.push(n); } return tailNums.some(n => drawNumbersSet.has(n)); }); }
+      else if (comboType === '平码') { hit = tokens.some(t => drawNumbersZhengma.includes(t.padStart(2,'0'))); }
       else if (['二连肖','二连肖带主肖','三连肖','三连肖带主肖','四连肖','四连肖带主肖','五连肖','五连肖带主肖'].includes(comboType)) { hit = tokens.every(t => drawZodiacsSet.has(t)); }
       else if (['二连尾','二连尾零尾','三连尾','三连尾零尾','四连尾','四连尾零尾','五连尾','五连尾零尾'].includes(comboType)) { hit = tokens.every(t => { const d=t.replace('尾',''); for(let i=0;i<=4;i++){ const n=(i*10+parseInt(d)).toString().padStart(2,'0'); if(drawNumbersSet.has(n)) return true; } return false; }); }
       else if (['五不中','六不中','七不中','八不中','九不中','十不中','十一不中','十二不中'].includes(comboType)) { hit = !tokens.some(t => drawNumbersSet.has(t.padStart(2,'0'))); }
@@ -3754,7 +3984,7 @@ function getOddsForType(type, oddsData) {
     rebate: parseFloat(saved.rebate) || defaults[type]?.rebate || 4
   };
 }
-    // ===== 连肖识别输入处理（旧版保持不变） =====
+// ===== 连肖识别输入处理（旧版保持不变） =====
 function comboRemoveSeparators() { const ta = document.getElementById('comboInput'); if (!ta) return; const s = ta.selectionStart, e = ta.selectionEnd; if (s === e) { showToast('请先选择文本'); return; } const sel = ta.value.substring(s, e); const cleaned = sel.replace(/[\s,，.。、+\-*＊\/\\|]+/g, ''); ta.value = ta.value.substring(0, s) + cleaned + ta.value.substring(e); }
 async function pasteComboOrder() { try { const text = await navigator.clipboard.readText(); if (text) { const ta = document.getElementById('comboInput'); if (ta) { ta.value = text; } } } catch(err) { showToast('无法访问剪贴板'); } }
 
@@ -4852,7 +5082,7 @@ async function saveReportOrder(){
   showToast('已上报成功（' + savedCount + '个地区）'); 
   setTimeout(() => { const toast = document.querySelector('.toast-message.show'); if (toast) toast.style.color = '#ff0000'; }, 10); 
 }
-    function updateOrderCountDisplay() {
+function updateOrderCountDisplay() {
   const fd = document.getElementById('filterDate')?.value || getTodayCST();
   getOrderRecords().then(orders => {
     const todayOrders = orders.filter(r => r.date === fd);
@@ -5371,7 +5601,7 @@ function renderAmountFrequencyCards(){
   } 
   ztb+='</tbody>'; zt.innerHTML=zth+ztb; 
 }
-    function isTokenMatching(token,targetNum){ const t=targetNum.padStart(2,'0'); if(/^\d{1,2}$/.test(token))return token.padStart(2,'0')===t; if(D[token]){const nums=keyToAllNums(token);return nums.includes(t);} return false; }
+function isTokenMatching(token,targetNum){ const t=targetNum.padStart(2,'0'); if(/^\d{1,2}$/.test(token))return token.padStart(2,'0')===t; if(D[token]){const nums=keyToAllNums(token);return nums.includes(t);} return false; }
 function highlightContent(content,targetNum){ if(!targetNum)return content; const t=targetNum.padStart(2,'0'); const parts=[];let tmp=''; for(const ch of content){if(ch==='-'||ch===' '){if(tmp)parts.push(tmp);parts.push(ch);tmp='';}else{tmp+=ch;}} if(tmp)parts.push(tmp); return parts.map(p=>{if(p==='-'||p===' ')return p;if(isTokenMatching(p,targetNum))return`<span class="highlight-number">${p}</span>`;return p;}).join(''); }
 function orderContainsTarget(content,targetNum){ if(!targetNum)return true; const t=targetNum.padStart(2,'0'); const lines=content.split('\n'); for(const line of lines){ if(!line.startsWith('特码:')) continue; const m=line.match(/^特码:(.+?)\s+各(?:数|)\s*(\d+)$/); if(!m)continue; const cont=m[1]; const parts=[];let tmp=''; for(const ch of cont){if(ch==='-'||ch===' '){if(tmp)parts.push(tmp);tmp='';}else{tmp+=ch;}} if(tmp)parts.push(tmp); for(const p of parts){if(p!=='-'&&p!==' '&&isTokenMatching(p,targetNum))return true;} } return false; }
 function getSpecialAmountFromOrder(content, prizeNum) { if (!prizeNum) return 0; const targetNum = prizeNum.padStart(2, '0'); const lines = content.split('\n'); let total = 0; for (const line of lines) { const match = line.match(/^(.+?):(.+?)\s+各(?:数|)\s*(\d+)$/); if (!match) continue; const tokensPart = match[2]; const amount = parseInt(match[3]) || 0; const tokens = tokensPart.split('-').map(t => t.trim()).filter(t => t); for (const token of tokens) { if (isTokenMatching(token, targetNum)) { total += amount; } } } return total; }
@@ -5706,7 +5936,7 @@ function fillPingtexiao() { const resultEl = document.getElementById('orderResul
 
 async function exportData(){ try{ const orders=await getAllOrdersUnfiltered(); const reports=await getAllReportsUnfiltered(); const logs = await getAllLogs(); const recycleRecords = await getRecycleBinRecords(); const comboRecords = await getComboOrders(); const drawRecords = {}; for (let i = 0; i < localStorage.length; i++) { const key = localStorage.key(i); if (key && key.startsWith('drawRecord_')) { drawRecords[key] = localStorage.getItem(key); } } const comboDrawRecords = {}; for (let i = 0; i < localStorage.length; i++) { const key = localStorage.key(i); if (key && key.startsWith('comboDrawRecord_')) { comboDrawRecords[key] = localStorage.getItem(key); } } const pingtexiao = {}; for (let i = 0; i < localStorage.length; i++) { const key = localStorage.key(i); if (key && key.startsWith('pingtexiao_')) { pingtexiao[key] = localStorage.getItem(key); } } const pingtexiaoHighlights = {}; for (let i = 0; i < localStorage.length; i++) { const key = localStorage.key(i); if (key && key.startsWith('ptHighlight_')) { pingtexiaoHighlights[key] = localStorage.getItem(key); } } const users = {}; for (let i = 0; i < localStorage.length; i++) { const key = localStorage.key(i); if (key && key.startsWith('users_')) { users[key] = localStorage.getItem(key); } } const presets = localStorage.getItem('replacePresets') || '[]'; const aliases = localStorage.getItem('categoryAliases') || '[]'; const oddsData = localStorage.getItem('comboOddsData') || '{}'; const data={version:7,orders,reports,logs,recycleRecords,comboRecords,drawRecords,comboDrawRecords,pingtexiao,pingtexiaoHighlights,users,replacePresets:JSON.parse(presets),categoryAliases:JSON.parse(aliases),oddsData:JSON.parse(oddsData),exportTime:new Date().toISOString()}; const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'}); const url=URL.createObjectURL(blob); const fileName = `港澳识别数据_全部_${getTodayCST()}.json`; const a = document.createElement('a'); a.href = url; a.download = fileName; document.body.appendChild(a); a.click(); document.body.removeChild(a); setTimeout(() => URL.revokeObjectURL(url), 60000); addOperationLog('export', '导出全部数据（含日志/回收站/用户/配置/连肖）'); showToast('导出成功：' + fileName); showStorageDrawerTemporary(5000); }catch(e){showToast('导出失败');} }
 async function importData(){ const inp=document.createElement('input'); inp.type='file'; inp.accept='.json'; inp.style.display='none'; document.body.appendChild(inp); inp.onchange=async(e)=>{ const file=e.target.files[0]; if(!file){document.body.removeChild(inp);return;} const reader=new FileReader(); reader.onload=async(ev)=>{ try{ const data=JSON.parse(ev.target.result); if(!data.orders||!data.reports){showToast('无效格式');document.body.removeChild(inp);return;} if (!data.version || data.version < 7) { const cf = await confirm(`备份文件版本（${data.version || '未知'}）低于当前版本（7），导入可能导致数据异常，是否继续？`); if (!cf) { document.body.removeChild(inp); return; } } const recycleCount = data.recycleRecords ? data.recycleRecords.length : 0; const comboCount = data.comboRecords ? data.comboRecords.length : 0; const userCount = data.users ? Object.keys(data.users).length : 0; const pingtexiaoCount = data.pingtexiao ? Object.keys(data.pingtexiao).length : 0; const highlightCount = data.pingtexiaoHighlights ? Object.keys(data.pingtexiaoHighlights).length : 0; const totalToImport = data.orders.length + data.reports.length + (data.drawRecords ? Object.keys(data.drawRecords).length : 0) + (data.comboDrawRecords ? Object.keys(data.comboDrawRecords).length : 0) + pingtexiaoCount + highlightCount + recycleCount + comboCount + userCount + (data.replacePresets ? data.replacePresets.length : 0) + (data.categoryAliases ? data.categoryAliases.length : 0); if(totalToImport === 0){ showToast('文件中没有数据'); document.body.removeChild(inp); return; } let confirmMsg = `文件包含 ${data.orders.length} 条订单，${data.reports.length} 条上报，${data.logs ? data.logs.length : 0} 条日志，${recycleCount} 条回收站记录，${comboCount} 条连肖订单，${userCount} 组用户数据。是否导入？`; const cf = await confirm(confirmMsg); if(!cf){document.body.removeChild(inp);return;} const eo=await getAllOrdersUnfiltered(); const er=await getAllReportsUnfiltered(); const eco=await getComboOrders(); let so=0,no=0; for(const r of data.orders){ const region = r.region || currentRegion; const dup = eo.find(o => o.content === r.content && o.user === r.user && o.timestamp === r.timestamp && o.region === region); if(dup){ so++; continue; } try{ await saveOrderRecordToIDB(r.content, r.user, r.date, r.totalAmount || 0, r.timestamp, region); no++; } catch(e){ console.error('导入订单失败', e); } } let sr=0,nr=0; for(const r of data.reports){ const region = r.region || currentRegion; const dup = er.find(o => o.content === r.content && o.user === r.user && o.timestamp === r.timestamp && o.region === region); if(dup){ sr++; continue; } try{ await saveReportOrderRecordToIDB(r.content, r.user, r.date, r.totalAmount || 0, r.timestamp, region); nr++; } catch(e){ console.error('导入上报失败', e); } } let sco=0,nco=0; if (data.comboRecords && Array.isArray(data.comboRecords)) { for(const r of data.comboRecords){ const region = r.region || currentRegion; const dup = eco.find(o => o.content === r.content && o.user === r.user && o.timestamp === r.timestamp && o.region === region); if(dup){ sco++; continue; } try{ await saveComboOrderRecordToIDB(r.content, r.user, r.date, r.totalAmount || 0, r.comboType || '', r.timestamp); nco++; } catch(e){ console.error('导入连肖订单失败', e); } } } if (data.logs && Array.isArray(data.logs)) { const existingLogs = await getAllLogs(); const existingIds = new Set(existingLogs.map(l => l.id)); for (const log of data.logs) { if (!existingIds.has(log.id)) { await new Promise((resolve) => { const tx = db.transaction([LOG_STORE_NAME], 'readwrite'); const store = tx.objectStore(LOG_STORE_NAME); store.add(log); tx.oncomplete = () => resolve(); }); } } } if (data.recycleRecords && Array.isArray(data.recycleRecords)) { const existingRecycle = await getRecycleBinRecords(); const existingRecycleIds = new Set(existingRecycle.map(r => r.id)); for (const rec of data.recycleRecords) { if (!existingRecycleIds.has(rec.id)) { await new Promise((resolve) => { const tx = db.transaction([RECYCLE_STORE_NAME], 'readwrite'); const store = tx.objectStore(RECYCLE_STORE_NAME); store.add(rec); tx.oncomplete = () => resolve(); }); } } } if (data.users) { for (const [key, value] of Object.entries(data.users)) { if (!localStorage.getItem(key)) { localStorage.setItem(key, value); } } } let dcImported = 0; if (data.drawRecords) { for (const [key, value] of Object.entries(data.drawRecords)) { const existing = localStorage.getItem(key); if (existing) { try { const existingData = JSON.parse(existing); const newData = JSON.parse(value); let changed = false; for (const [issue, entry] of Object.entries(newData)) { if (existingData[issue] && existingData[issue].number && existingData[issue].number.trim()) { if (entry.pl !== undefined && entry.pl !== '') { existingData[issue].pl = entry.pl; changed = true; } } else { existingData[issue] = entry; changed = true; } } if (changed) { localStorage.setItem(key, JSON.stringify(existingData)); dcImported++; } } catch(e) { localStorage.setItem(key, value); dcImported++; } } else { localStorage.setItem(key, value); dcImported++; } } } let comboDrawImported = 0; if (data.comboDrawRecords) { for (const [key, value] of Object.entries(data.comboDrawRecords)) { if (!localStorage.getItem(key)) { localStorage.setItem(key, value); comboDrawImported++; } } } let ptImported = 0, ptSkipped = 0; if (data.pingtexiao) { for (const [key, value] of Object.entries(data.pingtexiao)) { if (localStorage.getItem(key)) { ptSkipped++; } else { localStorage.setItem(key, value); ptImported++; } } } let hlImported = 0; if (data.pingtexiaoHighlights) { for (const [key, value] of Object.entries(data.pingtexiaoHighlights)) { localStorage.setItem(key, value); hlImported++; } } if (data.oddsData) { if (!localStorage.getItem('comboOddsData')) { localStorage.setItem('comboOddsData', JSON.stringify(data.oddsData)); } } let presetImported = 0, aliasImported = 0; if (data.replacePresets && Array.isArray(data.replacePresets)) { const currentPresets = getReplacePresets(); data.replacePresets.forEach(p => { if (!currentPresets.some(x => x.old === p.old)) { currentPresets.push(p); presetImported++; } }); localStorage.setItem('replacePresets', JSON.stringify(currentPresets)); } if (data.categoryAliases && Array.isArray(data.categoryAliases)) { const currentAliases = getCategoryAliases(); data.categoryAliases.forEach(a => { if (!currentAliases.some(x => x.alias === a.alias)) { currentAliases.push(a); aliasImported++; } }); localStorage.setItem('categoryAliases', JSON.stringify(currentAliases)); } await updateTableFromRecords(); calculateStorageUsage(); renderPingtexiaoTable(); updateCardA(); renderSmartDecision(); addOperationLog('import', `导入${no+nr+nco}条订单/上报/连肖记录`); let msg = `成功导入 ${no+nr+nco} 条记录，${dcImported} 组开奖记录，${comboDrawImported} 组录开奖记录，${recycleCount} 条回收站记录，${comboCount} 条连肖订单，${userCount} 组用户数据。`; if (ptImported > 0) msg += `\n导入平特肖数据 ${ptImported} 组。`; if (ptSkipped > 0) msg += `\n跳过平特肖数据 ${ptSkipped} 组（已存在）。`; if (hlImported > 0) msg += `\n导入平特肖高亮标记 ${hlImported} 组。`; if (presetImported > 0) msg += `\n新增 ${presetImported} 条替换预设。`; if (aliasImported > 0) msg += `\n新增 ${aliasImported} 条分类缩写。`; if(so+sr+sco > 0) msg += `\n跳过 ${so+sr+sco} 条重复记录。`; showToast(msg); document.body.removeChild(inp); showStorageDrawerTemporary(5000); }catch(err){showToast('导入失败');document.body.removeChild(inp);} }; reader.onerror=()=>{showToast('读取失败');document.body.removeChild(inp);}; reader.readAsText(file); }; inp.addEventListener('cancel',()=>{document.body.removeChild(inp);}); inp.click(); }
-    function showCardManager() { if (!isAdmin()) { showToast('需要管理员权限'); return; } if (document.getElementById('cardManagerWin')) return; const keys = getCardKeys(); const win = document.createElement('div'); win.className = 'floating-window'; win.id = 'cardManagerWin'; win.style.width = '650px'; win.style.height = '500px'; win.style.left = '50%'; win.style.top = '50%'; win.style.transform = 'translate(-50%, -50%)'; win.innerHTML = `<div class="modal-header"><h3>🔑 卡密管理</h3><div class="window-controls"><button onclick="maximizeWindow('cardManagerWin')">🗖</button><button onclick="document.getElementById('cardManagerWin').remove()">×</button></div></div><div class="modal-body"><div style="margin-bottom:15px;display:flex;gap:10px;flex-wrap:wrap;align-items:center;"><input type="number" id="expireDaysInput" placeholder="有效天数" value="30" min="1" style="padding:5px;border-radius:4px;border:1px solid #ccc;width:80px;"><span>天</span><button onclick="generateCardKey()" style="padding:6px 15px;background:#28a745;color:#fff;border:none;border-radius:4px;">生成卡密</button></div><div id="cardListContainer"></div></div><div class="modal-footer"><button onclick="document.getElementById('cardManagerWin').remove()" style="padding:8px 16px;background:#6c757d;color:#fff;border:none;border-radius:4px;">关闭</button></div>`; document.body.appendChild(win); renderCardList(); makeWindowDraggable('cardManagerWin'); highestZ += 1; win.style.zIndex = highestZ; }
+function showCardManager() { if (!isAdmin()) { showToast('需要管理员权限'); return; } if (document.getElementById('cardManagerWin')) return; const keys = getCardKeys(); const win = document.createElement('div'); win.className = 'floating-window'; win.id = 'cardManagerWin'; win.style.width = '650px'; win.style.height = '500px'; win.style.left = '50%'; win.style.top = '50%'; win.style.transform = 'translate(-50%, -50%)'; win.innerHTML = `<div class="modal-header"><h3>🔑 卡密管理</h3><div class="window-controls"><button onclick="maximizeWindow('cardManagerWin')">🗖</button><button onclick="document.getElementById('cardManagerWin').remove()">×</button></div></div><div class="modal-body"><div style="margin-bottom:15px;display:flex;gap:10px;flex-wrap:wrap;align-items:center;"><input type="number" id="expireDaysInput" placeholder="有效天数" value="30" min="1" style="padding:5px;border-radius:4px;border:1px solid #ccc;width:80px;"><span>天</span><button onclick="generateCardKey()" style="padding:6px 15px;background:#28a745;color:#fff;border:none;border-radius:4px;">生成卡密</button></div><div id="cardListContainer"></div></div><div class="modal-footer"><button onclick="document.getElementById('cardManagerWin').remove()" style="padding:8px 16px;background:#6c757d;color:#fff;border:none;border-radius:4px;">关闭</button></div>`; document.body.appendChild(win); renderCardList(); makeWindowDraggable('cardManagerWin'); highestZ += 1; win.style.zIndex = highestZ; }
 function renderCardList() { const keys = getCardKeys(); const container = document.getElementById('cardListContainer'); if (!container) return; if (keys.length === 0) { container.innerHTML = '<div style="text-align:center;color:#666;padding:20px;">暂无卡密</div>'; return; } container.innerHTML = keys.map((card, idx) => { const created = card.createTime ? new Date(card.createTime).toLocaleString('zh-CN') : '未知'; const expired = card.expireDays ? `有效${card.expireDays}天` : '永久'; const statusClass = { active: 'green', disabled: 'red', expired: 'gray' }[card.status] || 'gray'; const statusText = card.status === 'active' ? '启用' : card.status === 'disabled' ? '禁用' : '过期'; return `<div style="border:1px solid #eee;border-radius:6px;padding:8px;margin-bottom:8px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;"><span style="font-weight:bold;font-size:16px;">${card.code}</span><span style="color:${statusClass};font-size:12px;">[${statusText}]</span><span style="font-size:11px;color:#666;">创建:${created} ${expired}</span><div style="margin-left:auto;display:flex;gap:5px;">${card.status==='active'?`<button onclick="disableCard(${idx})" style="background:#f39c12;color:#fff;border:none;padding:3px 8px;border-radius:3px;">禁用</button>`:''}${card.status==='disabled'?`<button onclick="enableCard(${idx})" style="background:#2ecc71;color:#fff;border:none;padding:3px 8px;border-radius:3px;">启用</button>`:''}<button onclick="deleteCard(${idx})" style="background:#e74c3c;color:#fff;border:none;padding:3px 8px;border-radius:3px;">删除</button></div></div>`; }).join(''); }
 async function generateCardKey() { const expireDays = parseInt(document.getElementById('expireDaysInput')?.value) || 30; if (expireDays < 1) { showToast('有效期至少1天'); return; } const code = generateSelfVerifyingCard(expireDays); const keys = getCardKeys(); if (keys.find(k => k.code === code)) { showToast('卡密生成冲突，请重试'); return; } keys.push({ code, status: 'active', createTime: new Date().toISOString(), expireDays }); saveCardKeys(keys); renderCardList(); showToast(`卡密 ${code} 已生成，有效期${expireDays}天`); }
 async function disableCard(index) { if (!(await confirm('确定禁用该卡密？'))) return; const keys = getCardKeys(); keys[index].status = 'disabled'; saveCardKeys(keys); renderCardList(); }
