@@ -1902,6 +1902,35 @@ function collectSpecialMatches(text) {
     return { cat: k + '连肖', nums: comb, amt, cnt: comb.length, total: amt * comb.length, kw, warnings };
   });
 
+  // ===== 第7点：生肖串 + N + 连肖 + 复试 + 关键字 + 金额 =====
+  addMatch(new RegExp(
+      `((?:[${Z}]+))` +
+      `[\\s]*([二三四五2345两])` +
+      `(?:连肖|连[肖]?|肖连|肖全中|连?肖|肖中|连)` +
+      `${SEP}复[式试]?` +
+      `[\\s]*(${KW_GROUP})${SEP}${AMT_GROUP}`, 'g'
+  ), m => {
+      const full = m[0];
+      const { amt, kw } = extractAmtAndKw(full);
+      if (!amt || amt <= 0) return null;
+      const zPart = m[1];
+      const k = toNum(m[2].replace(/[^0-9二三四五两]/g, ''));
+      if (!k || k < 2 || k > 5) return null;
+      const zChars = (zPart.match(new RegExp(`[${Z}]`, 'g')) || []).join('');
+      if (zChars.length < k) return null;
+      const comb = zCombosKeepOrder(zChars, k);
+      if (comb.length === 0) return null;
+      const warnings = [];
+      if (!kw) warnings.push('缺少金额关键字');
+      return {
+          cat: k + '连肖',
+          nums: comb,
+          amt, cnt: comb.length,
+          total: amt * comb.length,
+          kw, warnings
+      };
+  });
+
   // 非复式连肖（生肖串 + 连肖 + N）
   addMatch(new RegExp(`((?:[${Z}]+))[\\s]*(?:连肖|连[肖]?|肖连|肖全中|连?肖|肖中|连)${SEP}([二三四五2345两])\\s*${END_AMT_RE}`, 'g'), m => {
     const full = m[0]; const { amt, kw } = extractAmtAndKw(full); if (!amt || amt <= 0) return null;
@@ -2109,7 +2138,7 @@ function collectSpecialMatches(text) {
                total: amt * pairs.length, kw, warnings };
   });
 
-  // ===== 新增：号码串 + 复式玩法在后（如 "08-12-15 复式二中二 各组100"） =====
+  // ===== 第11点：号码串 + 复式玩法 顺序（复式二中二/三中三/特碰） =====
   addMatch(new RegExp(
       `((?:\\d+${SEP_CHARS}+)+\\d+)` +
       `[\\s]*(复[式试]?(?:[二2]中[二2]|[三3]中[三3]|特碰))` +
