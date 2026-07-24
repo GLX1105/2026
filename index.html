@@ -779,115 +779,65 @@ async function switchRegion(region) {
 
 function clearMemoryData() { tableBetData = {}; userBetData = {}; reportBetData = {}; reportAmountData = {}; reportRiskData = {}; numberCount = {}; zodiacCount = {}; numberAmountCount = {}; zodiacAmountCount = {}; zodiacDirectAmount = {}; zodiacFilteredAmount = {}; zodiacReportAmount = {}; zodiacFilteredReportAmount = {}; numberOrderTotal = 0; zodiacWeightedTotal = 0; originalOrderAmount = {}; directOrderAmount = {}; directReportAmount = {}; }
 
-// ===== 浮动窗口控制（只允许标题栏拖拽 + 边界弹回） =====
+// ===== 浮动窗口控制 =====
 let highestZ = 2000;
 function makeWindowDraggable(winId) {
   const win = document.getElementById(winId);
   if (!win) return;
   const header = win.querySelector('.modal-header') || win.querySelector('.database-modal-header');
-  if (!header) return;
+  const footer = win.querySelector('.modal-footer');
   let isDragging = false, startX, startY, startLeft, startTop;
-
   function onMouseDown(e) {
     if (e.target.closest('.window-controls')) return;
     if (e.target.closest('input, textarea, button, select, [contenteditable="true"]')) return;
-    if (e.offsetX > e.target.clientWidth || e.offsetY > e.target.clientHeight) return;
     isDragging = true;
     const rect = win.getBoundingClientRect();
-    startX = e.clientX;
-    startY = e.clientY;
-    startLeft = rect.left;
-    startTop = rect.top;
-
-    // 如果窗口已经越界，先拉回安全位置再开始拖拽
-    const minVisible = 50;
-    if (startTop < 0) {
-      win.style.top = '0px';
-      win.style.transform = 'none';
-      startTop = 0;
-    }
-    if (startLeft < -win.offsetWidth + minVisible) {
-      win.style.left = (-win.offsetWidth + minVisible) + 'px';
-      win.style.transform = 'none';
-      startLeft = -win.offsetWidth + minVisible;
-    }
-    if (startLeft > window.innerWidth - minVisible) {
-      win.style.left = (window.innerWidth - minVisible) + 'px';
-      win.style.transform = 'none';
-      startLeft = window.innerWidth - minVisible;
-    }
-
-    win.style.cursor = 'grabbing';
-    e.preventDefault();
+    startX = e.clientX; startY = e.clientY; startLeft = rect.left; startTop = rect.top;
+    win.style.cursor = 'grabbing'; e.preventDefault();
   }
-
-  header.addEventListener('mousedown', onMouseDown);
-
-  // 双击标题栏重置窗口到中央
-  header.addEventListener('dblclick', function(e) {
-    if (e.target.closest('.window-controls')) return;
-    if (e.target.closest('input, textarea, button, select')) return;
-    win.style.left = '50%';
-    win.style.top = '50%';
-    win.style.transform = 'translate(-50%, -50%)';
-    win.style.right = '';
-    win.style.bottom = '';
-    showToast('窗口已重置到中央');
-  });
-
+  if (header) { header.addEventListener('mousedown', onMouseDown); }
+  if (footer) { footer.addEventListener('mousedown', onMouseDown); }
+  
+  // ===== 双击标题栏重置窗口位置 =====
+  if (header) {
+    header.addEventListener('dblclick', function(e) {
+      if (e.target.closest('.window-controls')) return;
+      if (e.target.closest('input, textarea, button, select')) return;
+      // 重置窗口到屏幕中央
+      win.style.left = '50%';
+      win.style.top = '50%';
+      win.style.transform = 'translate(-50%, -50%)';
+      win.style.right = '';
+      win.style.bottom = '';
+      showToast('窗口已重置到中央');
+    });
+  }
+  
   document.addEventListener('mousemove', (e) => {
     if (!isDragging) return;
-    const dx = e.clientX - startX;
-    const dy = e.clientY - startY;
+    const dx = e.clientX - startX; const dy = e.clientY - startY;
     let newLeft = startLeft + dx;
     let newTop = startTop + dy;
-
+    
+    // ===== 边界限制：确保标题栏始终在屏幕内至少50px可抓取区域 =====
     const winWidth = win.offsetWidth;
     const winHeight = win.offsetHeight;
     const screenWidth = window.innerWidth;
     const screenHeight = window.innerHeight;
-    const minVisible = 50;
-
-    if (newLeft < -winWidth + minVisible) newLeft = -winWidth + minVisible;
-    if (newLeft > screenWidth - minVisible) newLeft = screenWidth - minVisible;
-    if (newTop < 0) newTop = 0;
-    if (newTop > screenHeight - minVisible) newTop = screenHeight - minVisible;
-
+    const minVisibleX = 50;
+    const minVisibleY = 50;
+    
+    if (newLeft < -winWidth + minVisibleX) newLeft = -winWidth + minVisibleX;
+    if (newLeft > screenWidth - minVisibleX) newLeft = screenWidth - minVisibleX;
+    if (newTop < -winHeight + minVisibleY) newTop = -winHeight + minVisibleY;
+    if (newTop > screenHeight - minVisibleY) newTop = screenHeight - minVisibleY;
+    
     win.style.left = newLeft + 'px';
     win.style.top = newTop + 'px';
     win.style.transform = 'none';
   });
-
-  document.addEventListener('mouseup', () => {
-    if (!isDragging) return;
-    isDragging = false;
-    win.style.cursor = '';
-
-    // 松开鼠标后兜底修正
-    const rect = win.getBoundingClientRect();
-    const winWidth = win.offsetWidth;
-    const screenWidth = window.innerWidth;
-    const screenHeight = window.innerHeight;
-    const minVisible = 50;
-
-    if (rect.top < 0) {
-      win.style.top = '0px';
-      win.style.transform = 'none';
-    }
-    if (rect.left < -winWidth + minVisible) {
-      win.style.left = (-winWidth + minVisible) + 'px';
-      win.style.transform = 'none';
-    }
-    if (rect.left > screenWidth - minVisible) {
-      win.style.left = (screenWidth - minVisible) + 'px';
-      win.style.transform = 'none';
-    }
-    if (rect.top > screenHeight - minVisible) {
-      win.style.top = (screenHeight - minVisible) + 'px';
-      win.style.transform = 'none';
-    }
-  });
-
+  
+  document.addEventListener('mouseup', () => { if (isDragging) { isDragging = false; win.style.cursor = ''; } });
   win.addEventListener('mousedown', () => { highestZ += 1; win.style.zIndex = highestZ; });
 }
 
@@ -1108,7 +1058,7 @@ function showRecognizeModal() {
 function closeRecognizeModal() { const textarea = document.querySelector('.source-order-input'); if (textarea) { const draftKey = `recognizeDraft_${currentRegion}`; localStorage.setItem(draftKey, textarea.value); } const win = document.getElementById('recognizeWin'); if (win) win.remove(); }
 
 function markSelection() { const ta = document.querySelector('.source-order-input'); if (!ta) return; const start = ta.selectionStart, end = ta.selectionEnd; if (start === end) { showToast('请先选择文本'); return; } const selectedText = ta.value.substring(start, end); const tokens = selectedText.split(/[\s,，.。、+\-*＊\/\\|]+/).filter(t => t.trim()); if (tokens.length === 0) { showToast('所选内容无有效文字'); return; } const merged = tokens.join('-'); ta.value = ta.value.substring(0, start) + merged + ta.value.substring(end); performRecognition(ta.value); }
-    // ===== 订单变量与基础函数 =====
+// ===== 订单变量与基础函数 =====
 let tableBetData = {}, userBetData = {}, reportBetData = {}, reportAmountData = {}, reportRiskData = {};
 let numberCount = {}, zodiacCount = {}, numberAmountCount = {}, zodiacAmountCount = {};
 let zodiacDirectAmount = {}, zodiacFilteredAmount = {};
@@ -1431,7 +1381,6 @@ function buildPlayPatterns() {
     return patterns;
 }
 
-// 预生成一个用于删除玩法名后标点的正则（避免每次都重新构建）
 const _playPunctPatterns = buildPlayPatterns();
 const _playPunctRegex = new RegExp(
     `(${_playPunctPatterns.join('|')})[，。！？；：、,\\.\\!\\?;:]`,
@@ -1442,7 +1391,6 @@ function step_removePlayPunctuation(txt) {
     return txt.replace(_playPunctRegex, '$1');
 }
 
-// ===== 预处理主函数（整合后） =====
 function preprocess(txt) {
   let c = txt;
   c = c.replace(/[\uFF01-\uFF5E]/g, ch => String.fromCharCode(ch.charCodeAt(0) - 0xFEE0));
@@ -1474,36 +1422,21 @@ function preprocess(txt) {
     三全中: '三中三', 復制: '复式', 鳮: '鸡', 単: '单', 組: '组', 平待: '平特', 泼: '波', 肖连: '连肖', 消: '肖', '〇': '0',
     l: '1', I: '1', 壹: '一', 贰: '二', 叁: '三', 肆: '四', 陆: '六', 柒: '七', 捌: '八', 玖: '九', 伍: '五', 免: '兔', 拘: '狗',
     馬: '马', 龍: '龙', 雞: '鸡', 豬: '猪', 候: '猴', 侯: '猴', 兔子: '兔', 猴子: '猴', 子: '鼠', 老蛇: '蛇',
-    // ===== 新增生僻字 / 异体字容错 =====
     '𤠣': '猴', '竜': '龙', '鷄': '鸡', '猎': '猪',
-    // ===== 新增：二中二复容错 =====
     '二中二复': '复式二中二', '二中二复式': '复式二中二',
-    // 波色大小
     '红波小': '红小', '红波大': '红大', '绿波小': '绿小', '绿波大': '绿大',
     '蓝波小': '蓝小', '兰小': '蓝小', '兰波小': '蓝小',
     '蓝波大': '蓝大', '兰大': '蓝大', '兰波大': '蓝大',
-    // 尾数
     '尾数小': '小尾', '尾数大': '大尾',
-    // 平特
     '平特一肖': '平特肖', '平特二肖': '平特肖', '平特三肖': '平特肖',
-    // 复式连肖
     '复试三肖': '复式三连肖', '三肖复式': '三连肖复式',
-    // 复式连尾
     '复试三尾': '复式三连尾', '三尾复式': '三连尾复式', '复3尾': '复三尾', '复三尾': '复式三连尾',
-    // 二中二
     '复试二中二': '复式二中二', '二中二复试': '复式二中二', '2中2复试': '复式二中二', '复试2中2': '复式二中二',
-    // 三中三
     '复试三中三': '复式三中三', '三中三复试': '复式三中三', '3中3复试': '复式三中三', '复试3中3': '复式三中三',
-    // 其他
     '三三二二串': '复三复二', '三三二二': '复三复二', '家属': '家肖',
     '复3': '复三', '复三': '复式三', '复3尾': '复三尾'
   };
   for (const [k, v] of Object.entries(reps)) c = c.split(k).join(v);
-  
-  // 应用用户自定义替换预设和分类缩写（修复替换预设不生效的问题）
-  c = applyReplacePresets(c);
-  c = applyCategoryAliases(c);
-  
   ['天天彩', '天天采', '天天', '天彩', '天采', '总单'].forEach(s => c = c.split(s).join(''));
   c = c.replace(/澳门\d+期/g, '');
   c = c.replace(/[。！？；]/g, ' ');
@@ -1512,13 +1445,11 @@ function preprocess(txt) {
   c = c.replace(/[\s]{2,}/g, ' ');
   c = c.replace(/\[\[\[NL\]\]\]/g, '\n');
   
-  // 头数连写
   c = c.replace(/((?:\d[\s,，.。、+\-*＊\/\\|]*)+)头/g, (match, digits) => {
     const nums = (digits.match(/\d/g) || []);
     if (nums.length >= 2) return nums.map(n => n + '头').join('-');
     return match;
   });
-  // 尾数连写
   c = c.replace(/((?:\d[\s,，.。、+\-*＊\/\\|]*)+)尾/g, (match, digits) => {
     const nums = (digits.match(/\d/g) || []);
     if (nums.length >= 2) return nums.map(n => n + '尾').join('-');
@@ -1526,6 +1457,77 @@ function preprocess(txt) {
   });
   
   return c.trim();
+}
+
+const KW_RE_STR = `(${KW_LIST.join('|')})`;
+const AMT_RE_STR = '(\\d+|[一二三四五六七八九十百千两]+)';
+const SEP_CHARS = '[\\s\\-,\\.\u3001\uff0c\u3002\uff01\uff1f\uff1b\uff1a\\(\\)\\[\\]{}<>/|@#$%^&*+=]';
+const SEP = SEP_CHARS + '*';
+const KW_GROUP = `(${KW_LIST.join('|')})`;
+const AMT_GROUP = `(${AMT_RE_STR})`;
+const END_AMT_RE = `\\s*(?:(?:${KW_GROUP})\\s*)?${AMT_GROUP}`;
+
+function extractAmtAndKw(matchedText) { let amt = 0, kw = ''; const re = new RegExp(`(${KW_LIST.join('|')})${SEP}(${AMT_RE_STR})`, 'g'); let m, last = null; while ((m = re.exec(matchedText)) !== null) { last = m; } if (last) { kw = last[1]; amt = toNum(last[2]); } else { const nums = matchedText.match(new RegExp(AMT_RE_STR, 'g')); if (nums) amt = toNum(nums[nums.length - 1]); } return { amt, kw }; }
+
+function parseTeMaSegment(content) {
+  if (!content.trim()) return null;
+  const allDictKeys = Object.keys(D).filter(k => !ZODIAC.includes(k) && !/^\d+$/.test(k) && !/^\d{2}$/.test(k));
+  allDictKeys.sort((a, b) => b.length - a.length);
+  let remaining = content.trim();
+  const tokens = [];
+  const invalidNums = [];
+  const zodRegex = new RegExp(`^[${ZODIAC}]`);
+  while (remaining.length > 0) {
+    remaining = remaining.trim();
+    let matched = false;
+    for (const key of allDictKeys) {
+      if (remaining.startsWith(key)) {
+        if (keyToAllNums(key).length > 0) tokens.push({ type: 'key', value: key });
+        remaining = remaining.slice(key.length);
+        matched = true;
+        break;
+      }
+    }
+    if (matched) continue;
+    const zodMatch = remaining.match(zodRegex);
+    if (zodMatch) { tokens.push({ type: 'zodiac', value: zodMatch[0] }); remaining = remaining.slice(1); continue; }
+    const numMatch = remaining.match(/^(\d+)/);
+    if (numMatch) {
+      const nStr = numMatch[1];
+      const n = parseInt(nStr);
+      if (n >= 1 && n <= 49) {
+        tokens.push({ type: 'num', value: String(n) });
+        remaining = remaining.slice(nStr.length);
+        continue;
+      } else {
+        invalidNums.push(nStr);
+        remaining = remaining.slice(nStr.length);
+        continue;
+      }
+    }
+    remaining = remaining.slice(1);
+  }
+  if (tokens.length === 0) return null;
+  const allNumsArr = [];
+  const displayItems = [];
+  for (const t of tokens) {
+    if (t.type === 'num') {
+      const padded = String(parseInt(t.value)).padStart(2, '0');
+      displayItems.push(padded);
+      allNumsArr.push(padded);
+    } else if (t.type === 'zodiac') {
+      displayItems.push(t.value);
+      const nums = ZODIAC_NUMS[t.value] ? ZODIAC_NUMS[t.value].split(/[\s,，]+/) : [];
+      nums.forEach(n => allNumsArr.push(n));
+    } else if (t.type === 'key') {
+      displayItems.push(t.value);
+      const nums = keyToAllNums(t.value);
+      nums.forEach(n => allNumsArr.push(n));
+    }
+  }
+  const cnt = allNumsArr.length;
+  const warnings = invalidNums.length ? ['无效号码: ' + invalidNums.join(', ')] : [];
+  return { displayItems, totalCount: cnt, warnings, allNumsArr: allNumsArr };
 }
 function collectSpecialMatches(text) {
   const Z = ZODIAC;
@@ -1850,35 +1852,6 @@ function collectSpecialMatches(text) {
     return { cat: k + '连肖', nums: comb, amt, cnt: comb.length, total: amt * comb.length, kw, warnings };
   });
 
-  // ===== 第7点：生肖串 + N + 连肖 + 复试 + 关键字 + 金额 =====
-  addMatch(new RegExp(
-      `((?:[${Z}]+))` +
-      `[\\s]*([二三四五2345两])` +
-      `(?:连肖|连[肖]?|肖连|肖全中|连?肖|肖中|连)` +
-      `${SEP}复[式试]?` +
-      `[\\s]*(${KW_GROUP})${SEP}${AMT_GROUP}`, 'g'
-  ), m => {
-      const full = m[0];
-      const { amt, kw } = extractAmtAndKw(full);
-      if (!amt || amt <= 0) return null;
-      const zPart = m[1];
-      const k = toNum(m[2].replace(/[^0-9二三四五两]/g, ''));
-      if (!k || k < 2 || k > 5) return null;
-      const zChars = (zPart.match(new RegExp(`[${Z}]`, 'g')) || []).join('');
-      if (zChars.length < k) return null;
-      const comb = zCombosKeepOrder(zChars, k);
-      if (comb.length === 0) return null;
-      const warnings = [];
-      if (!kw) warnings.push('缺少金额关键字');
-      return {
-          cat: k + '连肖',
-          nums: comb,
-          amt, cnt: comb.length,
-          total: amt * comb.length,
-          kw, warnings
-      };
-  });
-
   // 非复式连肖（生肖串 + 连肖 + N）
   addMatch(new RegExp(`((?:[${Z}]+))[\\s]*(?:连肖|连[肖]?|肖连|肖全中|连?肖|肖中|连)${SEP}([二三四五2345两])\\s*${END_AMT_RE}`, 'g'), m => {
     const full = m[0]; const { amt, kw } = extractAmtAndKw(full); if (!amt || amt <= 0) return null;
@@ -2086,7 +2059,7 @@ function collectSpecialMatches(text) {
                total: amt * pairs.length, kw, warnings };
   });
 
-  // ===== 第11点：号码串 + 复式玩法 顺序（复式二中二/三中三/特碰） =====
+  // ===== 新增：号码串 + 复式玩法在后（如 "08-12-15 复式二中二 各组100"） =====
   addMatch(new RegExp(
       `((?:\\d+${SEP_CHARS}+)+\\d+)` +
       `[\\s]*(复[式试]?(?:[二2]中[二2]|[三3]中[三3]|特碰))` +
