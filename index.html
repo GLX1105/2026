@@ -1431,6 +1431,7 @@ function buildPlayPatterns() {
     return patterns;
 }
 
+// 预生成一个用于删除玩法名后标点的正则（避免每次都重新构建）
 const _playPunctPatterns = buildPlayPatterns();
 const _playPunctRegex = new RegExp(
     `(${_playPunctPatterns.join('|')})[，。！？；：、,\\.\\!\\?;:]`,
@@ -1441,6 +1442,7 @@ function step_removePlayPunctuation(txt) {
     return txt.replace(_playPunctRegex, '$1');
 }
 
+// ===== 预处理主函数（整合后） =====
 function preprocess(txt) {
   let c = txt;
   c = c.replace(/[\uFF01-\uFF5E]/g, ch => String.fromCharCode(ch.charCodeAt(0) - 0xFEE0));
@@ -1472,21 +1474,36 @@ function preprocess(txt) {
     三全中: '三中三', 復制: '复式', 鳮: '鸡', 単: '单', 組: '组', 平待: '平特', 泼: '波', 肖连: '连肖', 消: '肖', '〇': '0',
     l: '1', I: '1', 壹: '一', 贰: '二', 叁: '三', 肆: '四', 陆: '六', 柒: '七', 捌: '八', 玖: '九', 伍: '五', 免: '兔', 拘: '狗',
     馬: '马', 龍: '龙', 雞: '鸡', 豬: '猪', 候: '猴', 侯: '猴', 兔子: '兔', 猴子: '猴', 子: '鼠', 老蛇: '蛇',
+    // ===== 新增生僻字 / 异体字容错 =====
     '𤠣': '猴', '竜': '龙', '鷄': '鸡', '猎': '猪',
+    // ===== 新增：二中二复容错 =====
     '二中二复': '复式二中二', '二中二复式': '复式二中二',
+    // 波色大小
     '红波小': '红小', '红波大': '红大', '绿波小': '绿小', '绿波大': '绿大',
     '蓝波小': '蓝小', '兰小': '蓝小', '兰波小': '蓝小',
     '蓝波大': '蓝大', '兰大': '蓝大', '兰波大': '蓝大',
+    // 尾数
     '尾数小': '小尾', '尾数大': '大尾',
+    // 平特
     '平特一肖': '平特肖', '平特二肖': '平特肖', '平特三肖': '平特肖',
+    // 复式连肖
     '复试三肖': '复式三连肖', '三肖复式': '三连肖复式',
+    // 复式连尾
     '复试三尾': '复式三连尾', '三尾复式': '三连尾复式', '复3尾': '复三尾', '复三尾': '复式三连尾',
+    // 二中二
     '复试二中二': '复式二中二', '二中二复试': '复式二中二', '2中2复试': '复式二中二', '复试2中2': '复式二中二',
+    // 三中三
     '复试三中三': '复式三中三', '三中三复试': '复式三中三', '3中3复试': '复式三中三', '复试3中3': '复式三中三',
+    // 其他
     '三三二二串': '复三复二', '三三二二': '复三复二', '家属': '家肖',
     '复3': '复三', '复三': '复式三', '复3尾': '复三尾'
   };
   for (const [k, v] of Object.entries(reps)) c = c.split(k).join(v);
+  
+  // 应用用户自定义替换预设和分类缩写（修复替换预设不生效的问题）
+  c = applyReplacePresets(c);
+  c = applyCategoryAliases(c);
+  
   ['天天彩', '天天采', '天天', '天彩', '天采', '总单'].forEach(s => c = c.split(s).join(''));
   c = c.replace(/澳门\d+期/g, '');
   c = c.replace(/[。！？；]/g, ' ');
@@ -1495,11 +1512,13 @@ function preprocess(txt) {
   c = c.replace(/[\s]{2,}/g, ' ');
   c = c.replace(/\[\[\[NL\]\]\]/g, '\n');
   
+  // 头数连写
   c = c.replace(/((?:\d[\s,，.。、+\-*＊\/\\|]*)+)头/g, (match, digits) => {
     const nums = (digits.match(/\d/g) || []);
     if (nums.length >= 2) return nums.map(n => n + '头').join('-');
     return match;
   });
+  // 尾数连写
   c = c.replace(/((?:\d[\s,，.。、+\-*＊\/\\|]*)+)尾/g, (match, digits) => {
     const nums = (digits.match(/\d/g) || []);
     if (nums.length >= 2) return nums.map(n => n + '尾').join('-');
@@ -1507,77 +1526,6 @@ function preprocess(txt) {
   });
   
   return c.trim();
-}
-
-const KW_RE_STR = `(${KW_LIST.join('|')})`;
-const AMT_RE_STR = '(\\d+|[一二三四五六七八九十百千两]+)';
-const SEP_CHARS = '[\\s\\-,\\.\u3001\uff0c\u3002\uff01\uff1f\uff1b\uff1a\\(\\)\\[\\]{}<>/|@#$%^&*+=]';
-const SEP = SEP_CHARS + '*';
-const KW_GROUP = `(${KW_LIST.join('|')})`;
-const AMT_GROUP = `(${AMT_RE_STR})`;
-const END_AMT_RE = `\\s*(?:(?:${KW_GROUP})\\s*)?${AMT_GROUP}`;
-
-function extractAmtAndKw(matchedText) { let amt = 0, kw = ''; const re = new RegExp(`(${KW_LIST.join('|')})${SEP}(${AMT_RE_STR})`, 'g'); let m, last = null; while ((m = re.exec(matchedText)) !== null) { last = m; } if (last) { kw = last[1]; amt = toNum(last[2]); } else { const nums = matchedText.match(new RegExp(AMT_RE_STR, 'g')); if (nums) amt = toNum(nums[nums.length - 1]); } return { amt, kw }; }
-
-function parseTeMaSegment(content) {
-  if (!content.trim()) return null;
-  const allDictKeys = Object.keys(D).filter(k => !ZODIAC.includes(k) && !/^\d+$/.test(k) && !/^\d{2}$/.test(k));
-  allDictKeys.sort((a, b) => b.length - a.length);
-  let remaining = content.trim();
-  const tokens = [];
-  const invalidNums = [];
-  const zodRegex = new RegExp(`^[${ZODIAC}]`);
-  while (remaining.length > 0) {
-    remaining = remaining.trim();
-    let matched = false;
-    for (const key of allDictKeys) {
-      if (remaining.startsWith(key)) {
-        if (keyToAllNums(key).length > 0) tokens.push({ type: 'key', value: key });
-        remaining = remaining.slice(key.length);
-        matched = true;
-        break;
-      }
-    }
-    if (matched) continue;
-    const zodMatch = remaining.match(zodRegex);
-    if (zodMatch) { tokens.push({ type: 'zodiac', value: zodMatch[0] }); remaining = remaining.slice(1); continue; }
-    const numMatch = remaining.match(/^(\d+)/);
-    if (numMatch) {
-      const nStr = numMatch[1];
-      const n = parseInt(nStr);
-      if (n >= 1 && n <= 49) {
-        tokens.push({ type: 'num', value: String(n) });
-        remaining = remaining.slice(nStr.length);
-        continue;
-      } else {
-        invalidNums.push(nStr);
-        remaining = remaining.slice(nStr.length);
-        continue;
-      }
-    }
-    remaining = remaining.slice(1);
-  }
-  if (tokens.length === 0) return null;
-  const allNumsArr = [];
-  const displayItems = [];
-  for (const t of tokens) {
-    if (t.type === 'num') {
-      const padded = String(parseInt(t.value)).padStart(2, '0');
-      displayItems.push(padded);
-      allNumsArr.push(padded);
-    } else if (t.type === 'zodiac') {
-      displayItems.push(t.value);
-      const nums = ZODIAC_NUMS[t.value] ? ZODIAC_NUMS[t.value].split(/[\s,，]+/) : [];
-      nums.forEach(n => allNumsArr.push(n));
-    } else if (t.type === 'key') {
-      displayItems.push(t.value);
-      const nums = keyToAllNums(t.value);
-      nums.forEach(n => allNumsArr.push(n));
-    }
-  }
-  const cnt = allNumsArr.length;
-  const warnings = invalidNums.length ? ['无效号码: ' + invalidNums.join(', ')] : [];
-  return { displayItems, totalCount: cnt, warnings, allNumsArr: allNumsArr };
 }
 function collectSpecialMatches(text) {
   const Z = ZODIAC;
