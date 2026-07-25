@@ -2714,7 +2714,10 @@ function performRecognition(text) {
     updateMaxLossDisplay();
     return;
   }
-  let processedText = preprocess(text);
+  let processedText = text;
+  processedText = applyReplacePresets(processedText);
+  processedText = applyCategoryAliases(processedText);
+  processedText = preprocess(processedText);
   const lines = processedText.split('\n');
   const allResults = [];
   const lineRegions = [];
