@@ -4891,9 +4891,17 @@ async function saveOrder(){
       } else {
         const match = line.match(/^(.+?):(.+?)\s+各\s*(\d+)$/);
         if(match){
-          const cleaned = match[2].replace(/[()]/g, '');
-          const groups = cleaned.split(/\s+/).filter(c=>c.trim());
-          totalAmount += groups.length * (parseInt(match[3]) || 0);
+          const playType = match[1];
+          const content = match[2];
+          const amt = parseInt(match[3]) || 0;
+          if(playType==='平特肖'||playType==='平特尾'||playType==='平码'){
+            const items = content.split('-').filter(i=>i.trim());
+            totalAmount += items.length * amt;
+          } else {
+            const cleaned = content.replace(/[()]/g, '');
+            const groups = cleaned.split(/\s+/).filter(c=>c.trim());
+            totalAmount += groups.length * amt;
+          }
         }
       }
     });
@@ -5002,9 +5010,17 @@ async function saveReportOrder(){
       } else {
         const match = line.match(/^(.+?):(.+?)\s+各\s*(\d+)$/);
         if(match){
-          const cleaned = match[2].replace(/[()]/g, '');
-          const groups = cleaned.split(/\s+/).filter(c=>c.trim());
-          totalAmount += groups.length * (parseInt(match[3]) || 0);
+          const playType = match[1];
+          const content = match[2];
+          const amt = parseInt(match[3]) || 0;
+          if(playType==='平特肖'||playType==='平特尾'||playType==='平码'){
+            const items = content.split('-').filter(i=>i.trim());
+            totalAmount += items.length * amt;
+          } else {
+            const cleaned = content.replace(/[()]/g, '');
+            const groups = cleaned.split(/\s+/).filter(c=>c.trim());
+            totalAmount += groups.length * amt;
+          }
         }
       }
     });
@@ -5027,7 +5043,7 @@ async function saveReportOrder(){
   showToast('已上报成功（' + savedCount + '个地区）'); 
   setTimeout(() => { const toast = document.querySelector('.toast-message.show'); if (toast) toast.style.color = '#ff0000'; }, 10); 
 }
-function updateOrderCountDisplay() {
+    function updateOrderCountDisplay() {
   const fd = document.getElementById('filterDate')?.value || getTodayCST();
   getOrderRecords().then(orders => {
     const todayOrders = orders.filter(r => r.date === fd);
