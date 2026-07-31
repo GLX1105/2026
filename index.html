@@ -10,6 +10,56 @@
 * {margin:0;padding:0;box-sizing:border-box;font-family:"Microsoft YaHei",sans-serif;}
 body {background:#f5f7fa;font-size:14px;line-height:1.4;overflow-x:hidden;position:relative;}
 
+/* ===== 笔记本压缩布局 (769px - 1100px) ===== */
+@media screen and (min-width: 769px) and (max-width: 1100px) {
+    .container {padding:8px !important;gap:8px !important;}
+    .recognize-wrap {min-width:0 !important;}
+    .risk-report-area {flex:0 1 340px !important;min-width:300px !important;}
+    .summary-row {gap:4px !important;}
+    .summary-item {font-size:11px !important;padding:4px 6px !important;}
+    .btn {padding:6px 8px !important;font-size:12px !important;min-height:28px !important;}
+    .card {padding:10px !important;}
+    .card-title {font-size:14px !important;margin-bottom:8px !important;}
+    .freq-container {gap:8px !important;}
+    .freq-card {padding:6px !important;min-width:150px !important;}
+    .freq-title {font-size:11px !important;}
+    .freq-table {font-size:10px !important;}
+    #riskTable, #reportTable {font-size:10px !important;}
+    #riskTable th,#riskTable td,#reportTable th,#reportTable td {padding:4px 2px !important;font-size:10px !important;}
+    .order-input-container {min-height:220px !important;}
+    .source-order-input {font-size:12px !important;padding:6px !important;}
+    .result-content {font-size:12px !important;padding:6px !important;}
+    .btn-group {gap:4px !important;}
+    .category-btn {padding:4px 2px !important;font-size:10px !important;min-height:28px !important;}
+    .navbar {padding:8px 10px !important;}
+    .navbar-title {font-size:18px !important;}
+    .navbar-actions .btn {padding:6px 12px !important;font-size:12px !important;}
+    .config-input {height:18px !important;font-size:10px !important;}
+    .config-label {width:36px !important;font-size:10px !important;}
+    .summary-item .small-input {width:40px !important;}
+    .range-input {width:36px !important;}
+    .draw-number-input-plain {width:20px !important;font-size:12px !important;}
+    .draw-zodiac-plain {font-size:10px !important;}
+    .database-modal-box {max-width:95% !important;}
+    #originalAmountTable {font-size:10px !important;}
+    #originalAmountTable th,#originalAmountTable td {padding:3px 1px !important;font-size:10px !important;}
+    .cat-insert-text {font-size:10px !important;}
+    .freq-card .freq-title .btn {padding:2px 4px !important;font-size:9px !important;}
+    .recognize-card .btn-group {gap:3px !important;}
+    .recognize-card .btn-group .btn {font-size:9px !important;padding:3px 2px !important;min-height:24px !important;}
+    .btn-sm {padding:3px 4px !important;font-size:9px !important;min-height:22px !important;}
+}
+
+/* ===== 桌面端小窗口兜底：允许横向滚动（769px - 900px） ===== */
+@media screen and (min-width: 769px) and (max-width: 900px) {
+    .container {overflow-x:auto !important;-webkit-overflow-scrolling:touch !important;}
+    .recognize-wrap {min-width:480px !important;} /* 防止卡片过度压缩 */
+    .risk-report-area {flex:0 0 320px !important;min-width:320px !important;}
+    .table-container {overflow-x:visible !important;} /* 容器本身已有滚动，内部表格可以不滚 */
+    #riskTable, #reportTable {min-width:600px !important;} /* 保证表格完整显示 */
+}
+
+/* ===== 手机端布局 (0 - 768px) ===== */
 @media screen and (max-width: 768px) {
     .container {flex-direction:column!important;padding:10px!important;gap:10px!important;}
     .recognize-wrap {width:100%!important;order:1;}
