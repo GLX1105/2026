@@ -31,9 +31,6 @@ body {background:#f5f7fa;font-size:14px;line-height:1.4;overflow-x:hidden;positi
     .result-content {font-size:12px !important;padding:6px !important;}
     .btn-group {gap:4px !important;}
     .category-btn {padding:4px 2px !important;font-size:10px !important;min-height:28px !important;}
-    .navbar {padding:8px 10px !important;}
-    .navbar-title {font-size:18px !important;}
-    .navbar-actions .btn {padding:6px 12px !important;font-size:12px !important;}
     .config-input {height:18px !important;font-size:10px !important;}
     .config-label {width:36px !important;font-size:10px !important;}
     .summary-item .small-input {width:40px !important;}
@@ -48,15 +45,51 @@ body {background:#f5f7fa;font-size:14px;line-height:1.4;overflow-x:hidden;positi
     .recognize-card .btn-group {gap:3px !important;}
     .recognize-card .btn-group .btn {font-size:9px !important;padding:3px 2px !important;min-height:24px !important;}
     .btn-sm {padding:3px 4px !important;font-size:9px !important;min-height:22px !important;}
+
+    /* 导航栏强制不换行，按钮缩小 */
+    .navbar {
+        padding: 8px 10px !important;
+        flex-wrap: nowrap !important;
+        gap: 6px !important;
+    }
+    .navbar > div:first-child {
+        flex-shrink: 0 !important;
+    }
+    .navbar-title {
+        font-size: 16px !important;
+    }
+    .navbar-actions {
+        flex-wrap: nowrap !important;
+        gap: 4px !important;
+        overflow-x: auto !important;
+    }
+    .navbar-actions .btn {
+        padding: 5px 8px !important;
+        font-size: 11px !important;
+        min-height: 26px !important;
+        white-space: nowrap !important;
+        flex-shrink: 0 !important;
+    }
+    .btn-macau, .btn-hongkong, .btn-yuegang {
+        padding: 5px 8px !important;
+        font-size: 11px !important;
+        min-height: 26px !important;
+    }
+
+    /* 大表格容器允许横向滚动 */
+    .number-stats-scroll {
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+    }
 }
 
 /* ===== 桌面端小窗口兜底：允许横向滚动（769px - 900px） ===== */
 @media screen and (min-width: 769px) and (max-width: 900px) {
     .container {overflow-x:auto !important;-webkit-overflow-scrolling:touch !important;}
-    .recognize-wrap {min-width:480px !important;} /* 防止卡片过度压缩 */
+    .recognize-wrap {min-width:480px !important;}
     .risk-report-area {flex:0 0 320px !important;min-width:320px !important;}
-    .table-container {overflow-x:visible !important;} /* 容器本身已有滚动，内部表格可以不滚 */
-    #riskTable, #reportTable {min-width:600px !important;} /* 保证表格完整显示 */
+    .table-container {overflow-x:visible !important;}
+    #riskTable, #reportTable {min-width:600px !important;}
 }
 
 /* ===== 手机端布局 (0 - 768px) ===== */
