@@ -29,6 +29,8 @@ body {background:#f5f7fa;font-size:14px;line-height:1.4;overflow-x:hidden;positi
     }
     .freq-title {font-size:11px !important;}
     .freq-table {font-size:10px !important;}
+
+    /* 右侧风险表格全面压缩 */
     #riskTable, #reportTable {font-size:9px !important;}
     #riskTable th,#riskTable td,#reportTable th,#reportTable td {
         padding:2px 1px !important;
@@ -54,6 +56,7 @@ body {background:#f5f7fa;font-size:14px;line-height:1.4;overflow-x:hidden;positi
     #reportTable th:nth-child(5),#reportTable td:nth-child(5) {
         width:28px !important;
     }
+
     .order-input-container {min-height:220px !important;}
     .source-order-input {font-size:12px !important;padding:6px !important;}
     .result-content {font-size:12px !important;padding:6px !important;}
@@ -617,13 +620,13 @@ tr.selected-row{background-color:#dceeff!important;font-weight:bold;box-shadow:i
     <button class="btn btn-clear" onclick="logout()">退出</button>
   </div>
 </div>
-<div class="container" id="mainContent">
+    <div class="container" id="mainContent">
   <div class="recognize-wrap">
       <!-- 下注统计大卡片：号码次数 + 生肖次数 + 上报号码金额 -->
       <div class="card" style="margin-top:0;">
         <div class="card-title">下注统计<span id="filterDateDrawInfo" style="margin-left:12px;font-size:14px;font-weight:normal;display:none;"></span><span id="liveClock"></span></div>
         <div class="freq-container">
-          <div class="freq-card">
+          <div class="freq-card" style="overflow-x: auto;">
             <div class="freq-title">号码次数<div class="amount-stat-box" id="numberTotalBox" style="display:none; margin-left:8px;"><span id="numberTotalAmount">0</span></div></div>
             <table class="freq-table" id="numberFreqTable"></table>
           </div>
@@ -632,7 +635,7 @@ tr.selected-row{background-color:#dceeff!important;font-weight:bold;box-shadow:i
             <table class="freq-table" id="zodiacFreqTable"></table>
             <div id="recentDrawNumbers" class="recent-draw-text" style="display:none;"></div>
           </div>
-          <div class="freq-card">
+          <div class="freq-card" style="overflow-x: auto;">
             <div class="freq-title">上报号码金额<div class="amount-stat-box" id="reportAmountTotalBox" style="display:none; margin-left:8px;"><span id="reportAmountTotalValue">0</span></div></div>
             <table class="freq-table" id="reportAmountTable"></table>
           </div>
@@ -643,7 +646,7 @@ tr.selected-row{background-color:#dceeff!important;font-weight:bold;box-shadow:i
       <div class="card" style="margin-top:0;">
         <div class="card-title">金额次数统计</div>
         <div class="freq-container">
-          <div class="freq-card">
+          <div class="freq-card" style="overflow-x: auto;">
             <div class="freq-title">号码金额次数 <span style="font-size:11px;font-weight:normal;margin-left:8px;">范围：<input type="number" id="numAmountMin" class="range-input" value="1" min="1"> - <input type="number" id="numAmountMax" class="range-input" value="50000" min="1"></span></div>
             <table class="freq-table" id="numberAmountFreqTable"></table>
           </div>
@@ -658,7 +661,7 @@ tr.selected-row{background-color:#dceeff!important;font-weight:bold;box-shadow:i
               <span class="amount-stat-box" id="ptAmountTotalBox" style="display:none; margin-left:4px;"><span>合计：</span><span id="ptAmountTotal">0</span></span>
               <span class="amount-stat-box" id="ptReportTotalBox" style="display:none; margin-left:4px;"><span>上报：</span><span id="ptReportTotal">0</span></span>
             </div>
-            <div id="pingtexiaoTableContainer" style="overflow-x:auto;"></div>
+            <div id="pingtexiaoTableContainer" style="overflow-x: auto;"></div>
           </div>
         </div>
       </div>
@@ -667,7 +670,7 @@ tr.selected-row{background-color:#dceeff!important;font-weight:bold;box-shadow:i
       <div class="card" style="margin-top:0;">
         <div class="card-title">号码统计</div>
         <div class="freq-container">
-          <div class="freq-card number-amount-card">
+          <div class="freq-card number-amount-card" style="overflow-x: auto;">
             <div class="freq-title">
               号码金额
               <div class="amount-stat-box" id="directOrderTotalBox" style="display:none; margin-left:8px;"><span>号码合计：</span><span id="directOrderTotalAmount">0</span></div>
@@ -726,6 +729,85 @@ tr.selected-row{background-color:#dceeff!important;font-weight:bold;box-shadow:i
         </div>
       </div>
     </div>
+
+    <!-- 右侧风险报告区域 -->
+    <div class="risk-report-area">
+        <div class="card" id="riskReportCard">
+          <div class="card-title">
+            <div class="title-left">
+              <input type="date" id="filterDate" style="padding:4px;border-radius:4px;border:1px solid #ccc;" onchange="updateTableFromRecords()">
+              <button onclick="updateTableFromRecords()" style="margin-left:5px;background:none;border:none;cursor:pointer;font-size:16px;" title="强制刷新">🔄</button>
+              <select id="riskReportSwitcher" style="padding:4px 8px;border-radius:4px;border:1px solid #ccc;font-size:14px;" onchange="switchRiskReport()">
+                <option value="total" selected>总风险</option>
+                <option value="user">用户</option>
+                <option value="report">净风险</option>
+              </select>
+              <select id="viewUserSelect" style="padding:4px 8px;border-radius:4px;border:1px solid #ccc;font-size:14px;display:none;" onchange="updateTableFromRecords()"></select>
+            </div>
+            <div class="year-zodiac-area">
+              <span>本年生肖：</span>
+              <select id="startZodiacSelect">
+                <option value="马">马</option><option value="蛇">蛇</option><option value="龙">龙</option><option value="兔">兔</option><option value="虎">虎</option><option value="牛">牛</option><option value="鼠">鼠</option><option value="猪">猪</option><option value="狗">狗</option><option value="鸡">鸡</option><option value="猴">猴</option><option value="羊">羊</option>
+              </select>
+              <button class="btn-screenshot" style="padding:2px 8px; font-size:12px; min-height:auto; border-radius:20px; background:#27ae60; color:#fff; border:none; cursor:pointer; margin-left:4px;" onclick="screenshotRiskCard()">截图</button>
+            </div>
+          </div>
+          <div id="riskSection">
+            <div class="summary-row">
+              <div class="summary-item">总下注：<span id="totalBet">0</span></div>
+              <div class="summary-item">返水%：<input type="number" id="rebateRate" class="small-input" value="4" min="0" max="100" step="0.1"></div>
+              <div class="summary-item">返水：<span id="totalRebate">0</span></div>
+              <div class="summary-item">倍数：<input type="number" id="multipleVal" class="small-input" value="47" min="0.1" step="0.1">
+                <button class="btn-screenshot" style="padding:2px 8px; font-size:12px; min-height:auto; border-radius:20px; background:#27ae60; color:#fff; border:none; cursor:pointer;" onclick="screenshotTable('riskTable')">截图</button>
+                <button class="btn-copy-nums" style="padding:2px 8px; font-size:12px; min-height:auto; border-radius:20px; background:#8e44ad; color:#fff; border:none; cursor:pointer;" onclick="copySelectedNumbers('riskTable')">复制</button>
+              </div>
+            </div>
+            <div class="table-container">
+              <table id="riskTable"><thead><tr><th>号码</th><th>下注</th><th>风险</th><th>ID</th><th>排名</th></tr></thead><tbody id="tableBody" onclick="handleTableRowClick(event)"></tbody></table>
+            </div>
+          </div>
+          <div id="reportSection" style="display:none;">
+            <div class="summary-row">
+              <div class="summary-item">总下注：<span id="reportTotalBet">0</span></div>
+              <div class="summary-item">返水%：<input type="number" id="reportRebateRate" class="small-input" value="4" min="0" max="100" step="0.1"></div>
+              <div class="summary-item">返水：<span id="reportTotalRebate">0</span></div>
+              <div class="summary-item">倍数：<input type="number" id="reportMultipleVal" class="small-input" value="47" min="0.1" step="0.1">
+                <button class="btn-screenshot" style="padding:2px 8px; font-size:12px; min-height:auto; border-radius:20px; background:#27ae60; color:#fff; border:none; cursor:pointer;" onclick="screenshotTable('reportTable')">截图</button>
+                <button class="btn-copy-nums" style="padding:2px 8px; font-size:12px; min-height:auto; border-radius:20px; background:#8e44ad; color:#fff; border:none; cursor:pointer;" onclick="copySelectedNumbers('reportTable')">复制</button>
+              </div>
+            </div>
+            <div class="table-container">
+              <table id="reportTable"><thead><tr><th>号码</th><th>下注</th><th>风险</th><th>ID</th><th>排名</th></tr></thead><tbody id="reportTableBody" onclick="handleTableRowClick(event)"></tbody></table>
+            </div>
+          </div>
+        </div>
+    </div>
+  </div>
+
+  <!-- 右侧存储抽屉面板 -->
+  <div class="storage-drawer" id="storageDrawer">
+    <div class="storage-tab" id="storageTab" onclick="toggleStorageDrawer()">存储</div>
+    <div class="storage-panel" id="storagePanel">
+      <button class="close-drawer" onclick="toggleStorageDrawer()">×</button>
+      <p><span class="label">数据库状态：</span><span class="value" id="dbStatus" style="color:#27ae60;">正常</span></p>
+      <p><span class="label">今日数量：</span><span class="value" id="todayOrderCount">0</span></p>
+      <p><span class="label">订单数量：</span><span class="value" id="orderCount">0</span></p>
+      <p><span class="label">已用空间：</span><span class="value" id="usedSpace">0 MB</span></p>
+      <p><span class="label">剩余空间：</span><span class="value" id="freeSpace">50 MB</span></p>
+      <hr style="margin:8px 0;border-color:#eee;">
+      <p style="cursor:pointer;" onclick="showOperationLog()"><span class="label">📋 操作日志：</span><span class="value" id="logCount">0</span></p>
+      <p style="cursor:pointer;color:#e74c3c;" onclick="clearOperationLog()"><span class="label">🧹 清除日志</span></p>
+    </div>
+  </div>
+</div>
+    <div class="database-modal" id="databaseModal" style="display:none;">
+  <div class="database-modal-box" id="databaseModalBox">
+    <div class="database-modal-header" id="databaseModalHeader"><h3>📊 号码数据库</h3><div class="window-controls"><button onclick="maximizeWindow('databaseModalBox')" title="最大化">🗖</button><button class="close-database-btn" onclick="hideDatabase()">×</button></div></div>
+    <div class="database-modal-body" id="databaseModalContent">
+      <!-- 动态填充 -->
+    </div>
+  </div>
+</div>
 <!-- 右侧风险报告区域 -->
     <div class="risk-report-area">
         <div class="card" id="riskReportCard">
