@@ -862,65 +862,115 @@ async function switchRegion(region) {
 
 function clearMemoryData() { tableBetData = {}; userBetData = {}; reportBetData = {}; reportAmountData = {}; reportRiskData = {}; numberCount = {}; zodiacCount = {}; numberAmountCount = {}; zodiacAmountCount = {}; zodiacDirectAmount = {}; zodiacFilteredAmount = {}; zodiacReportAmount = {}; zodiacFilteredReportAmount = {}; numberOrderTotal = 0; zodiacWeightedTotal = 0; originalOrderAmount = {}; directOrderAmount = {}; directReportAmount = {}; }
 
-// ===== 浮动窗口控制 =====
+// ===== 浮动窗口控制（只允许标题栏拖拽 + 边界弹回） =====
 let highestZ = 2000;
 function makeWindowDraggable(winId) {
   const win = document.getElementById(winId);
   if (!win) return;
   const header = win.querySelector('.modal-header') || win.querySelector('.database-modal-header');
-  const footer = win.querySelector('.modal-footer');
+  if (!header) return;
   let isDragging = false, startX, startY, startLeft, startTop;
+
   function onMouseDown(e) {
     if (e.target.closest('.window-controls')) return;
     if (e.target.closest('input, textarea, button, select, [contenteditable="true"]')) return;
+    if (e.offsetX > e.target.clientWidth || e.offsetY > e.target.clientHeight) return;
     isDragging = true;
     const rect = win.getBoundingClientRect();
-    startX = e.clientX; startY = e.clientY; startLeft = rect.left; startTop = rect.top;
-    win.style.cursor = 'grabbing'; e.preventDefault();
+    startX = e.clientX;
+    startY = e.clientY;
+    startLeft = rect.left;
+    startTop = rect.top;
+
+    // 如果窗口已经越界，先拉回安全位置再开始拖拽
+    const minVisible = 50;
+    if (startTop < 0) {
+      win.style.top = '0px';
+      win.style.transform = 'none';
+      startTop = 0;
+    }
+    if (startLeft < -win.offsetWidth + minVisible) {
+      win.style.left = (-win.offsetWidth + minVisible) + 'px';
+      win.style.transform = 'none';
+      startLeft = -win.offsetWidth + minVisible;
+    }
+    if (startLeft > window.innerWidth - minVisible) {
+      win.style.left = (window.innerWidth - minVisible) + 'px';
+      win.style.transform = 'none';
+      startLeft = window.innerWidth - minVisible;
+    }
+
+    win.style.cursor = 'grabbing';
+    e.preventDefault();
   }
-  if (header) { header.addEventListener('mousedown', onMouseDown); }
-  if (footer) { footer.addEventListener('mousedown', onMouseDown); }
-  
-  // ===== 双击标题栏重置窗口位置 =====
-  if (header) {
-    header.addEventListener('dblclick', function(e) {
-      if (e.target.closest('.window-controls')) return;
-      if (e.target.closest('input, textarea, button, select')) return;
-      // 重置窗口到屏幕中央
-      win.style.left = '50%';
-      win.style.top = '50%';
-      win.style.transform = 'translate(-50%, -50%)';
-      win.style.right = '';
-      win.style.bottom = '';
-      showToast('窗口已重置到中央');
-    });
-  }
-  
+
+  header.addEventListener('mousedown', onMouseDown);
+
+  // 双击标题栏重置窗口到中央
+  header.addEventListener('dblclick', function(e) {
+    if (e.target.closest('.window-controls')) return;
+    if (e.target.closest('input, textarea, button, select')) return;
+    win.style.left = '50%';
+    win.style.top = '50%';
+    win.style.transform = 'translate(-50%, -50%)';
+    win.style.right = '';
+    win.style.bottom = '';
+    showToast('窗口已重置到中央');
+  });
+
   document.addEventListener('mousemove', (e) => {
     if (!isDragging) return;
-    const dx = e.clientX - startX; const dy = e.clientY - startY;
+    const dx = e.clientX - startX;
+    const dy = e.clientY - startY;
     let newLeft = startLeft + dx;
     let newTop = startTop + dy;
-    
-    // ===== 边界限制：确保标题栏始终在屏幕内至少50px可抓取区域 =====
+
     const winWidth = win.offsetWidth;
     const winHeight = win.offsetHeight;
     const screenWidth = window.innerWidth;
     const screenHeight = window.innerHeight;
-    const minVisibleX = 50;
-    const minVisibleY = 50;
-    
-    if (newLeft < -winWidth + minVisibleX) newLeft = -winWidth + minVisibleX;
-    if (newLeft > screenWidth - minVisibleX) newLeft = screenWidth - minVisibleX;
-    if (newTop < -winHeight + minVisibleY) newTop = -winHeight + minVisibleY;
-    if (newTop > screenHeight - minVisibleY) newTop = screenHeight - minVisibleY;
-    
+    const minVisible = 50;
+
+    if (newLeft < -winWidth + minVisible) newLeft = -winWidth + minVisible;
+    if (newLeft > screenWidth - minVisible) newLeft = screenWidth - minVisible;
+    if (newTop < 5) newTop = 5;   // 防止标题栏跑出浏览器可视区域顶部
+    if (newTop > screenHeight - minVisible) newTop = screenHeight - minVisible;
+
     win.style.left = newLeft + 'px';
     win.style.top = newTop + 'px';
     win.style.transform = 'none';
   });
-  
-  document.addEventListener('mouseup', () => { if (isDragging) { isDragging = false; win.style.cursor = ''; } });
+
+  document.addEventListener('mouseup', () => {
+    if (!isDragging) return;
+    isDragging = false;
+    win.style.cursor = '';
+
+    // 松开鼠标后兜底修正
+    const rect = win.getBoundingClientRect();
+    const winWidth = win.offsetWidth;
+    const screenWidth = window.innerWidth;
+    const screenHeight = window.innerHeight;
+    const minVisible = 50;
+
+    if (rect.top < 5) {
+      win.style.top = '5px';
+      win.style.transform = 'none';
+    }
+    if (rect.left < -winWidth + minVisible) {
+      win.style.left = (-winWidth + minVisible) + 'px';
+      win.style.transform = 'none';
+    }
+    if (rect.left > screenWidth - minVisible) {
+      win.style.left = (screenWidth - minVisible) + 'px';
+      win.style.transform = 'none';
+    }
+    if (rect.top > screenHeight - minVisible) {
+      win.style.top = (screenHeight - minVisible) + 'px';
+      win.style.transform = 'none';
+    }
+  });
+
   win.addEventListener('mousedown', () => { highestZ += 1; win.style.zIndex = highestZ; });
 }
 
@@ -1141,7 +1191,7 @@ function showRecognizeModal() {
 function closeRecognizeModal() { const textarea = document.querySelector('.source-order-input'); if (textarea) { const draftKey = `recognizeDraft_${currentRegion}`; localStorage.setItem(draftKey, textarea.value); } const win = document.getElementById('recognizeWin'); if (win) win.remove(); }
 
 function markSelection() { const ta = document.querySelector('.source-order-input'); if (!ta) return; const start = ta.selectionStart, end = ta.selectionEnd; if (start === end) { showToast('请先选择文本'); return; } const selectedText = ta.value.substring(start, end); const tokens = selectedText.split(/[\s,，.。、+\-*＊\/\\|]+/).filter(t => t.trim()); if (tokens.length === 0) { showToast('所选内容无有效文字'); return; } const merged = tokens.join('-'); ta.value = ta.value.substring(0, start) + merged + ta.value.substring(end); performRecognition(ta.value); }
-// ===== 订单变量与基础函数 =====
+    // ===== 订单变量与基础函数 =====
 let tableBetData = {}, userBetData = {}, reportBetData = {}, reportAmountData = {}, reportRiskData = {};
 let numberCount = {}, zodiacCount = {}, numberAmountCount = {}, zodiacAmountCount = {};
 let zodiacDirectAmount = {}, zodiacFilteredAmount = {};
