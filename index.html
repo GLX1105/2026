@@ -37,25 +37,15 @@ body {background:#f5f7fa;font-size:14px;line-height:1.4;overflow-x:hidden;positi
         font-size:9px !important;
     }
     #riskTable th:nth-child(1),#riskTable td:nth-child(1),
-    #reportTable th:nth-child(1),#reportTable td:nth-child(1) {
-        width:44px !important;
-    }
+    #reportTable th:nth-child(1),#reportTable td:nth-child(1) {width:44px !important;}
     #riskTable th:nth-child(2),#riskTable td:nth-child(2),
-    #reportTable th:nth-child(2),#reportTable td:nth-child(2) {
-        width:36px !important;
-    }
+    #reportTable th:nth-child(2),#reportTable td:nth-child(2) {width:36px !important;}
     #riskTable th:nth-child(3),#riskTable td:nth-child(3),
-    #reportTable th:nth-child(3),#reportTable td:nth-child(3) {
-        width:36px !important;
-    }
+    #reportTable th:nth-child(3),#reportTable td:nth-child(3) {width:36px !important;}
     #riskTable th:nth-child(4),#riskTable td:nth-child(4),
-    #reportTable th:nth-child(4),#reportTable td:nth-child(4) {
-        width:38px !important;
-    }
+    #reportTable th:nth-child(4),#reportTable td:nth-child(4) {width:38px !important;}
     #riskTable th:nth-child(5),#riskTable td:nth-child(5),
-    #reportTable th:nth-child(5),#reportTable td:nth-child(5) {
-        width:28px !important;
-    }
+    #reportTable th:nth-child(5),#reportTable td:nth-child(5) {width:28px !important;}
 
     .order-input-container {min-height:220px !important;}
     .source-order-input {font-size:12px !important;padding:6px !important;}
@@ -73,38 +63,63 @@ body {background:#f5f7fa;font-size:14px;line-height:1.4;overflow-x:hidden;positi
     #originalAmountTable th,#originalAmountTable td {padding:3px 1px !important;font-size:10px !important;}
     .cat-insert-text {font-size:10px !important;}
     .freq-card .freq-title .btn {padding:2px 4px !important;font-size:9px !important;}
-    .recognize-card .btn-group {gap:3px !important;}
-    .recognize-card .btn-group .btn {font-size:9px !important;padding:3px 2px !important;min-height:24px !important;}
     .btn-sm {padding:3px 4px !important;font-size:9px !important;min-height:22px !important;}
 
-    /* 导航栏强制不换行 */
+    /* ===== 导航栏方形按钮 ===== */
     .navbar {
         padding: 8px 10px !important;
         flex-wrap: nowrap !important;
         gap: 6px !important;
     }
-    .navbar > div:first-child {
-        flex-shrink: 0 !important;
-    }
-    .navbar-title {
-        font-size: 16px !important;
-    }
+    .navbar > div:first-child {flex-shrink: 0 !important;}
+    .navbar-title {font-size: 16px !important;}
     .navbar-actions {
         flex-wrap: nowrap !important;
         gap: 4px !important;
         overflow-x: auto !important;
     }
     .navbar-actions .btn {
-        padding: 5px 8px !important;
-        font-size: 11px !important;
+        padding: 4px 4px !important;
+        font-size: 10px !important;
         min-height: 26px !important;
+        width: 56px !important;
+        border-radius: 4px !important;
         white-space: nowrap !important;
         flex-shrink: 0 !important;
+        text-align: center !important;
+        letter-spacing: 0 !important;
     }
+    /* 地区切换按钮稍宽 */
     .btn-macau, .btn-hongkong, .btn-yuegang {
-        padding: 5px 8px !important;
-        font-size: 11px !important;
+        padding: 4px 4px !important;
+        font-size: 10px !important;
         min-height: 26px !important;
+        width: 56px !important;
+        border-radius: 4px !important;
+        white-space: nowrap !important;
+        flex-shrink: 0 !important;
+        text-align: center !important;
+        letter-spacing: 0 !important;
+    }
+
+    /* ===== 识别弹窗方形按钮 ===== */
+    .recognize-card .btn-group {
+        gap: 3px !important;
+    }
+    .recognize-card .btn-group .btn {
+        font-size: 10px !important;
+        padding: 4px 4px !important;
+        min-height: 26px !important;
+        width: 64px !important;
+        border-radius: 4px !important;
+        white-space: nowrap !important;
+        flex-shrink: 0 !important;
+        text-align: center !important;
+        letter-spacing: 0 !important;
+    }
+    /* 语义转换按钮稍宽 */
+    .recognize-card .btn-group .btn-cancel {
+        width: 72px !important;
     }
 
     /* 大表格容器允许横向滚动 */
@@ -594,32 +609,32 @@ tr.selected-row{background-color:#dceeff!important;font-weight:bold;box-shadow:i
 </head>
 <body>
 <div id="dbWarning">⚠ 数据库不可用，请检查浏览器设置或存储空间</div>
-<div class="navbar" id="mainNavbar">
+<div class="navbar" id="mainNavbar" style="flex-wrap: nowrap;">
   <div style="display:flex; align-items:center; gap:12px;">
     <div class="navbar-title">港澳·识别</div>
-    <button class="btn btn-macau region-active" id="btnMacau" onclick="switchRegion('macau')">澳门</button>
-    <button class="btn btn-hongkong" id="btnHongkong" onclick="switchRegion('hongkong')">香港</button>
-    <button class="btn btn-yuegang" id="btnYuegang" onclick="switchRegion('yuegang')">粤港</button>
+    <button class="btn btn-macau region-active" id="btnMacau" onclick="switchRegion('macau')" style="width:56px;">澳门</button>
+    <button class="btn btn-hongkong" id="btnHongkong" onclick="switchRegion('hongkong')" style="width:56px;">香港</button>
+    <button class="btn btn-yuegang" id="btnYuegang" onclick="switchRegion('yuegang')" style="width:56px;">粤港</button>
   </div>
-  <div class="navbar-actions" id="navbarActions">
-    <button class="btn btn-recognize" onclick="showRecognizeModal()">识别</button>
-    <button class="btn btn-reset" id="resetBtn" onclick="resetTable()">清空</button>
-    <button class="btn btn-save-order" onclick="showOrderRecord()">订单记录</button>
-    <button class="btn btn-primary" onclick="showReportOrderRecord()">上报数据</button>
-    <button class="btn btn-primary" onclick="showLianxiaoStatsWin()">其他订单</button>
-    <button class="btn btn-primary" onclick="showUserManager()">用户</button>
-    <button class="btn btn-primary" onclick="showDatabase()">数据库</button>
-    <button class="btn btn-primary" onclick="showReplacePreset()">替换预设</button>
-    <button class="btn btn-primary" onclick="showCategoryAliases()">分类缩写</button>
-    <button class="btn btn-primary" onclick="showDuiJiangWin()">兑奖</button>
-    <button class="btn btn-primary" onclick="showDrawRecord()">开奖记录</button>
-    <button class="btn btn-export" onclick="exportData()">导出</button>
-    <button class="btn btn-import" onclick="importData()">导入</button>
-    <button class="btn btn-primary" onclick="showRecycleBin()">回收站<span id="recycleCount" class="recycle-count-badge" style="display:none;">0</span></button>
-    <button class="btn btn-primary" id="cardMgrBtn" style="display:none;" onclick="showCardManager()">卡密</button>
-    <button class="btn btn-clear" onclick="logout()">退出</button>
+  <div class="navbar-actions" id="navbarActions" style="flex-wrap: nowrap; overflow-x: auto;">
+    <button class="btn btn-recognize" onclick="showRecognizeModal()" style="width:56px;">识别</button>
+    <button class="btn btn-reset" id="resetBtn" onclick="resetTable()" style="width:56px;">清空</button>
+    <button class="btn btn-save-order" onclick="showOrderRecord()" style="width:56px;">订单记录</button>
+    <button class="btn btn-primary" onclick="showReportOrderRecord()" style="width:56px;">上报数据</button>
+    <button class="btn btn-primary" onclick="showLianxiaoStatsWin()" style="width:56px;">其他订单</button>
+    <button class="btn btn-primary" onclick="showUserManager()" style="width:56px;">用户</button>
+    <button class="btn btn-primary" onclick="showDatabase()" style="width:56px;">数据库</button>
+    <button class="btn btn-primary" onclick="showReplacePreset()" style="width:56px;">替换预设</button>
+    <button class="btn btn-primary" onclick="showCategoryAliases()" style="width:56px;">分类缩写</button>
+    <button class="btn btn-primary" onclick="showDuiJiangWin()" style="width:56px;">兑奖</button>
+    <button class="btn btn-primary" onclick="showDrawRecord()" style="width:56px;">开奖记录</button>
+    <button class="btn btn-export" onclick="exportData()" style="width:56px;">导出</button>
+    <button class="btn btn-import" onclick="importData()" style="width:56px;">导入</button>
+    <button class="btn btn-primary" onclick="showRecycleBin()" style="width:56px;">回收站<span id="recycleCount" class="recycle-count-badge" style="display:none;">0</span></button>
+    <button class="btn btn-primary" id="cardMgrBtn" style="display:none; width:56px;" onclick="showCardManager()">卡密</button>
+    <button class="btn btn-clear" onclick="logout()" style="width:56px;">退出</button>
   </div>
-</div>
+</div>v
     <div class="container" id="mainContent">
   <div class="recognize-wrap">
       <!-- 下注统计大卡片：号码次数 + 生肖次数 + 上报号码金额 -->
@@ -730,7 +745,7 @@ tr.selected-row{background-color:#dceeff!important;font-weight:bold;box-shadow:i
       </div>
     </div>
 
-    <!-- 右侧风险报告区域 -->
+    <!-- 右侧风险报告区域（保持原样） -->
     <div class="risk-report-area">
         <div class="card" id="riskReportCard">
           <div class="card-title">
