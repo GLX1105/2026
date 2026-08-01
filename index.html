@@ -21,11 +21,19 @@ body {background:#f5f7fa;font-size:14px;line-height:1.4;overflow-x:hidden;positi
     .card {padding:10px !important;}
     .card-title {font-size:14px !important;margin-bottom:8px !important;}
     .freq-container {gap:8px !important;}
-    .freq-card {padding:6px !important;min-width:150px !important;}
+    .freq-card {padding:6px !important;min-width:120px !important;}
     .freq-title {font-size:11px !important;}
     .freq-table {font-size:10px !important;}
     #riskTable, #reportTable {font-size:10px !important;}
     #riskTable th,#riskTable td,#reportTable th,#reportTable td {padding:4px 2px !important;font-size:10px !important;}
+    #riskTable th:nth-child(1),#riskTable td:nth-child(1),
+    #reportTable th:nth-child(1),#reportTable td:nth-child(1) {
+        width:48px !important;
+    }
+    #riskTable th:nth-child(4),#riskTable td:nth-child(4),
+    #reportTable th:nth-child(4),#reportTable td:nth-child(4) {
+        width:42px !important;
+    }
     .order-input-container {min-height:220px !important;}
     .source-order-input {font-size:12px !important;padding:6px !important;}
     .result-content {font-size:12px !important;padding:6px !important;}
@@ -76,10 +84,26 @@ body {background:#f5f7fa;font-size:14px;line-height:1.4;overflow-x:hidden;positi
         min-height: 26px !important;
     }
 
-    /* 大表格容器允许横向滚动 */
+    /* 大表格容器允许横向滚动（号码金额统计） */
     .number-stats-scroll {
         overflow-x: auto !important;
         -webkit-overflow-scrolling: touch !important;
+    }
+
+    /* 进一步压缩多列表格 */
+    #numberFreqTable,
+    #numberAmountFreqTable,
+    #reportAmountTable,
+    #originalAmountTable {
+        font-size: 9px !important;
+    }
+    #numberFreqTable th,#numberFreqTable td,
+    #numberAmountFreqTable th,#numberAmountFreqTable td,
+    #reportAmountTable th,#reportAmountTable td,
+    #originalAmountTable th,#originalAmountTable td {
+        padding: 1px 2px !important;
+        white-space: normal !important;
+        word-break: break-all !important;
     }
 }
 
