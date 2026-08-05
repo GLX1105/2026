@@ -321,11 +321,14 @@ function makeWindowResizable(win) {
           }
         }
 
-        // 防止窗口拖出屏幕
+        // 防止窗口拖出屏幕（与拖拽逻辑一致，顶部不低于0px）
         const screenW = window.innerWidth;
         const screenH = window.innerHeight;
         const minVisible = 50;
 
+        if (newTop < 0) {
+          newTop = 0;
+        }
         if (newLeft + newWidth < minVisible) {
           newLeft = minVisible - newWidth;
         }
