@@ -253,6 +253,110 @@ function makeWindowDraggable(winId) {
   });
 
   win.addEventListener('mousedown', () => { highestZ += 1; win.style.zIndex = highestZ; });
+
+  // 添加8方向resize句柄
+  makeWindowResizable(win);
+}
+
+// ===== 8方向窗口拉伸 =====
+function makeWindowResizable(win) {
+  const directions = ['n', 's', 'e', 'w', 'ne', 'nw', 'se', 'sw'];
+  const minWidth = parseInt(win.style.minWidth) || 300;
+  const minHeight = parseInt(win.style.minHeight) || 200;
+
+  directions.forEach(dir => {
+    const handle = document.createElement('div');
+    handle.className = `resize-handle resize-${dir}`;
+    // 防止句柄遮挡标题栏按钮交互
+    handle.style.pointerEvents = 'auto';
+    win.appendChild(handle);
+
+    handle.addEventListener('mousedown', function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+
+      const rect = win.getBoundingClientRect();
+      const startX = e.clientX;
+      const startY = e.clientY;
+      const startWidth = rect.width;
+      const startHeight = rect.height;
+      const startLeft = rect.left;
+      const startTop = rect.top;
+
+      // 禁用文本选择
+      document.body.style.userSelect = 'none';
+      document.body.style.cursor = getComputedStyle(handle).cursor;
+
+      function onMouseMove(ev) {
+        const dx = ev.clientX - startX;
+        const dy = ev.clientY - startY;
+
+        let newWidth = startWidth;
+        let newHeight = startHeight;
+        let newLeft = startLeft;
+        let newTop = startTop;
+
+        // 右方向：改变宽度
+        if (dir.includes('e')) {
+          newWidth = Math.max(minWidth, startWidth + dx);
+        }
+        // 下方向：改变高度
+        if (dir.includes('s')) {
+          newHeight = Math.max(minHeight, startHeight + dy);
+        }
+        // 左方向：改变左边距和宽度
+        if (dir.includes('w')) {
+          const w = startWidth - dx;
+          if (w >= minWidth) {
+            newWidth = w;
+            newLeft = startLeft + dx;
+          }
+        }
+        // 上方向：改变上边距和高度
+        if (dir.includes('n')) {
+          const h = startHeight - dy;
+          if (h >= minHeight) {
+            newHeight = h;
+            newTop = startTop + dy;
+          }
+        }
+
+        // 防止窗口拖出屏幕
+        const screenW = window.innerWidth;
+        const screenH = window.innerHeight;
+        const minVisible = 50;
+
+        if (newLeft + newWidth < minVisible) {
+          newLeft = minVisible - newWidth;
+        }
+        if (newLeft > screenW - minVisible) {
+          newLeft = screenW - minVisible;
+        }
+        if (newTop + newHeight < minVisible) {
+          newTop = minVisible - newHeight;
+        }
+        if (newTop > screenH - minVisible) {
+          newTop = screenH - minVisible;
+        }
+
+        win.style.width = newWidth + 'px';
+        win.style.height = newHeight + 'px';
+        win.style.left = newLeft + 'px';
+        win.style.top = newTop + 'px';
+        win.style.transform = 'none';
+      }
+
+      function onMouseUp() {
+        document.removeEventListener('mousemove', onMouseMove);
+        document.removeEventListener('mouseup', onMouseUp);
+        document.body.style.userSelect = '';
+        document.body.style.cursor = '';
+      }
+
+      document.addEventListener('mousemove', onMouseMove);
+      document.addEventListener('mouseup', onMouseUp);
+    });
+  });
 }
 
 // ===== 最大化窗口 =====

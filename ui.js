@@ -129,14 +129,17 @@ function displayResults(rs, container) {
   // 地区颜色映射
   const regionColorMap = { 'macau': '#e74c3c', 'hongkong': '#3498db', 'yuegang': '#27ae60' };
 
-  for (const r of rs) {
+  for (let i = 0; i < rs.length; i++) {
+    const r = rs[i];
+    const lineIdx = r.lineIndex !== undefined ? r.lineIndex : i;
     if (r.category === '__unrecognized__') {
       const regionLabel = REGION_LABELS[r.region] || '';
       const warnText = (r.warnings && r.warnings.length) ? r.warnings.join('；') : '缺少金额关键字或有效玩法';
       if (r.region && r.region !== currentRegion && !r.warnings.length) {
-        html += `<div class="result-line"><span style="color:${regionColorMap[r.region] || '#333'};">${regionLabel}·</span>${r.rawLine} <span style="color:red;">[已提取地区${regionLabel}，但内容无法识别]</span></div>`;
+        html += `<div class="result-line" data-line-index="${lineIdx}"><span style="color:${regionColorMap[r.region] || '#333'};">${regionLabel}·</span>${r.rawLine} <span style="color:red;">[已提取地区${regionLabel}，但内容无法识别]</span></div>`;
       } else {
-        html += `<div class="result-line"><span style="color:${r.region !== currentRegion ? (regionColorMap[r.region] || '#e74c3c') : '#000'};">${regionLabel}·</span>${r.rawLine} <span style="color:red;">[${warnText}]</span></div>`;
+        const warnClick = (r.warnings && r.warnings.length) ? ` onclick="jumpToInputLine(${lineIdx})" style="color:red;cursor:pointer;" title="点击跳转到输入行"` : ' style="color:red;"';
+        html += `<div class="result-line" data-line-index="${lineIdx}"><span style="color:${r.region !== currentRegion ? (regionColorMap[r.region] || '#e74c3c') : '#000'};">${regionLabel}·</span>${r.rawLine} <span${warnClick}>[${warnText}]</span></div>`;
       }
       continue;
     }
@@ -152,8 +155,10 @@ function displayResults(rs, container) {
     if (r._inherited) {
       line += ` <span style="color:#27ae60;">[继承]</span>`;
     }
-    if (r.warnings && r.warnings.length) { line += ` <span style="color:red;">[${r.warnings.join('；')}]</span>`; }
-    html += `<div class="result-line">${line}</div>`;
+    if (r.warnings && r.warnings.length) {
+      line += ` <span onclick="jumpToInputLine(${lineIdx})" style="color:red;cursor:pointer;text-decoration:underline dotted;" title="点击跳转到输入行">[${r.warnings.join('；')}]</span>`;
+    }
+    html += `<div class="result-line" data-line-index="${lineIdx}">${line}</div>`;
     const pureNumStr = formatNums(r.category, r.numbers);
     pureLines.push(`${r.category}:${pureNumStr} ${kwDisplay} ${Math.round(r.unitAmount)}`);
     pureRegions.push(r.region);
@@ -171,6 +176,33 @@ function displayResults(rs, container) {
   window._pureOrderLines = pureLines;
   window._pureOrderRegions = pureRegions;
   window._cachedMaxLossData = maxLossData;
+}
+
+// ===== 点击报警跳转到输入框对应行 =====
+function jumpToInputLine(lineIndex) {
+  const textarea = document.querySelector('.source-order-input');
+  if (!textarea) return;
+  const lines = textarea.value.split('\n');
+  let nonEmptyIdx = 0;
+  let pos = 0;
+  for (let i = 0; i < lines.length; i++) {
+    if (nonEmptyIdx === lineIndex) {
+      const lineEnd = pos + lines[i].length;
+      textarea.focus();
+      textarea.setSelectionRange(lineEnd, lineEnd);
+      // 滚动使该行可见
+      const lineHeight = parseInt(getComputedStyle(textarea).lineHeight) || 20;
+      const pad = textarea.clientHeight / 3;
+      textarea.scrollTop = Math.max(0, (i * lineHeight) - pad);
+      // 临时高亮提示
+      textarea.style.outline = '2px solid #e74c3c';
+      textarea.style.outlineOffset = '-2px';
+      setTimeout(() => { textarea.style.outline = ''; textarea.style.outlineOffset = ''; }, 1500);
+      return;
+    }
+    pos += lines[i].length + 1;
+    nonEmptyIdx++;
+  }
 }
 
 // ===== 保存订单 =====
@@ -868,6 +900,63 @@ async function copyReportCapText(){ const info=document.getElementById('reportCa
 // ===== 截图功能 =====
 async function screenshotTable(tid){ const tbl=document.getElementById(tid); if(!tbl){showToast('表格不存在');return;} try{ const canvas=await html2canvas(tbl,{backgroundColor:'#ffffff',scale:2,logging:false}); canvas.toBlob(async blob=>{ if(!blob){showToast('生成图片失败');return;} try{ const item=new ClipboardItem({'image/png':blob}); await navigator.clipboard.write([item]); showToast('截图已复制'); }catch(e){showToast('复制失败'); } },'image/png'); }catch(e){showToast('截图失败');} }
 
+// ===== 订单记录窗口截图（全尺寸，包括不可视区域） =====
+async function screenshotOrderRecord() {
+  const win = document.getElementById('orderWin');
+  if (!win) { showToast('窗口不存在'); return; }
+  try {
+    // 获取模态内容区域（包含滚动列表）
+    const modalBody = win.querySelector('.modal-body');
+    if (!modalBody) { showToast('内容区域不存在'); return; }
+    // 获取滚动容器
+    const listContainer = document.getElementById('orderListContainer');
+    
+    // 暂存原始样式
+    const origOverflow = listContainer ? listContainer.style.overflow : '';
+    const origMaxHeight = modalBody.style.maxHeight;
+    const origHeight = modalBody.style.height;
+    const winOrigOverflow = win.style.overflow;
+
+    // 展开所有内容以便截图
+    if (listContainer) {
+      listContainer.style.overflow = 'visible';
+    }
+    modalBody.style.maxHeight = 'none';
+    modalBody.style.height = 'auto';
+    win.style.overflow = 'visible';
+
+    // 等待DOM更新
+    await new Promise(r => setTimeout(r, 100));
+
+    const canvas = await html2canvas(modalBody, {
+      backgroundColor: '#ffffff',
+      scale: 2,
+      logging: false,
+      useCORS: true,
+      allowTaint: false
+    });
+
+    // 恢复原始样式
+    if (listContainer) listContainer.style.overflow = origOverflow;
+    modalBody.style.maxHeight = origMaxHeight;
+    modalBody.style.height = origHeight;
+    win.style.overflow = winOrigOverflow;
+
+    canvas.toBlob(async blob => {
+      if (!blob) { showToast('生成图片失败'); return; }
+      try {
+        const item = new ClipboardItem({ 'image/png': blob });
+        await navigator.clipboard.write([item]);
+        showToast('订单截图已复制到剪贴板');
+      } catch(e) {
+        showToast('复制到剪贴板失败');
+      }
+    }, 'image/png');
+  } catch(e) {
+    showToast('截图失败');
+  }
+}
+
 // ===== 各种统计表渲染 =====
 function renderReportAmountTable(){ const tbl=document.getElementById('reportAmountTable'); if(!tbl)return; tbl.innerHTML=''; const cols=[...Array(5)].map((_,c)=>Array.from({length:c===4?9:10},(_,r)=>(c*10+r+1).toString().padStart(2,'0'))); let th='<thead><tr>'; for(let c=0;c<5;c++)th+='<th>号码</th><th>金额</th>'; th+='</tr></thead>'; let tb='<tbody>'; for(let r=0;r<10;r++){ tb+='<tr>'; for(let c=0;c<5;c++){ const n=cols[c][r]||''; if(n){ const a=reportAmountData[n]||0; const cls=redNumbers.includes(n)?'red-text':(blueNumbers.includes(n)?'blue-text':'green-text'); tb+=`<td class="${cls}">${n}</td><td class="black-text">${a||''}</td>`; }else{tb+='<td></td><td></td>';} } tb+='</tr>'; } tb+='</tbody>'; tbl.innerHTML=th+tb; updateReportAmountTotal(); }
 
@@ -970,7 +1059,7 @@ window._orderListAllData = [];
 window._orderListPage = 0;
 window._orderListPageSize = 50;
 
-async function showOrderRecord(filter='all'){ try{ const recs=await getOrderRecords(),users=getUsers(),today=getTodayCST(); const reports=await getReportOrderRecords(); const fd=document.getElementById('filterDate')?.value; const fRecs=fd?recs.filter(r=>r.date===fd):recs; const fReps=fd?reports.filter(r=>r.date===fd):reports; if(document.getElementById('orderWin'))document.getElementById('orderWin').remove(); const w=document.createElement('div'); w.className='floating-window'; w.id='orderWin'; w.style.width='750px'; w.style.height='600px'; w.style.left='50%'; w.style.top='50%'; w.style.transform='translate(-50%,-50%)'; let html=`<div class="modal-header"><h3>下单记录 <span style="font-size:12px;font-weight:normal;">(共${fRecs.length}单)</span></h3><div class="window-controls"><button onclick="maximizeWindow('orderWin')">🗖</button><button onclick="document.getElementById('orderWin').remove()">×</button></div></div><div class="modal-body" style="display:flex; flex-direction:column; height: calc(100% - 120px);">`;
+async function showOrderRecord(filter='all'){ try{ const recs=await getOrderRecords(),users=getUsers(),today=getTodayCST(); const reports=await getReportOrderRecords(); const fd=document.getElementById('filterDate')?.value; const fRecs=fd?recs.filter(r=>r.date===fd):recs; const fReps=fd?reports.filter(r=>r.date===fd):reports; const prizeInput = document.getElementById('prizeNumberInput'); if (prizeInput) window._savedPrizeFilter = prizeInput.value || ''; if(document.getElementById('orderWin'))document.getElementById('orderWin').remove(); const w=document.createElement('div'); w.className='floating-window'; w.id='orderWin'; w.style.width='750px'; w.style.height='600px'; w.style.left='50%'; w.style.top='50%'; w.style.transform='translate(-50%,-50%)'; let html=`<div class="modal-header"><h3>下单记录 <span style="font-size:12px;font-weight:normal;">(共${fRecs.length}单)</span></h3><div class="window-controls"><button onclick="maximizeWindow('orderWin')">🗖</button><button onclick="document.getElementById('orderWin').remove()">×</button></div></div><div class="modal-body" style="display:flex; flex-direction:column; height: calc(100% - 120px);">`;
   html+=`<div style="margin-bottom:6px;display:flex;gap:12px;flex-wrap:wrap;align-items:center;position:sticky;top:0;background:rgba(255,255,255,0.9);z-index:2;padding:5px 0;"><select id="recordUserFilter" onchange="showOrderRecord(this.value)" style="padding:4px 8px;border-radius:4px;border:1px solid #ccc;"><option value="all" ${filter==='all'?'selected':''}>全部用户</option>`;
   users.forEach(u=>html+=`<option value="${u}" ${u===filter?'selected':''}>${u}</option>`);
   html+=`</select><button onclick="checkAll()" style="padding:6px 12px;background:#007bff;color:#fff;border:none;border-radius:4px;">全选</button><button onclick="uncheckAll()" style="padding:6px 12px;background:#6c757d;color:#fff;border:none;border-radius:4px;">取消全选</button><button onclick="deleteChecked()" style="padding:6px 12px;background:#e74c3c;color:#fff;border:none;border-radius:4px;">批量删除</button>`;
@@ -992,8 +1081,14 @@ async function showOrderRecord(filter='all'){ try{ const recs=await getOrderReco
       html += `<div style="text-align:center;padding:10px;" id="loadMoreOrdersBtn"><button onclick="loadMoreOrders()" style="padding:6px 20px;background:#007bff;color:#fff;border:none;border-radius:4px;cursor:pointer;">加载更多（${pageSize}/${filtered.length}）</button></div>`;
     }
   }
-  html+=`</div></div><div class="modal-footer"><button onclick="batchCopyOrders('.order-check')" style="padding:8px 16px;background:#8e44ad;color:#fff;border:none;border-radius:4px;">批量复制</button><button onclick="document.getElementById('orderWin').remove()" style="padding:8px 16px;background:#6c757d;color:#fff;border:none;border-radius:4px;">关闭</button></div>`;
+  html+=`</div></div><div class="modal-footer"><button onclick="batchCopyOrders('.order-check')" style="padding:8px 16px;background:#8e44ad;color:#fff;border:none;border-radius:4px;">批量复制</button><button onclick="screenshotOrderRecord()" style="padding:8px 16px;background:#27ae60;color:#fff;border:none;border-radius:4px;">截图</button><button onclick="document.getElementById('orderWin').remove()" style="padding:8px 16px;background:#6c757d;color:#fff;border:none;border-radius:4px;">关闭</button></div>`;
   w.innerHTML=html; document.body.appendChild(w); makeWindowDraggable('orderWin'); highestZ+=1; w.style.zIndex=highestZ;
+  const savedPrize = window._savedPrizeFilter || '';
+  if (savedPrize) {
+    const prizeInput = document.getElementById('prizeNumberInput');
+    if (prizeInput) { prizeInput.value = savedPrize; applyPrizeFilter(); }
+  }
+  window._savedPrizeFilter = '';
   renderOrderStats(fRecs, fReps, filter, document.getElementById('prizeNumberInput')?.value?.trim());
  }catch(e){showToast('加载失败');} }
 

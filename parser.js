@@ -1488,7 +1488,8 @@ function performRecognition(text) {
   // 跨行继承上下文
   let lastInheritablePlay = null;
 
-  for (const line of lines) {
+  for (let lineIdx = 0; lineIdx < lines.length; lineIdx++) {
+    const line = lines[lineIdx];
     if (!line.trim()) {
       continue;
     }
@@ -1527,7 +1528,7 @@ function performRecognition(text) {
       const inheritResult = applyInlineInheritance(lineResults, lastInheritablePlay);
       lineResults = inheritResult.results;
       lastInheritablePlay = inheritResult.lastPlay;
-      lineResults.forEach(r => { r.region = currentLineRegion; });
+      lineResults.forEach(r => { r.region = currentLineRegion; r.lineIndex = lineIdx; });
       allResults.push(...lineResults);
     }
   }
@@ -1537,7 +1538,8 @@ function performRecognition(text) {
     totalCount: r.cnt, totalAmount: r.total, kw: r.kw || '', warnings: r.warnings || [],
     rawLine: r.rawLine || '',
     region: r.region || currentRegion,
-    _inherited: r._inherited || false
+    _inherited: r._inherited || false,
+    lineIndex: r.lineIndex
   }));
 
   if (resultDiv) {
@@ -1574,7 +1576,7 @@ function displayResults(rs, container) {
       if (r.region && r.region !== currentRegion && !r.warnings.length) {
         html += `<div class="result-line" data-line-index="${i}"><span style="color:${regionColorMap[r.region] || '#333'};">${regionLabel}·</span>${r.rawLine} <span style="color:red;">[已提取地区${regionLabel}，但内容无法识别]</span></div>`;
       } else {
-        const warnClick = (r.warnings && r.warnings.length) ? ` onclick="jumpToInputLine(${i})" style="color:red;cursor:pointer;text-decoration:underline dotted;" title="点击跳转到输入行"` : '';
+        const warnClick = (r.warnings && r.warnings.length) ? ` onclick="jumpToInputLine(${i})" style="color:red;cursor:pointer;" title="点击跳转到输入行"` : '';
         html += `<div class="result-line" data-line-index="${i}"><span style="color:${r.region !== currentRegion ? (regionColorMap[r.region] || '#e74c3c') : '#000'};">${regionLabel}·</span>${r.rawLine} <span${warnClick}>[${warnText}]</span></div>`;
       }
       continue;
