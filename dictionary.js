@@ -181,7 +181,7 @@ function preprocess(txt) {
 // ===== 正则常量 =====
 const KW_RE_STR = `(${KW_LIST.join('|')})`;
 const AMT_RE_STR = '(\\d+|[一二三四五六七八九十百千两]+)';
-const SEP_CHARS = '[\\s\\-,\u3001\uff0c\u3002\uff01\uff1f\uff1b\uff1a\\(\\)\\[\\]{}<>/|@#$%^&*+=]';
+const SEP_CHARS = '[\\s\\-,\\.\u3001\uff0c\u3002\uff01\uff1f\uff1b\uff1a\\(\\)\\[\\]{}<>/|@#$%^&*+=]';
 const SEP = SEP_CHARS + '*';
 const KW_GROUP = `(${KW_LIST.join('|')})`;
 const AMT_GROUP = `(${AMT_RE_STR})`;

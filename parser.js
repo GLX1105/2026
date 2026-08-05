@@ -476,8 +476,8 @@ function collectSpecialMatches(text) {
   });
 
   // 非复式二中二
-  addMatch(new RegExp(`[二2]中[二2]${SEP}((?:\\d{1,2}${SEP_CHARS}+\\d{1,2}${SEP_CHARS}*)+)(?!${SEP_CHARS}*[拖托碰])[\\s]*${END_AMT_RE}`, 'g'), m => {
-    const full = m[0]; const { amt, kw } = extractAmtAndKw(full); if (!amt || amt <= 0) return null;
+  addMatch(new RegExp(`[二2]中[二2]${SEP}((?:\\d{1,2}(?!\\d)${SEP_CHARS}+\\d{1,2}(?!\\d)${SEP_CHARS}*)+)(?!${SEP_CHARS}*[拖托碰])[\\s]*(?:${END_AMT_RE})?`, 'g'), m => {
+    const full = m[0]; const { amt, kw } = extractAmtAndKw(full); if (!kw && !amt) return null;
     const numPart = m[1]; const invalidNums = findInvalidNums(numPart);
     const warnings = invalidNums.length ? ['无效号码: ' + invalidNums.join(', ')] : [];
     const pairs = [];
@@ -490,13 +490,13 @@ function collectSpecialMatches(text) {
       const nums = extractNums(numPart);
       if (nums.length % 2 !== 0 || nums.length === 0) {
         warnings.push(`号码数(${nums.length})与二中二不匹配`);
-        return { cat: '二中二', nums: [], amt, cnt: 0, total: 0, kw, warnings };
+        return { cat: '二中二', nums: [], amt: 0, cnt: 0, total: 0, kw, warnings };
       }
       const uniq = [...new Set(nums)].sort((a, b) => parseInt(a) - parseInt(b));
       combosNoSort(uniq, 2).forEach(c => pairs.push(c.join('-')));
     }
-    if (pairs.length > 1 && !kw) warnings.push('缺少金额关键字');
-    return { cat: '二中二', nums: pairs, amt, cnt: pairs.length, total: amt * pairs.length, kw, warnings };
+    if (!kw) warnings.push('缺少金额关键字');
+    return { cat: '二中二', nums: pairs, amt: kw ? amt : 0, cnt: kw ? pairs.length : 0, total: kw ? amt * pairs.length : 0, kw, warnings };
   });
 
   // ===== 特碰：复式 =====
@@ -510,8 +510,8 @@ function collectSpecialMatches(text) {
   });
 
   // ===== 特碰：数字直接配对 =====
-  addMatch(new RegExp(`特碰${SEP}((?:\\d{1,2}${SEP_CHARS}+\\d{1,2}${SEP_CHARS}*)+)(?!${SEP_CHARS}*[拖托碰])[\\s]*${END_AMT_RE}`, 'g'), m => {
-    const full = m[0]; const { amt, kw } = extractAmtAndKw(full); if (!amt || amt <= 0) return null;
+  addMatch(new RegExp(`特碰${SEP}((?:\\d{1,2}(?!\\d)${SEP_CHARS}+\\d{1,2}(?!\\d)${SEP_CHARS}*)+)(?!${SEP_CHARS}*[拖托碰])[\\s]*(?:${END_AMT_RE})?`, 'g'), m => {
+    const full = m[0]; const { amt, kw } = extractAmtAndKw(full); if (!kw && !amt) return null;
     const numPart = m[1]; const invalidNums = findInvalidNums(numPart);
     const warnings = invalidNums.length ? ['无效号码: ' + invalidNums.join(', ')] : [];
     const pairs = [];
@@ -524,13 +524,13 @@ function collectSpecialMatches(text) {
       const nums = extractNums(numPart);
       if (nums.length % 2 !== 0 || nums.length === 0) {
         warnings.push(`号码数(${nums.length})与特碰不匹配`);
-        return { cat: '特碰', nums: [], amt, cnt: 0, total: 0, kw, warnings };
+        return { cat: '特碰', nums: [], amt: 0, cnt: 0, total: 0, kw, warnings };
       }
       const uniq = [...new Set(nums)].sort((a, b) => parseInt(a) - parseInt(b));
       combosNoSort(uniq, 2).forEach(c => pairs.push(c.join('-')));
     }
-    if (pairs.length > 1 && !kw) warnings.push('缺少金额关键字');
-    return { cat: '特碰', nums: pairs, amt, cnt: pairs.length, total: amt * pairs.length, kw, warnings };
+    if (!kw) warnings.push('缺少金额关键字');
+    return { cat: '特碰', nums: pairs, amt: kw ? amt : 0, cnt: kw ? pairs.length : 0, total: kw ? amt * pairs.length : 0, kw, warnings };
   });
 
   // 复式三中三
@@ -544,8 +544,8 @@ function collectSpecialMatches(text) {
   });
 
   // 非复式三中三
-  addMatch(new RegExp(`[三3]中[三3]${SEP}((?:\\d{1,2}${SEP_CHARS}+\\d{1,2}${SEP_CHARS}+\\d{1,2}${SEP_CHARS}*)+)[\\s]*${END_AMT_RE}`, 'g'), m => {
-    const full = m[0]; const { amt, kw } = extractAmtAndKw(full); if (!amt || amt <= 0) return null;
+  addMatch(new RegExp(`[三3]中[三3]${SEP}((?:\\d{1,2}(?!\\d)${SEP_CHARS}+\\d{1,2}(?!\\d)${SEP_CHARS}+\\d{1,2}(?!\\d)${SEP_CHARS}*)+)[\\s]*(?:${END_AMT_RE})?`, 'g'), m => {
+    const full = m[0]; const { amt, kw } = extractAmtAndKw(full); if (!kw && !amt) return null;
     const numPart = m[1]; const invalidNums = findInvalidNums(numPart);
     const warnings = invalidNums.length ? ['无效号码: ' + invalidNums.join(', ')] : [];
     const triples = [];
@@ -558,13 +558,13 @@ function collectSpecialMatches(text) {
       const nums = extractNums(numPart);
       if (nums.length % 3 !== 0 || nums.length === 0) {
         warnings.push(`号码数(${nums.length})与三中三不匹配`);
-        return { cat: '三中三', nums: [], amt, cnt: 0, total: 0, kw, warnings };
+        return { cat: '三中三', nums: [], amt: 0, cnt: 0, total: 0, kw, warnings };
       }
       const uniq = [...new Set(nums)].sort((a, b) => parseInt(a) - parseInt(b));
       combosNoSort(uniq, 3).forEach(c => triples.push(c.join('-')));
     }
-    if (triples.length > 1 && !kw) warnings.push('缺少金额关键字');
-    return { cat: '三中三', nums: triples, amt, cnt: triples.length, total: amt * triples.length, kw, warnings };
+    if (!kw) warnings.push('缺少金额关键字');
+    return { cat: '三中三', nums: triples, amt: kw ? amt : 0, cnt: kw ? triples.length : 0, total: kw ? amt * triples.length : 0, kw, warnings };
   });
 
   // ===== 平特肖 =====
