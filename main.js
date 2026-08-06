@@ -77,15 +77,15 @@ if (filterDateEl) { filterDateEl.addEventListener('change', () => { updateTableF
 const originalApplyReportCap = applyReportCap;
 applyReportCap = function() { originalApplyReportCap(); const info = document.getElementById('reportCapInfo').innerText; if (!info || info === '无超出的号码') { document.getElementById('parseResultArea').innerText = ''; } };
 
-// ===== 清空按钮长按事件（长按800ms触发） =====
+// ===== 清空按钮长按事件（长按3秒清空全部地区） =====
 let resetLock = false;
 let resetLongPressTimer = null;
 const resetBtn = document.getElementById('resetBtn');
 if (resetBtn) {
-  resetBtn.addEventListener('mousedown', (e) => { if (e.button !== 0) return; resetLongPressTimer = setTimeout(() => { resetLongPressTimer = null; resetTable(); }, 800); });
+  resetBtn.addEventListener('mousedown', (e) => { if (e.button !== 0) return; resetLongPressTimer = setTimeout(async () => { resetLongPressTimer = null; const confirmed = await confirm('长按清空：确定要清空香港、澳门和粤港全部订单和上报数据吗？此操作不可恢复！'); if (!confirmed) return; const pwd = await prompt("输入清空密码：",""); if (pwd !== PASSWORD) { await alert("密码错误"); return; } await clearAllOrderRecordsFromIDB(); await clearAllReportOrderRecordsFromIDB(); await clearAllComboOrderRecordsFromIDB(); clearMemoryData(); renderAllTablesPlaceholder(); calculateStorageUsage(); updateAmountDisplays(); renderPingtexiaoTable(); addOperationLog('reset', '清空全部数据（长按）'); showToast('已清空全部地区数据'); }, 3000); });
   resetBtn.addEventListener('mouseup', () => { if (resetLongPressTimer) { clearTimeout(resetLongPressTimer); resetLongPressTimer = null; } });
   resetBtn.addEventListener('mouseleave', () => { if (resetLongPressTimer) { clearTimeout(resetLongPressTimer); resetLongPressTimer = null; } });
-  resetBtn.addEventListener('touchstart', (e) => { resetLongPressTimer = setTimeout(() => { resetLongPressTimer = null; resetTable(); e.preventDefault(); }, 800); });
+  resetBtn.addEventListener('touchstart', (e) => { resetLongPressTimer = setTimeout(async () => { resetLongPressTimer = null; const confirmed = await confirm('长按清空：确定要清空香港、澳门和粤港全部订单和上报数据吗？此操作不可恢复！'); if (!confirmed) return; const pwd = await prompt("输入清空密码：",""); if (pwd !== PASSWORD) { await alert("密码错误"); return; } await clearAllOrderRecordsFromIDB(); await clearAllReportOrderRecordsFromIDB(); await clearAllComboOrderRecordsFromIDB(); clearMemoryData(); renderAllTablesPlaceholder(); calculateStorageUsage(); updateAmountDisplays(); renderPingtexiaoTable(); addOperationLog('reset', '清空全部数据（长按）'); showToast('已清空全部地区数据'); }, 3000); e.preventDefault(); });
   resetBtn.addEventListener('touchend', (e) => { if (resetLongPressTimer) { clearTimeout(resetLongPressTimer); resetLongPressTimer = null; resetTable(); e.preventDefault(); } });
   resetBtn.addEventListener('touchcancel', () => { if (resetLongPressTimer) { clearTimeout(resetLongPressTimer); resetLongPressTimer = null; } });
 }
