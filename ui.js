@@ -911,60 +911,69 @@ async function screenshotOrderRecord() {
     clone.style.left = '-9999px';
     clone.style.top = '0';
     clone.style.width = win.offsetWidth + 'px';
-    clone.style.display = 'block';
+    // 保留原始 display（flex），不覆盖
     clone.style.visibility = 'visible';
     clone.style.height = 'auto';
     clone.style.maxHeight = 'none';
     clone.style.overflow = 'visible';
+    clone.style.minHeight = 'auto';
+    // 清除 transform，让克隆体不受 translate 影响
     clone.style.transform = 'none';
     document.body.appendChild(clone);
 
-    // 展开所有可滚动容器
-    const allScrollable = clone.querySelectorAll('*');
+    // 强制展开所有可能限制高度的子元素
+    const allEls = clone.querySelectorAll('*');
     const savedStyles = [];
-    allScrollable.forEach(el => {
-      const cs = window.getComputedStyle(el);
-      if (cs.overflow === 'auto' || cs.overflow === 'scroll' || cs.overflowY === 'auto' || cs.overflowY === 'scroll' ||
-          el.style.overflow === 'auto' || el.style.overflow === 'scroll' ||
-          el.style.overflowY === 'auto' || el.style.overflowY === 'scroll' ||
-          (el.style.maxHeight && el.style.maxHeight !== 'none') ||
-          /max-height[^;]*:[^;]*(?:px|em|rem|vh)/.test(el.getAttribute('style') || '')) {
+    allEls.forEach(el => {
+      const style = el.style;
+      const hasOverflowClip = style.overflowY === 'auto' || style.overflowY === 'scroll' ||
+                              style.overflow === 'auto' || style.overflow === 'scroll';
+      const hasMaxHeight = style.maxHeight && style.maxHeight !== 'none' && style.maxHeight !== '';
+      const isFlexItem = style.flex === '1' || style.flex === '1 1 0%' || style.flex === '1 1 0px' ||
+                         /flex:\s*1/.test(el.getAttribute('style') || '');
+      if (hasOverflowClip || hasMaxHeight || isFlexItem) {
         savedStyles.push({
           el,
-          overflow: el.style.overflow,
-          overflowY: el.style.overflowY,
-          maxHeight: el.style.maxHeight,
-          height: el.style.height,
-          flex: el.style.flex
+          overflow: style.overflow,
+          overflowY: style.overflowY,
+          maxHeight: style.maxHeight,
+          height: style.height,
+          flex: style.flex,
+          minHeight: style.minHeight
         });
-        el.style.overflow = 'visible';
-        el.style.overflowY = 'visible';
-        el.style.maxHeight = 'none';
-        el.style.height = 'auto';
-        el.style.flex = 'none';
+        style.overflow = 'visible';
+        style.overflowY = 'visible';
+        style.maxHeight = 'none';
+        style.height = 'auto';
+        style.flex = 'none';
+        style.minHeight = 'auto';
       }
     });
 
-    // 展开 modal-body 和所有 flex 子项
-    const cloneModalBody = clone.querySelector('.modal-body');
-    if (cloneModalBody) {
+    // 额外处理 orderListContainer 特定容器
+    const listContainer = clone.querySelector('#orderListContainer');
+    if (listContainer) {
       savedStyles.push({
-        el: cloneModalBody,
-        overflow: cloneModalBody.style.overflow,
-        overflowY: cloneModalBody.style.overflowY,
-        maxHeight: cloneModalBody.style.maxHeight,
-        height: cloneModalBody.style.height,
-        flex: cloneModalBody.style.flex
+        el: listContainer,
+        overflow: listContainer.style.overflow,
+        overflowY: listContainer.style.overflowY,
+        maxHeight: listContainer.style.maxHeight,
+        height: listContainer.style.height,
+        flex: listContainer.style.flex,
+        minHeight: listContainer.style.minHeight
       });
-      cloneModalBody.style.overflow = 'visible';
-      cloneModalBody.style.overflowY = 'visible';
-      cloneModalBody.style.maxHeight = 'none';
-      cloneModalBody.style.height = 'auto';
-      cloneModalBody.style.flex = 'none';
+      listContainer.style.overflow = 'visible';
+      listContainer.style.overflowY = 'visible';
+      listContainer.style.maxHeight = 'none';
+      listContainer.style.height = 'auto';
+      listContainer.style.flex = 'none';
+      listContainer.style.minHeight = 'auto';
     }
 
     // 强制 layout 刷新
     clone.offsetHeight;
+    // 额外等待一帧以确保布局完成
+    await new Promise(r => requestAnimationFrame(r));
 
     const canvas = await html2canvas(clone, {
       backgroundColor: '#ffffff',
@@ -1887,6 +1896,7 @@ function formatDateMD(dateStr) { const d = new Date(dateStr + 'T00:00:00'); retu
 (function() { const originalApplyPrizeFilter = applyPrizeFilter; applyPrizeFilter = async function() { await originalApplyPrizeFilter.apply(this, arguments); const input = document.getElementById('prizeNumberInput'); if (!input) return; let val = input.value.trim(); if (val === '') { input.className = ''; return; } if (/^\d$/.test(val)) val = '0' + val; if (/^\d{2}$/.test(val) && parseInt(val) >= 1 && parseInt(val) <= 49) { const cls = redNumbers.includes(val) ? 'red-text' : (blueNumbers.includes(val) ? 'blue-text' : 'green-text'); input.className = cls; } else { input.className = ''; } }; })();
 
 function getZodiacColorClass(zodiac) { if (!zodiac) return ''; const redSet = new Set(['鼠','兔','马','鸡']); const blueSet = new Set(['虎','蛇','猴','猪']); const greenSet = new Set(['牛','龙','羊','狗']); if (redSet.has(zodiac)) return 'red-text'; if (blueSet.has(zodiac)) return 'blue-text'; if (greenSet.has(zodiac)) return 'green-text'; return ''; }
+function getNumColorClass(num) { if (!num) return ''; const n = num.padStart(2, '0'); if (redNumbers.includes(n)) return 'red-text'; if (blueNumbers.includes(n)) return 'blue-text'; if (greenNumbers.includes(n)) return 'green-text'; return ''; }
 function getNumberColorClass(num) { if (redNumbers.includes(num)) return 'red-text'; if (blueNumbers.includes(num)) return 'blue-text'; if (greenNumbers.includes(num)) return 'green-text'; return ''; }
 
 async function showDrawRecord() { const old = document.getElementById('drawRecordWin'); if (old) old.remove(); let year = new Date().getFullYear(); const fd = document.getElementById('filterDate')?.value; if (fd) { const m = fd.match(/^(\d{4})/); if (m) year = parseInt(m[1]); } const startDate = new Date(year, 0, 1); const endDate = new Date(year, 11, 31); if (isNaN(startDate) || isNaN(endDate)) { showToast('日期无效'); return; } const rows = []; let issue = 1; const cur = new Date(startDate); while (cur <= endDate) { rows.push({ date: formatDateMD(cur.toISOString().slice(0,10)), issue: issue.toString().padStart(2, '0'), fullDate: cur.toISOString().slice(0,10) }); cur.setDate(cur.getDate() + 1); issue++; } const totalIssues = issue - 1; const groups = Math.ceil(totalIssues / 100); const storageKey = `drawRecord_${currentRegion}_${year}`; let savedData = {}; try { savedData = JSON.parse(localStorage.getItem(storageKey) || '{}'); } catch (e) {} const monthlyPL = new Array(12).fill(0); for (const iid in savedData) { const entry = savedData[iid]; if (entry && entry.number && entry.number.trim() && entry.pl !== undefined && entry.pl !== '') { const num = entry.number.trim().padStart(2, '0'); if (/^\d{2}$/.test(num) && parseInt(num) >= 1 && parseInt(num) <= 49) { const issueNum = parseInt(iid); const issueDate = new Date(year, 0, issueNum); const month = issueDate.getMonth(); const plVal = parseFloat(entry.pl); if (!isNaN(plVal)) monthlyPL[month] += plVal; } } } let totalPLSum = 0; for (let m = 0; m < 12; m++) totalPLSum += monthlyPL[m]; let monthlyInnerHtml = '<table class="monthly-summary-table" style="width:100%;margin:0;border:none;"><tbody>'; for (let m = 0; m < 12; m++) { const val = monthlyPL[m]; let valText = ''; if (val > 0) valText = `<span style="color:#27ae60;font-weight:bold;">+${val}</span>`; else if (val < 0) valText = `<span style="color:#e74c3c;font-weight:bold;">${val}</span>`; monthlyInnerHtml += `<tr><td style="text-align:left;padding:1px 4px;border:none;font-size:11px;color:#0000ff;">${m+1}月</td><td style="text-align:right;padding:1px 4px;border:none;font-size:11px;">${valText}</td></tr>`; } let totalText = ''; if (totalPLSum > 0) totalText = `<span style="color:#27ae60;font-weight:bold;">+${totalPLSum}</span>`; else if (totalPLSum < 0) totalText = `<span style="color:#e74c3c;font-weight:bold;">${totalPLSum}</span>`; monthlyInnerHtml += `<tr style="border-top:2px solid #333;"><td style="text-align:left;padding:1px 4px;border:none;font-size:11px;color:#0000ff;">总盈亏</td><td style="text-align:right;padding:1px 4px;border:none;font-size:11px;">${totalText}</td></tr>`; monthlyInnerHtml += '</tbody></table>'; let tableHtml = '<div class="draw-table-wrap"><table class="draw-table"><thead><tr>'; for (let g = 0; g < groups; g++) { tableHtml += '<th>期号</th><th>号码</th><th>生肖</th><th>盈亏</th>'; } tableHtml += '</tr></thead><tbody>'; const monthlyRowsNeeded = 13; const startRow = 87; for (let r = 0; r < 100; r++) { tableHtml += '<tr>'; for (let g = 0; g < groups; g++) { const idx = g * 100 + r; if (g === 3 && r >= startRow && r < startRow + monthlyRowsNeeded) { if (r === startRow) { tableHtml += `<td colspan="4" rowspan="${monthlyRowsNeeded}" style="vertical-align:top;padding:2px;">${monthlyInnerHtml}</td>`; } } else if (g === 3 && r >= startRow + monthlyRowsNeeded) { tableHtml += '<td></td><td></td><td></td><td></td>'; } else if (idx < rows.length) { const row = rows[idx]; const iid = row.issue; const savedEntry = savedData[iid] || {}; const savedNumber = savedEntry.number || ''; const savedPL = savedEntry.pl || ''; const isReadOnly = !!savedNumber; tableHtml += `<td>${iid}期</td>`; const numVal = savedNumber ? savedNumber.padStart(2, '0') : ''; const numColorClass = savedNumber ? getNumberColorClass(numVal) : ''; const inputDisabled = isReadOnly ? 'disabled' : ''; tableHtml += `<td><input type="text" class="draw-number-input draw-num-${iid} ${numColorClass}" value="${savedNumber}" ${inputDisabled} oninput="onDrawNumberInput(this, '${iid}')" maxlength="2"></td>`; const zodiac = savedNumber ? (currentZodiacMap[numVal] || '') : ''; const zColorClass = getZodiacColorClass(zodiac); tableHtml += `<td><span class="draw-zodiac-${iid} ${zColorClass}">${zodiac}</span></td>`; let plColorClass = ''; if (savedPL !== '') { const plVal = parseFloat(savedPL); if (!isNaN(plVal)) { if (plVal > 0) plColorClass = ' green-text'; else if (plVal < 0) plColorClass = ' red-text'; } } tableHtml += `<td><input type="text" class="draw-pl-input draw-pl-${iid}${plColorClass}" value="${savedPL}" ${inputDisabled} oninput="updatePlColor(this)" maxlength="7"></td>`; } else { tableHtml += '<td></td><td></td><td></td><td></td>'; } } tableHtml += '</tr>'; } tableHtml += '</tbody></table></div>'; const win = document.createElement('div'); win.className = 'floating-window'; win.id = 'drawRecordWin'; win.style.width = Math.min(groups * 170 + 40, window.innerWidth - 20) + 'px'; win.style.height = '650px'; win.style.left = '50%'; win.style.top = '50%'; win.style.transform = 'translate(-50%, -50%)'; const savedCount = localStorage.getItem(`recentDrawCount_${currentRegion}`) || ''; const regionLabel = currentRegion === 'macau' ? '澳门' : currentRegion === 'hongkong' ? '香港' : '粤港'; win.innerHTML = `<div class="modal-header"><h3>开奖记录（${regionLabel} ${year}年阳历）</h3><div class="window-controls"><button onclick="maximizeWindow('drawRecordWin')">🗖</button><button onclick="document.getElementById('drawRecordWin').remove()">×</button></div></div><div class="modal-body" style="display:flex; flex-direction:column; gap:10px;"><div class="card" style="flex:1; display:flex; flex-direction:column;"><div class="card-title" style="display:flex; align-items:center; gap:8px;"><span>开奖号码记录</span><input type="number" id="recentDrawCountInput" placeholder="留空不显示" value="${savedCount}" style="width:60px;padding:2px 4px;border:1px solid #ccc;border-radius:4px;font-size:13px;"><button class="btn btn-primary" onclick="saveRecentDrawCount()" style="padding:4px 12px;font-size:12px;min-height:28px;">保存</button></div><div style="overflow:auto; flex:1;">${tableHtml}</div></div><div style="display:flex; gap:10px; justify-content:center; padding:10px;"><button class="btn btn-primary" onclick="editDrawRecord()">修改</button><button class="btn btn-save-order" onclick="saveDrawRecord(${year})">保存</button><button class="btn btn-danger" onclick="clearAllDrawRecords(${year})" style="background:#e74c3c;color:#fff;">清空全部</button></div></div>`; document.body.appendChild(win); makeWindowDraggable('drawRecordWin'); highestZ += 1; win.style.zIndex = highestZ; showFloatingWinOverlay('drawRecordWin'); updateRecentDrawTexts(); setTimeout(() => { const allNumInputs = win.querySelectorAll('.draw-number-input'); const allPlInputs = win.querySelectorAll('.draw-pl-input'); const allInputs = [...allNumInputs, ...allPlInputs].sort((a, b) => { const trA = a.closest('tr'); const trB = b.closest('tr'); const rows = [...win.querySelectorAll('.draw-table tbody tr')]; if (trA !== trB) return rows.indexOf(trA) - rows.indexOf(trB); const tdsA = [...trA.querySelectorAll('td')]; const tdsB = [...trB.querySelectorAll('td')]; const tdA = a.closest('td'); const tdB = b.closest('td'); return tdsA.indexOf(tdA) - tdsB.indexOf(tdB); }); const enabledInputs = allInputs.filter(inp => !inp.disabled); enabledInputs.forEach((inp, i) => { inp.addEventListener('keydown', function(e) { if (e.key === 'Enter') { e.preventDefault(); const nextIdx = i + 1; if (nextIdx < enabledInputs.length) { const next = enabledInputs[nextIdx]; next.focus(); next.select(); } } }); }); }, 200); }
@@ -2741,25 +2751,29 @@ function processCurrentOrder(input, user, isNormal, date = null) {
 
 function onDrawInputPlain(idx) {
   const input = document.getElementById('drawNum' + idx);
-  if (!input) return;
+  const zodiacSpan = document.getElementById('drawZodiac' + idx);
+  if (!input || !zodiacSpan) return;
   let val = input.value.replace(/\D/g, '');
   if (val.length > 2) val = val.slice(0, 2);
   input.value = val;
   if (val.length === 2) {
-    const num = parseInt(val);
-    if (num >= 1 && num <= 49) {
-      input.style.color = 'black';
-    } else {
-      input.style.color = 'red';
+    const num = val.padStart(2, '0');
+    const intVal = parseInt(num);
+    if (intVal >= 1 && intVal <= 49) {
+      const zodiac = currentZodiacMap[num] || '';
+      zodiacSpan.textContent = zodiac;
+      zodiacSpan.className = 'draw-zodiac-plain ' + getZodiacColorClass(zodiac);
+      input.className = 'draw-number-input-plain ' + getNumColorClass(num);
+      if (idx < 7) {
+        const next = document.getElementById('drawNum' + (idx + 1));
+        if (next) next.focus();
+      }
+      return;
     }
   }
-  if (idx < 7) {
-    const next = document.getElementById('drawNum' + (idx + 1));
-    if (next && val.length === 2) {
-      const num = parseInt(val);
-      if (num >= 1 && num <= 49) next.focus();
-    }
-  }
+  zodiacSpan.textContent = '';
+  zodiacSpan.className = 'draw-zodiac-plain';
+  input.className = 'draw-number-input-plain';
 }
 
 function enableDrawEdit() {
