@@ -2778,7 +2778,7 @@ function onDrawInputPlain(idx) {
 
 function enableDrawEdit() {
   window._lianxiaoEditEnabled = true;
-  document.querySelectorAll('.draw-number-input').forEach(el => el.disabled = false);
+  document.querySelectorAll('.draw-number-input-plain, .draw-number-input').forEach(el => el.disabled = false);
   showToast('已启用编辑模式');
 }
 
@@ -3164,8 +3164,8 @@ function refreshDuiJiangStats() {
     const reportPLColor = reportPL > 0 ? 'color:#008000;' : (reportPL < 0 ? 'color:#ff0000;' : '');
     const sumOrderHitDetail = hasValidDraw ? buildHitDetail(sumOrderHitByType) : '';
     const sumReportHitDetail = hasValidDraw ? buildHitDetail(sumReportHitByType) : '';
-    orderHtml += '<tr style="background-color:#fef9e7;"><td>所有用户</td><td>' + sumOrderTotal + '</td><td>' + sumOrderRebate + '</td><td style="color:#ff0000;">' + sumOrderHitDetail + '</td><td style="' + orderPLColor + '">' + (hasValidDraw && orderPL !== 0 ? orderPL : '') + '</td></tr>';
-    reportHtml += '<tr style="background-color:#fef9e7;"><td>所有用户</td><td>' + sumReportTotal + '</td><td>' + sumReportRebate + '</td><td style="color:#ff0000;">' + sumReportHitDetail + '</td><td style="' + reportPLColor + '">' + (hasValidDraw && reportPL !== 0 ? reportPL : '') + '</td></tr>';
+    orderHtml += '<tr style="background-color:#fef9e7;"><td>所有用户</td><td>' + sumOrderTotal + '</td><td>' + Math.round(sumOrderRebate) + '</td><td style="color:#ff0000;">' + sumOrderHitDetail + '</td><td style="' + orderPLColor + '">' + (hasValidDraw && orderPL !== 0 ? orderPL : '') + '</td></tr>';
+    reportHtml += '<tr style="background-color:#fef9e7;"><td>所有用户</td><td>' + sumReportTotal + '</td><td>' + Math.round(sumReportRebate) + '</td><td style="color:#ff0000;">' + sumReportHitDetail + '</td><td style="' + reportPLColor + '">' + (hasValidDraw && reportPL !== 0 ? reportPL : '') + '</td></tr>';
     orderBody.innerHTML = orderHtml; reportBody.innerHTML = reportHtml;
     const netAmount = sumOrderTotal - sumReportTotal;
     const netRebate = Math.round(sumOrderRebate - sumReportRebate);

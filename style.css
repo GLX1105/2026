@@ -595,7 +595,7 @@ tr.selected-row{background-color:#dceeff!important;font-weight:bold;box-shadow:i
     border: none; outline: none; background: transparent;
     color: #333;
 }
-.draw-number-input-plain:disabled { background: transparent; color: inherit; }
+.draw-number-input-plain:disabled { background: transparent; }
 
 .draw-zodiac-plain { font-size: 12px; font-weight: bold; min-width: 24px; display: inline-block; text-align: center; }
 
