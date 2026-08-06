@@ -905,30 +905,68 @@ async function screenshotOrderRecord() {
   const win = document.getElementById('orderWin');
   if (!win) { showToast('窗口不存在'); return; }
   try {
-    // 获取模态内容区域（包含滚动列表）
-    const modalBody = win.querySelector('.modal-body');
-    if (!modalBody) { showToast('内容区域不存在'); return; }
-    // 获取滚动容器
-    const listContainer = document.getElementById('orderListContainer');
-    
-    // 暂存原始样式
-    const origOverflow = listContainer ? listContainer.style.overflow : '';
-    const origMaxHeight = modalBody.style.maxHeight;
-    const origHeight = modalBody.style.height;
-    const winOrigOverflow = win.style.overflow;
+    // 克隆整个窗口，避免布局约束影响截图
+    const clone = win.cloneNode(true);
+    clone.style.position = 'absolute';
+    clone.style.left = '-9999px';
+    clone.style.top = '0';
+    clone.style.width = win.offsetWidth + 'px';
+    clone.style.display = 'block';
+    clone.style.visibility = 'visible';
+    clone.style.height = 'auto';
+    clone.style.maxHeight = 'none';
+    clone.style.overflow = 'visible';
+    clone.style.transform = 'none';
+    document.body.appendChild(clone);
 
-    // 展开所有内容以便截图
-    if (listContainer) {
-      listContainer.style.overflow = 'visible';
+    // 展开所有可滚动容器
+    const allScrollable = clone.querySelectorAll('*');
+    const savedStyles = [];
+    allScrollable.forEach(el => {
+      const cs = window.getComputedStyle(el);
+      if (cs.overflow === 'auto' || cs.overflow === 'scroll' || cs.overflowY === 'auto' || cs.overflowY === 'scroll' ||
+          el.style.overflow === 'auto' || el.style.overflow === 'scroll' ||
+          el.style.overflowY === 'auto' || el.style.overflowY === 'scroll' ||
+          (el.style.maxHeight && el.style.maxHeight !== 'none') ||
+          /max-height[^;]*:[^;]*(?:px|em|rem|vh)/.test(el.getAttribute('style') || '')) {
+        savedStyles.push({
+          el,
+          overflow: el.style.overflow,
+          overflowY: el.style.overflowY,
+          maxHeight: el.style.maxHeight,
+          height: el.style.height,
+          flex: el.style.flex
+        });
+        el.style.overflow = 'visible';
+        el.style.overflowY = 'visible';
+        el.style.maxHeight = 'none';
+        el.style.height = 'auto';
+        el.style.flex = 'none';
+      }
+    });
+
+    // 展开 modal-body 和所有 flex 子项
+    const cloneModalBody = clone.querySelector('.modal-body');
+    if (cloneModalBody) {
+      savedStyles.push({
+        el: cloneModalBody,
+        overflow: cloneModalBody.style.overflow,
+        overflowY: cloneModalBody.style.overflowY,
+        maxHeight: cloneModalBody.style.maxHeight,
+        height: cloneModalBody.style.height,
+        flex: cloneModalBody.style.flex
+      });
+      cloneModalBody.style.overflow = 'visible';
+      cloneModalBody.style.overflowY = 'visible';
+      cloneModalBody.style.maxHeight = 'none';
+      cloneModalBody.style.height = 'auto';
+      cloneModalBody.style.flex = 'none';
     }
-    modalBody.style.maxHeight = 'none';
-    modalBody.style.height = 'auto';
-    win.style.overflow = 'visible';
 
-    // 等待DOM更新
-    await new Promise(r => setTimeout(r, 100));
+    // 强制 layout 刷新
+    clone.offsetHeight;
 
-    const canvas = await html2canvas(modalBody, {
+    const canvas = await html2canvas(clone, {
       backgroundColor: '#ffffff',
       scale: 2,
       logging: false,
@@ -936,11 +974,7 @@ async function screenshotOrderRecord() {
       allowTaint: false
     });
 
-    // 恢复原始样式
-    if (listContainer) listContainer.style.overflow = origOverflow;
-    modalBody.style.maxHeight = origMaxHeight;
-    modalBody.style.height = origHeight;
-    win.style.overflow = winOrigOverflow;
+    document.body.removeChild(clone);
 
     canvas.toBlob(async blob => {
       if (!blob) { showToast('生成图片失败'); return; }
